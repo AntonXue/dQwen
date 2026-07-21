@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv*/
+build/
+dist/
+# large binary fixtures live outside git; see tests/fixtures/README
+*.pt
+*.safetensors
