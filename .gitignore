@@ -8,3 +8,7 @@ dist/
 # large binary fixtures live outside git; see tests/fixtures/README
 *.pt
 *.safetensors
+third_party/
+!third_party/*.md
+!third_party/*.json
+!third_party/*.sh

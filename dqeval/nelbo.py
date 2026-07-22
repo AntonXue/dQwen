@@ -91,9 +91,55 @@ def mc_nelbo_loglikelihood(logits_fn: Callable[[torch.Tensor], torch.Tensor],
     return -sum(losses) / len(losses)
 
 
+def loglikelihood_options(adapter, prompt_ids: torch.Tensor,
+                          options: "list[torch.Tensor]", *,
+                          mc_num: Optional[int] = None,
+                          batch_size: int = 16) -> "list[float]":
+    """Score a SET of candidate continuations with ONE estimator setting.
+
+    USE THIS -- not repeated `loglikelihood()` calls -- whenever the scores will be
+    COMPARED against each other, which is every multiple-choice task.
+
+    Why: `loglikelihood()` chooses mc_num per continuation (1 if single-token, else
+    128). For a mixed-length option set that silently scores one option EXACTLY and
+    another with a 128-draw stochastic LOWER BOUND, then argmaxes across two
+    different estimands. It raises nothing and yields a plausible-looking accuracy.
+
+    Bare-letter MMLU/ARC cannot trigger it -- " A".." D" are single tokens in every
+    tokenizer we support (verified across LLaDA, Dream, SDAR, dQwen). Any option set
+    with punctuation, parenthesised letters, or free text can.
+
+    Length caveat that remains even with a uniform estimator: multi-token options
+    accumulate more masked-position CE terms, so longer continuations score lower
+    for reasons unrelated to correctness. That is what lm-eval's `acc_norm` exists
+    to compensate for; this function does not normalise, it only guarantees that
+    every option was measured the same way.
+    """
+    if not options:
+        return []
+    lengths = {int(o.flatten().numel()) for o in options}
+    if mc_num is None:
+        # one setting for the whole set, decided by the WHOLE set, not per option
+        mc_num = 1 if lengths == {1} else 128
+    if mc_num == 1 and lengths != {1}:
+        raise ValueError(
+            f"mc_num=1 is exact only for single-token continuations, but option "
+            f"lengths are {sorted(lengths)}. Pass an explicit mc_num >= 2."
+        )
+    bs = 1 if mc_num == 1 else min(batch_size, mc_num)
+    return [
+        mc_nelbo_loglikelihood(adapter.logits, prompt_ids.flatten(), o.flatten(),
+                               mc_num=mc_num, batch_size=bs, mask_id=adapter.mask_id)
+        for o in options
+    ]
+
+
 def loglikelihood(adapter, prompt_ids: torch.Tensor, answer_ids: torch.Tensor, *,
                   mc_num: Optional[int] = None, batch_size: int = 16) -> float:
-    """Adapter-friendly wrapper. Single-token answers use the EXACT mc_num=1 path.
+    """Adapter-friendly wrapper for ONE continuation.
+
+    For comparing several candidates, use `loglikelihood_options` instead -- see the
+    estimator-mixing hazard documented there.
 
     Note this uses `adapter.logits` (canonical), not `raw_logits` -- see module
     docstring. Passing raw logits for Dream would be an off-by-one with no error.
