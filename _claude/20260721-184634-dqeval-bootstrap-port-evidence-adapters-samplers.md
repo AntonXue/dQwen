@@ -202,10 +202,14 @@ separate code path* — is empirically supported, not assumed.
 - Target env: conda `qwen35` — tf 5.13.0, torch 2.7.1+cu128, flash_attn 2.8.3,
   einops 0.8.1, evalplus 0.3.1. `lm_eval` NOT installed there (Phase 3).
 - `HF_HOME=/ssd1/ayx98/cache/huggingface`, always `HF_HUB_DISABLE_XET=1`.
-- Cached: dQwen3.5 {0.8B,2B,4B,9B} with all `step-*` revisions; LLaDA Base+Instruct;
-  Dream-v0-Instruct-7B; SDAR 1.7B+4B.
-  **NOT cached:** dQwen3-{0.6B,1.7B} (metadata only, 44K), Dream-v0-Base-7B,
-  Dream-Coder-{Base,Instruct}.
+- **All 14 registered models are cached and load-tested** (`tests/load_matrix.py`,
+  14/14 PASS): dQwen3.5 {0.8B,2B,4B,9B} with all `step-*` revisions, dQwen3
+  {0.6B,1.7B}, LLaDA Base+Instruct, Dream-v0 {Base,Instruct}-7B, Dream-Coder-v0
+  {Base,Instruct}-7B, SDAR {1.7B,4B}-Chat. ~50GB was pulled this session.
+- Generation verified on all families. Note instruct/chat models given a *base-style*
+  completion prompt terminate immediately (LLaDA-Instruct emits `<|eot_id|>`, SDAR-Chat
+  `<|endoftext|>`) -- correct behaviour, but they need `adapter.chat()` formatting for
+  any real eval.
 - ADLMC assets still to rescue: `ablations/paper_evals/mc_nelbo.py` (bit-exact LLaDA
   MC-NELBO port, reproduces their reference at diff 0.00e+00) and
   `ablations/paper_evals/lm_eval_probe/` — **both git-UNTRACKED in ADLMC.**
