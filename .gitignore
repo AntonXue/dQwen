@@ -1,3 +1,4 @@
+.claude/          # agent worktrees + local settings
 __pycache__/
 *.py[cod]
 *.egg-info/
