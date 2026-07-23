@@ -78,27 +78,57 @@ class DQEvalLM(LM):
     def tok_decode(self, ids):
         return self.adapter.decode(torch.as_tensor(ids))
 
+    def _prep(self, r):
+        """(context_ids, continuation_ids) with the context length-budgeted."""
+        ctx = self.tok_encode(r.args[0])
+        cont = self.tok_encode(r.args[1])
+        budget = self.max_length - len(cont)
+        if budget < len(ctx):
+            ctx = ctx[-budget:] if budget > 0 else ctx[:1]
+        return ctx, cont
+
     # -- multiple choice: mmlu, arc, hellaswag, piqa, winogrande, ... ------
     @torch.inference_mode()
     def loglikelihood(self, requests):
         dev = self.adapter.device
-        out = []
-        for r in requests:
-            ctx = self.tok_encode(r.args[0])
-            cont = self.tok_encode(r.args[1])
-            # left-truncate context to fit the length budget
-            budget = self.max_length - len(cont)
-            if budget < len(ctx):
-                ctx = ctx[-budget:] if budget > 0 else ctx[:1]
-            p = torch.tensor(ctx, device=dev)
-            a = torch.tensor(cont, device=dev)
-            mc = 1 if len(cont) == 1 else self.mc_num
-            ll = nelbo.mc_nelbo_loglikelihood(
-                self.adapter.logits, p, a,
-                mc_num=mc, batch_size=(1 if mc == 1 else self.mc_bs),
-                mask_id=self.adapter.mask_id,
-            )
-            out.append((ll, False))   # is_greedy=False, LLaDA convention
+        mask_id = self.adapter.mask_id
+        out = [None] * len(requests)
+
+        # FAST PATH. Multiple-choice tasks issue one request per (question, option)
+        # with the SAME context and single-token continuations (mmlu/arc letters).
+        # The masked canvas [ctx, MASK] is then identical across a question's options,
+        # so one forward serves them all -- we just read a different vocab index per
+        # option. This is the exact mc_num=1 MASK-slot marginal, provably identical to
+        # scoring each option with its own forward, and still bs=1 (no batch-invariance
+        # exposure). It removes the ~4x redundant forwards multiple-choice would spend.
+        groups: dict[tuple, list[tuple[int, int]]] = {}
+        for i, r in enumerate(requests):
+            ctx, cont = self._prep(r)
+            if len(cont) == 1:
+                groups.setdefault(tuple(ctx), []).append((i, cont[0]))
+            else:
+                # multi-token continuation -> full MC-NELBO (no shared-forward reuse)
+                p = torch.tensor(ctx, device=dev)
+                a = torch.tensor(cont, device=dev)
+                ll = nelbo.mc_nelbo_loglikelihood(
+                    self.adapter.logits, p, a,
+                    mc_num=self.mc_num, batch_size=self.mc_bs, mask_id=mask_id,
+                )
+                out[i] = (ll, False)
+
+        for ctx, items in groups.items():
+            canvas = torch.tensor([*ctx, mask_id], device=dev)[None, :]
+            # position-aligned logit at the single masked (answer) slot
+            logits = self.adapter.logits(canvas)[0, len(ctx)]
+            # Use the SAME op nelbo uses (F.cross_entropy on the native-dtype logits),
+            # not log_softmax(logits.float()), so the shared-forward result is BITWISE
+            # identical to scoring each option through mc_nelbo. ll = -CE.
+            toks = torch.tensor([t for _, t in items], device=dev)
+            ce = torch.nn.functional.cross_entropy(
+                logits.unsqueeze(0).expand(len(items), -1), toks, reduction="none")
+            for (i, _), c in zip(items, ce):
+                out[i] = (-c.item(), False)   # is_greedy=False, LLaDA convention
+
         return out
 
     def loglikelihood_rolling(self, requests):
