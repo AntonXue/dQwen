@@ -40,6 +40,17 @@ else
   echo ">> hf_vlms.py already patched"
 fi
 
+# PATCH 2: the gsm8k task yamls reference the dataset as bare `gsm8k`, but newer
+# huggingface_hub requires `namespace/name` and the dataset moved to `openai/gsm8k`.
+# Without this, gsm8k* tasks die with HfUriError. Data-only, no behaviour change.
+GSM_DIR="$SP/lm_eval/tasks/gsm8k"
+if [ -d "$GSM_DIR" ] && grep -rql "dataset_path: gsm8k$" "$GSM_DIR"/*.yaml 2>/dev/null; then
+  echo ">> patching gsm8k task yamls: dataset_path gsm8k -> openai/gsm8k"
+  sed -i 's|dataset_path: gsm8k$|dataset_path: openai/gsm8k|' "$GSM_DIR"/*.yaml
+else
+  echo ">> gsm8k task yamls already patched (or absent)"
+fi
+
 echo ">> verifying import under transformers $($PY -c 'import transformers; print(transformers.__version__)')"
 $PY -c "from lm_eval import simple_evaluate; from lm_eval.api.registry import register_model; print('lm_eval import OK')"
 echo ">> done"
