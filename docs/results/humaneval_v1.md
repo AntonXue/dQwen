@@ -62,3 +62,20 @@ finding, not noise.
 - gen=1024 for the LLaDA gen=1024 published cell (35.4).
 - EvalPlus (HE+/MBPP+) denser tests; MBPP.
 - GSM8K (generative, same path).
+
+## EvalPlus (HE+) — driver validated
+
+Dream-Coder-7B-Base via `dqeval/evalplus_driver.py` (block-diffusion decode):
+
+| | base pass@1 | plus pass@1 | published |
+|---|---|---|---|
+| Dream-Coder-7B-Base | 59.76 | 55.49 | HE 66.5 / HE+ 60.4 |
+
+**Consistency check: the EvalPlus base pass@1 (59.76) equals the lm-eval `humaneval`
+number (59.76) exactly** — same generation, graded by two independent harnesses. The
+−6.7/−4.9 gap to published is the same block-diffusion-vs-native decode undersell
+documented for the Dream family, not a grading issue. MBPP+ and native-decode
+reproduction are the follow-ups.
+
+Also: LLaDA MBPP (lm-eval, block-diffusion) = 41.2 vs published ~39-40 — third LLaDA
+reproduction after MMLU (-0.05) and HumanEval (-0.6).
