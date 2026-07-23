@@ -147,8 +147,12 @@ class DQEvalLM(LM):
             kw = r.args[1] if len(r.args) > 1 and isinstance(r.args[1], dict) else {}
             until = list(kw.get("until", []) or [])
             # also stop on the model's own end tokens (LLaDA emits these; masked DLMs
-            # that don't self-terminate rely on `until` instead).
-            eot = [t for t in ("<|im_end|>", "<|endoftext|>",
+            # that don't self-terminate rely on `until` instead) and on a markdown
+            # code fence: base models with instruct-flavoured pretraining (Dream)
+            # wrap completions in ```...``` + prose, which HumanEval's `until` does
+            # NOT catch -- the fence then makes the graded code unparseable. Python
+            # never contains a triple backtick, so stopping at ``` is safe.
+            eot = [t for t in ("```", "<|im_end|>", "<|endoftext|>",
                                self.adapter.tokenizer.pad_token) if t]
             ids = self.adapter.encode(ctx)
             # EARLY-STOP during decode -- a masked DLM does not emit EOS, so without
