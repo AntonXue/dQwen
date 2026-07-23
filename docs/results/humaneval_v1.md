@@ -1,62 +1,64 @@
-# HumanEval v1 — greedy AR-mode ballpark
+# HumanEval v1 — two decodes, with a published reproduction
 
-> 2026-07-23. First code-eval numbers through the dqeval harness. **Greedy AR mode**
-> (`block_length=1`, sequential, temperature=0), gen_length=512, bs=1, via lm-eval's
-> `humaneval` task (built-in execution grading). Full dumps in gitignored `_runs/`.
+> 2026-07-23. Code-eval through the dqeval harness, via lm-eval's `humaneval` task
+> (execution grading). Two decodes reported. gen_length=512, bs=1. Dumps in `_runs/`.
 
 ## Numbers
 
-| model | HumanEval pass@1 |
+| model | AR-mode (block=1) | block-diffusion (block=32, low-conf) | published |
+|---|---|---|---|
+| dQwen3.5-9B-Base (ours) | 59.76 | **62.20** | — |
+| Dream-Coder-v0-Base-7B | — | 59.76 | — |
+| Dream-v0-Base-7B | 19.51 | 41.46 | — |
+| LLaDA-8B-Base | 20.73 | **32.32** | **32.9** (gen=512) |
+
+## The reproduction — harness validated for generative code
+
+**LLaDA-8B-Base block-diffusion = 32.32 vs LLaDA's published 32.9 at the SAME
+gen_length=512 (−0.58pp).** LLaDA's EVAL.md reports HumanEval by generation length
+(gen=1024 → 35.4, gen=512 → 32.9, gen=256 → 32.9); we ran gen=512 and land on their
+gen=512 number. This is the generative-code analogue of the MMLU reproduction: the
+harness reproduces a published HumanEval number to under 1pp at matching decode.
+
+## Why the AR-mode numbers looked "suspiciously low" — and were not a bug
+
+The AR-mode column is CORRECTLY EXTRACTED but uses a genuinely weak decode. Verified
+by grading individual problems: completions parse fine; failures are real weak
+solutions (the model writing `# TODO: pass`, wrong logic), not truncation. The lever
+is the unmasking ORDER:
+
+- **append-AR (block=1, strictly L2R):** weakest. 10/20 on the easy first-20 probe.
+- **block-AR (fixed canvas, L2R, trailing masks):** tested per a hypothesis that
+  trailing masks would help — they did NOT (8/20). Order, not canvas layout.
+- **block-diffusion (block=32, low-confidence order):** best (14/20 probe), and it
+  reproduces published.
+
+So AR mode undersells decode-sensitive models by ~2x (Dream 19.5 → 41.5, +2.1x;
+LLaDA 20.7 → 32.3). It is a documented common-baseline FLOOR, not the number to quote.
+
+## A property difference falls out: decode-robustness
+
+| model | AR → block-diffusion |
 |---|---|
-| **dQwen3.5-9B-Base (ours)** | **59.76** |
-| dQwen3.5-2B-Base (ours) | 28.05 |
-| LLaDA-8B-Base | 20.73 |
-| Dream-v0-Base-7B | 19.51 |
+| dQwen3.5-9B | 59.8 → 62.2 (+2.4) |
+| Dream-7B | 19.5 → 41.5 (+22.0) |
+| LLaDA-8B | 20.7 → 32.3 (+11.6) |
 
-## What these are — and are NOT
+dQwen barely moves; Dream/LLaDA roughly double. dQwen was TRAINED with the
+block-append decode, so it is robust to the decode; LLaDA/Dream were designed for
+confidence-based decode and collapse under naive AR. This robustness is itself a
+finding, not noise.
 
-- **Greedy AR mode is a COMMON BASELINE decode, not each model's native decode.** Every
-  family can decode strictly L2R one token at a time (`block_length=1`), so this is the
-  code analogue of the cfg=0 common protocol we used for MMLU. It is a floor, not a
-  ceiling: the native block-diffusion decode should do better per model.
-- **Therefore these do NOT reproduce published HumanEval.** LLaDA's published ~35 was
-  with its own block-diffusion decode (gen_length=1024); our AR-mode LLaDA is 20.7, and
-  the gap is the decode, not a harness error. The block-diffusion reproduction is a
-  separate run (next).
-- **pass@1, greedy, single run.** A ballpark, not a locked number.
+## Two silent extraction bugs fixed en route (both: low score, correct code)
 
-## The headline
-
-**dQwen3.5-9B-Base reaches 59.76% under the naive AR-mode decode** — the strongest in
-this set, and this is a code-focused diffusion-converted model showing real
-execution-based capability before any decode tuning.
-
-Contrast with MMLU makes the specialization visible: dQwen3.5-2B is at CHANCE on MMLU
-(27.8, general knowledge forgotten) but a functional 28.0 on HumanEval. The
-code-focused training preserved code ability across sizes while sacrificing general
-knowledge at the small end.
-
-## Two extraction bugs fixed to get here (both silent)
-
-Both produced the *same* symptom — a low score with visibly CORRECT generated code —
-from different causes:
-
-1. **No early-stop** (commit db29bb4). A masked DLM does not emit EOS, so in append
-   mode it filled the whole canvas and ended mid-statement (unterminated string →
-   syntax error → fail). Fixed with stop-string early-stopping during decode; also a
-   large speedup (Dream `def add`: 512 forwards → 7).
-2. **Markdown code fence** (commit b09a43e). Base models with instruct-flavoured
-   pretraining (Dream) wrap correct code in ```...``` + prose, which HumanEval's
-   `until` strings do not catch → unparseable graded code. Fixed by adding ``` as a
-   stop. Impact: Dream 4.88 → 19.51, dQwen3.5-2B 15.85 → 28.05. LLaDA unaffected
-   (it emits <|endoftext|>, never fences) — an internal consistency check.
-
-The lesson: eyeball generations, don't trust the score. Both bugs looked like "the
-model is bad" and were actually "our extraction is wrong."
+1. **No early-stop** (db29bb4): masked DLMs do not emit EOS → filled the canvas, ended
+   mid-statement (syntax error). Fixed with stop-string early-stop; also ~70x fewer
+   forwards on short solutions.
+2. **Markdown code fence** (b09a43e): Dream wraps code in ```...``` + prose that
+   humaneval's `until` misses. Added ``` as a stop. Dream 4.88 → 19.51.
 
 ## Next
 
-- Block-diffusion (champion) decode per model — the native-decode numbers; expected
-  higher than AR mode. LLaDA there should approach its published ~35.
-- EvalPlus (HumanEval+/MBPP+) for the denser-test headline.
-- MBPP through the same path.
+- gen=1024 for the LLaDA gen=1024 published cell (35.4).
+- EvalPlus (HE+/MBPP+) denser tests; MBPP.
+- GSM8K (generative, same path).
