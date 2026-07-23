@@ -86,10 +86,28 @@ def _transfer_schedule(n_masked: int, steps: int, device) -> torch.Tensor:
     return out
 
 
+def _stop_cut(text: str, stop_strings) -> "int | None":
+    """Index of the earliest stop-string occurrence in text, or None."""
+    if not stop_strings:
+        return None
+    hits = [text.find(s) for s in stop_strings if s]
+    hits = [h for h in hits if h >= 0]
+    return min(hits) if hits else None
+
+
 @torch.no_grad()
 def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
-             cfg: DecodeConfig) -> GenOutput:
-    """Block-diffusion decode of ONE prompt. `prompt_ids` is [1, L]."""
+             cfg: DecodeConfig, stop_strings=None) -> GenOutput:
+    """Block-diffusion decode of ONE prompt. `prompt_ids` is [1, L].
+
+    `stop_strings`: in append mode, after each block the generated text is checked
+    for these; the first hit ends decoding and truncates the output there. Because
+    a masked DLM does not self-terminate the way an AR model emits EOS, this is what
+    keeps generative tasks (humaneval's `\\ndef`/`\\nclass`, gsm8k's `\\n\\n`) from
+    running to the full canvas and ending mid-statement. It also saves the forwards
+    that would fill the rest of the canvas -- a large speedup at block_length=1.
+    Only meaningful in append mode (full/window see the whole canvas at once).
+    """
     if prompt_ids.dim() != 2 or prompt_ids.size(0) != 1:
         raise ValueError(f"bs=1 only; got prompt_ids of shape {tuple(prompt_ids.shape)}")
     if cfg.seed is not None:
@@ -102,6 +120,7 @@ def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
     canvas = torch.full((1, p_len + cfg.gen_length), mask_id, dtype=torch.long, device=dev)
     canvas[:, :p_len] = prompt_ids
     n_forward = 0
+    stop_text = None       # set when a stop string is hit in append mode
 
     for b in range(cfg.num_blocks):
         lo = p_len + b * cfg.block_length
@@ -139,10 +158,19 @@ def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
             blk[take] = x0[take]
             canvas[0, lo:hi] = blk
 
+        # early stop: check the generated text so far against the stop strings
+        if stop_strings and cfg.mode == "append":
+            gen_text = adapter.decode(canvas[0, p_len:hi])
+            cut = _stop_cut(gen_text, stop_strings)
+            if cut is not None:
+                stop_text = gen_text[:cut]
+                break
+
     gen_ids = canvas[0, p_len:]
+    text = adapter.decode(gen_ids) if stop_text is None else stop_text
     return GenOutput(
         prompt_ids=prompt_ids[0],
         gen_ids=gen_ids,
-        text=adapter.decode(gen_ids),
+        text=text,
         n_forward=n_forward,
     )

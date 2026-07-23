@@ -145,17 +145,20 @@ class DQEvalLM(LM):
         for r in requests:
             ctx = r.args[0]
             kw = r.args[1] if len(r.args) > 1 and isinstance(r.args[1], dict) else {}
-            until = kw.get("until", []) or []
+            until = list(kw.get("until", []) or [])
+            # also stop on the model's own end tokens (LLaDA emits these; masked DLMs
+            # that don't self-terminate rely on `until` instead).
+            eot = [t for t in ("<|im_end|>", "<|endoftext|>",
+                               self.adapter.tokenizer.pad_token) if t]
             ids = self.adapter.encode(ctx)
-            gen = unified.generate(self.adapter, ids, self.decode)
+            # EARLY-STOP during decode -- a masked DLM does not emit EOS, so without
+            # this it fills the whole canvas and ends mid-statement (syntax error).
+            gen = unified.generate(self.adapter, ids, self.decode,
+                                   stop_strings=until + eot)
             text = gen.text
-            # DLM decode stops on an all-mask/pad block, not a stop string:
-            # apply the harness's stop strings as post-hoc truncation.
-            for st in ("<|im_end|>", "<|endoftext|>", self.adapter.tokenizer.pad_token or ""):
+            # backstop: truncate again post-hoc (covers full/window mode too)
+            for st in eot + until:
                 if st and st in text:
                     text = text.split(st)[0]
-            for u in until:
-                if u and u in text:
-                    text = text.split(u)[0]
             out.append(text)
         return out
