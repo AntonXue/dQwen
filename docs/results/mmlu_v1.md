@@ -69,3 +69,22 @@ huggingface.co/Qwen/Qwen3.5-9B-Base (no table).
 - **Fast path** — one forward per question (shared masked canvas across the 4
   options), verified bitwise identical to per-option scoring. Full MMLU ~30 min/model
   at bs=1 for the DLMs; AR baselines ~5 min (KV cache + batch 16).
+
+## 4. Qwen3-adapted family (dQwen3) — twin sweep WITH a published reference
+
+Unlike Qwen3.5, the **Qwen3 tech report (arXiv:2505.09388, Table 8) publishes plain
+5-shot base MMLU**, so this family gets a real reported column.
+
+| size | reported (Qwen3 report) | Qwen3-Base AR (reproduced) | dQwen3-Base (diffusion) | repro − reported |
+|---|---|---|---|---|
+| 0.6B | 52.81 | 52.51 | 26.64 (chance) | **−0.30** |
+| 1.7B | 62.63 | 62.57 | 36.55 (retained) | **−0.06** |
+
+- **AR reproductions match the official numbers to ≤0.30pp** — a proper
+  reproduced-vs-reported validation (the Qwen3.5 side couldn't supply one). Third
+  published anchor overall, alongside LLaDA (−0.05) and Dream (~+2).
+- **dQwen3-1.7B retained (36.6, structured); dQwen3-0.6B at chance (26.6, flat).**
+  Note the Qwen3-based 1.7B retains where the Qwen3.5-based 2B did not (27.8) —
+  earlier retention onset on the Qwen3 substrate.
+- Qwen3 report also gives MMLU-Pro / MMLU-Redux for these sizes (0.6B: 24.74 / 51.26;
+  1.7B: 36.76 / 61.66) — the reported targets if those tasks are added later.

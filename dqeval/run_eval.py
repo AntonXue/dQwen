@@ -27,12 +27,16 @@ def main() -> int:
     ap.add_argument("--max-length", type=int, default=2048)
     ap.add_argument("--gen-length", type=int, default=256)
     ap.add_argument("--block-length", type=int, default=32)
+    ap.add_argument("--steps-per-block", type=int, default=32)
+    ap.add_argument("--allow-code", action="store_true",
+                    help="permit humaneval/mbpp to execute generated code")
     ap.add_argument("--out", default=None, help="write full results json here")
     a = ap.parse_args()
 
     model_args = (
         f"pretrained={a.model},mc_num={a.mc_num},max_length={a.max_length},"
-        f"gen_length={a.gen_length},block_length={a.block_length}"
+        f"gen_length={a.gen_length},block_length={a.block_length},"
+        f"steps_per_block={a.steps_per_block}"
     )
     if a.revision:
         model_args += f",revision={a.revision}"
@@ -44,6 +48,9 @@ def main() -> int:
         limit=a.limit,
         num_fewshot=a.num_fewshot,
         bootstrap_iters=0,
+        # code tasks (humaneval/mbpp) EXECUTE model-generated code; lm-eval refuses
+        # unless this is set. Requires HF_ALLOW_CODE_EVAL=1 in the environment too.
+        confirm_run_unsafe_code=a.allow_code,
     )
 
     print("\n===== RESULTS =====")
