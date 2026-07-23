@@ -51,6 +51,12 @@ else
   echo ">> gsm8k task yamls already patched (or absent)"
 fi
 
+# MATH answer verification: minerva_math needs these (same as LLaDA's eval script).
+# NOTE antlr4-python3-runtime==4.11 conflicts with omegaconf/hydra's 4.9 pin -- benign
+# here (we don't use hydra), and it's what math_verify requires.
+echo ">> installing MATH verification deps (sympy, math_verify, antlr4 4.11)"
+$PIP install -q "antlr4-python3-runtime==4.11" math_verify sympy || true
+
 echo ">> verifying import under transformers $($PY -c 'import transformers; print(transformers.__version__)')"
 $PY -c "from lm_eval import simple_evaluate; from lm_eval.api.registry import register_model; print('lm_eval import OK')"
 echo ">> done"
