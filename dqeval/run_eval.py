@@ -31,6 +31,11 @@ def main() -> int:
     ap.add_argument("--mode", choices=["append", "full", "window"], default="full",
                     help="full = LLaDA/Dream native (whole canvas visible, reveal "
                          "block-by-block); append = growing canvas (dQwen champion)")
+    ap.add_argument("--order", default="low_confidence",
+                    choices=["low_confidence", "entropy", "topk_margin", "random", "sequential"],
+                    help="unmasking order (Dream uses 'entropy')")
+    ap.add_argument("--temperature", type=float, default=0.0)
+    ap.add_argument("--top-p", type=float, default=1.0)
     ap.add_argument("--allow-code", action="store_true",
                     help="permit humaneval/mbpp to execute generated code")
     ap.add_argument("--out", default=None, help="write full results json here")
@@ -39,7 +44,8 @@ def main() -> int:
     model_args = (
         f"pretrained={a.model},mc_num={a.mc_num},max_length={a.max_length},"
         f"gen_length={a.gen_length},block_length={a.block_length},"
-        f"steps_per_block={a.steps_per_block},mode={a.mode}"
+        f"steps_per_block={a.steps_per_block},mode={a.mode},order={a.order},"
+        f"temperature={a.temperature},top_p={a.top_p}"
     )
     if a.revision:
         model_args += f",revision={a.revision}"

@@ -49,7 +49,8 @@ from dqeval.samplers import unified
 class DQEvalLM(LM):
     def __init__(self, pretrained, revision=None, *, batch_size=1,
                  max_length=2048, gen_length=1024, block_length=32,
-                 steps_per_block=32, mode="full", mc_num=128, mc_bs=16,
+                 steps_per_block=32, mode="full", order="low_confidence",
+                 top_p=1.0, top_k=0, mc_num=128, mc_bs=16,
                  temperature=0.0, cfg_scale=0.0, **kw):
         super().__init__()
         self.adapter = load(pretrained, revision=revision)
@@ -59,7 +60,8 @@ class DQEvalLM(LM):
         # decode config for generate_until; loglikelihood tasks ignore it
         self.decode = DecodeConfig(
             gen_length=int(gen_length), block_length=int(block_length),
-            steps_per_block=int(steps_per_block), mode=mode,
+            steps_per_block=int(steps_per_block), mode=mode, order=order,
+            top_p=float(top_p), top_k=int(top_k),
             temperature=float(temperature), cfg_scale=float(cfg_scale),
         )
 
