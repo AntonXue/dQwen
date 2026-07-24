@@ -132,10 +132,11 @@ PRESETS: dict[str, Preset] = {
     ),
     # ---- dQwen -----------------------------------------------------------
     # Historical champion was block_append (mode="append"), but a head-to-head found
-    # full-canvas BEATS it even on dQwen, which was trained with the append decode:
-    # HumanEval dQwen3.5-9B append 62.20 -> full 64.63 (+2.43), LLaDA 32.32 -> 32.93
-    # (=published). So the champion is now full-canvas. The append recipe is still
-    # reachable via explicit mode="append" for reproducing old ADLMC numbers.
+    # full-canvas BEATS it: HumanEval dQwen3.5-9B append 62.20 -> full 64.63 (+2.43),
+    # LLaDA 32.32 -> 32.93 (=published). dQwen3.5 is trained with STANDARD DLM masking
+    # (random masking over the full sequence), so full-canvas is the decode aligned
+    # with its training -- append was the mismatch, which is why it lost. The champion
+    # is now full-canvas; append stays reachable via explicit mode="append".
     "dqwen_champion": Preset(
         DecodeConfig(
             gen_length=256, block_length=32, steps_per_block=32,

@@ -90,8 +90,9 @@ HumanEval, block=32, gen=512, everything else identical:
 | dQwen3.5-9B-Base | 62.20 | **64.63** | +2.43 |
 
 Full-canvas (all answer slots visible from the start, reveal block-by-block) beats
-append (growing canvas, no trailing masks) on BOTH -- including dQwen, which was
-trained with the append decode. So append's weakness is not model-specific: a
+append (growing canvas, no trailing masks) on BOTH. dQwen3.5 is trained with STANDARD
+DLM masking (random masking over the full sequence), so full-canvas is aligned with
+its training and append was the mismatch -- which is why append lost even on dQwen. A
 growing canvas pre-signals the model it is near the end and biases toward short/stub
 answers. Full-canvas also lands LLaDA exactly on its published 32.9 (it IS LLaDA's
 native decode). => full-canvas is now the default everywhere; dqwen_champion moved to
