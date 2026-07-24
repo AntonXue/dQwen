@@ -64,7 +64,7 @@ def main() -> int:
     ap.add_argument("--model", required=True, help="dqeval registry name, or 'canonical' for the grade self-test")
     ap.add_argument("--revision", default=None)
     ap.add_argument("--dataset", choices=["humaneval", "mbpp"], required=True)
-    ap.add_argument("--gen-length", type=int, default=512)
+    ap.add_argument("--gen-length", type=int, default=1024)
     ap.add_argument("--block-length", type=int, default=32)
     ap.add_argument("--steps-per-block", type=int, default=32)
     ap.add_argument("--limit", type=int, default=None)

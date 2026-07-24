@@ -25,7 +25,7 @@ def main() -> int:
     ap.add_argument("--num-fewshot", type=int, default=None)
     ap.add_argument("--mc-num", type=int, default=128)
     ap.add_argument("--max-length", type=int, default=2048)
-    ap.add_argument("--gen-length", type=int, default=256)
+    ap.add_argument("--gen-length", type=int, default=1024)
     ap.add_argument("--block-length", type=int, default=32)
     ap.add_argument("--steps-per-block", type=int, default=32)
     ap.add_argument("--mode", choices=["append", "full", "window"], default="full",

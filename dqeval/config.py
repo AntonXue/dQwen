@@ -27,7 +27,7 @@ class DecodeConfig:
     """
 
     # --- canvas -----------------------------------------------------------
-    gen_length: int = 256
+    gen_length: int = 1024   # LLaDA-style default answer canvas
     block_length: int = 32          # semi-AR granularity within the canvas
     # DEFAULT: "full" -- the whole answer canvas is visible from the start and blocks
     # are revealed left-to-right (LLaDA/Dream native style). This is deliberate:
@@ -139,12 +139,12 @@ PRESETS: dict[str, Preset] = {
     # is now full-canvas; append stays reachable via explicit mode="append".
     "dqwen_champion": Preset(
         DecodeConfig(
-            gen_length=256, block_length=32, steps_per_block=32,
+            gen_length=1024, block_length=32, steps_per_block=32,
             mode="full", temperature=0.0,
             order="low_confidence", commit="static", sigma_scale=0.0,
         ),
-        "block=32, steps_per_block=32, low_confidence, full-canvas, greedy "
-        "(supersedes the ADLMC block_append champion; full > append by +2.43 HE)",
+        "gen=1024, block=32, steps_per_block=32, low_confidence, full-canvas, greedy "
+        "(gen=1024 matches LLaDA; supersedes ADLMC block_append; full > append +2.43 HE)",
     ),
 }
 
