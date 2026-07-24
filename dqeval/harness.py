@@ -49,7 +49,7 @@ from dqeval.samplers import unified
 class DQEvalLM(LM):
     def __init__(self, pretrained, revision=None, *, batch_size=1,
                  max_length=2048, gen_length=256, block_length=32,
-                 steps_per_block=32, mode="append", mc_num=128, mc_bs=16,
+                 steps_per_block=32, mode="full", mc_num=128, mc_bs=16,
                  temperature=0.0, cfg_scale=0.0, **kw):
         super().__init__()
         self.adapter = load(pretrained, revision=revision)

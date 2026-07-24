@@ -28,8 +28,15 @@ class DecodeConfig:
 
     # --- canvas -----------------------------------------------------------
     gen_length: int = 256
-    block_length: int = 32          # == gen_length  =>  full-canvas (LLaDA style)
-    mode: Mode = "append"
+    block_length: int = 32          # semi-AR granularity within the canvas
+    # DEFAULT: "full" -- the whole answer canvas is visible from the start and blocks
+    # are revealed left-to-right (LLaDA/Dream native style). This is deliberate:
+    # "append" grows the canvas block-by-block with NO trailing masks, which
+    # pre-signals the model that it is near the end of the sequence and biases it
+    # toward short / stub answers (the "# TODO: pass" behaviour observed in code
+    # eval). "append" is retained only as an explicit opt-in (it is dQwen's historical
+    # champion decode) and is a candidate for deprecation.
+    mode: Mode = "full"
     # --- schedule ---------------------------------------------------------
     steps_per_block: int = 32
     # --- token sampling ---------------------------------------------------
@@ -110,6 +117,10 @@ PRESETS: dict[str, Preset] = {
     # ---- SDAR ------------------------------------------------------------
     # threshold 0.9 is the LMDeploy/OpenCompass value behind the published table,
     # NOT generate.py's 0.85 default and NOT JetEngine's 0.75.
+    # mode="append" here is NOT a stylistic default -- SDAR's architecture IS
+    # block-append (KV-cached semi-AR); it has no full-canvas variant. This is the one
+    # family that genuinely requires append, which is why append is retained (demoted
+    # from default, not removed).
     "sdar_published": Preset(
         DecodeConfig(
             gen_length=256, block_length=4, steps_per_block=4,

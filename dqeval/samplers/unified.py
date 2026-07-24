@@ -158,8 +158,11 @@ def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
             blk[take] = x0[take]
             canvas[0, lo:hi] = blk
 
-        # early stop: check the generated text so far against the stop strings
-        if stop_strings and cfg.mode == "append":
+        # early stop: after a block completes, blocks 0..b are a contiguous revealed
+        # prefix in BOTH append and full mode (both reveal blocks left-to-right), so
+        # checking the decoded prefix for a stop string works for either. In full
+        # mode this also avoids denoising the trailing blocks once the answer ends.
+        if stop_strings and cfg.mode in ("append", "full"):
             gen_text = adapter.decode(canvas[0, p_len:hi])
             cut = _stop_cut(gen_text, stop_strings)
             if cut is not None:

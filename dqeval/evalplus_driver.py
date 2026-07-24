@@ -87,7 +87,7 @@ def main() -> int:
         from dqeval.config import DecodeConfig
         adapter = load(a.model, revision=a.revision)
         cfg = DecodeConfig(gen_length=a.gen_length, block_length=a.block_length,
-                           steps_per_block=a.steps_per_block, mode="append", temperature=0.0)
+                           steps_per_block=a.steps_per_block, mode="full", temperature=0.0)
         for i, (tid, prob) in enumerate(items):
             comp = generate_completion(adapter, prob["prompt"], cfg)
             samples.append({"task_id": tid, "solution": prob["prompt"] + comp})
