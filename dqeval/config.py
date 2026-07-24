@@ -131,14 +131,19 @@ PRESETS: dict[str, Preset] = {
         "(block=4, steps=4, low_confidence_dynamic, threshold=0.9, greedy)",
     ),
     # ---- dQwen -----------------------------------------------------------
+    # Historical champion was block_append (mode="append"), but a head-to-head found
+    # full-canvas BEATS it even on dQwen, which was trained with the append decode:
+    # HumanEval dQwen3.5-9B append 62.20 -> full 64.63 (+2.43), LLaDA 32.32 -> 32.93
+    # (=published). So the champion is now full-canvas. The append recipe is still
+    # reachable via explicit mode="append" for reproducing old ADLMC numbers.
     "dqwen_champion": Preset(
         DecodeConfig(
             gen_length=256, block_length=32, steps_per_block=32,
-            mode="append", temperature=0.0,
+            mode="full", temperature=0.0,
             order="low_confidence", commit="static", sigma_scale=0.0,
         ),
-        "ADLMC dlm_decode.block_append_generate champion recipe "
-        "(block=32, steps_per_block=32, temp=0, sigma_scale=0)",
+        "block=32, steps_per_block=32, low_confidence, full-canvas, greedy "
+        "(supersedes the ADLMC block_append champion; full > append by +2.43 HE)",
     ),
 }
 

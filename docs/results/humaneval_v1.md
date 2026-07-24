@@ -79,3 +79,21 @@ reproduction are the follow-ups.
 
 Also: LLaDA MBPP (lm-eval, block-diffusion) = 41.2 vs published ~39-40 — third LLaDA
 reproduction after MMLU (-0.05) and HumanEval (-0.6).
+
+## Decode mode head-to-head: full-canvas beats append (default switched)
+
+HumanEval, block=32, gen=512, everything else identical:
+
+| model | append | full-canvas | Δ |
+|---|---|---|---|
+| LLaDA-8B-Base | 32.32 | **32.93** (= published 32.9) | +0.61 |
+| dQwen3.5-9B-Base | 62.20 | **64.63** | +2.43 |
+
+Full-canvas (all answer slots visible from the start, reveal block-by-block) beats
+append (growing canvas, no trailing masks) on BOTH -- including dQwen, which was
+trained with the append decode. So append's weakness is not model-specific: a
+growing canvas pre-signals the model it is near the end and biases toward short/stub
+answers. Full-canvas also lands LLaDA exactly on its published 32.9 (it IS LLaDA's
+native decode). => full-canvas is now the default everywhere; dqwen_champion moved to
+full. append retained only for SDAR (architecturally block-append) and old-number
+reproduction.
