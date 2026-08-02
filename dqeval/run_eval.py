@@ -39,6 +39,12 @@ def main() -> int:
     ap.add_argument("--allow-code", action="store_true",
                     help="permit humaneval/mbpp to execute generated code")
     ap.add_argument("--out", default=None, help="write full results json here")
+    ap.add_argument("--no-log-samples", action="store_false", dest="log_samples",
+                    help="disable per-sample dumping (ON by default: prompts + raw and "
+                         "filtered generations land in <out>.<task>.samples.jsonl, so a "
+                         "formatting/extraction bug can be told from a real miss without "
+                         "regenerating)")
+    ap.set_defaults(log_samples=True)
     a = ap.parse_args()
 
     model_args = (
@@ -57,6 +63,10 @@ def main() -> int:
         limit=a.limit,
         num_fewshot=a.num_fewshot,
         bootstrap_iters=0,
+        # keep every prompt + generation for post-hoc debugging (dumped below). The
+        # aggregate json alone cannot distinguish a formatting/extraction bug from a
+        # genuine miss -- exactly the ambiguity that forced a manual MBPP regen once.
+        log_samples=a.log_samples,
         # code tasks (humaneval/mbpp) EXECUTE model-generated code; lm-eval refuses
         # unless this is set. Requires HF_ALLOW_CODE_EVAL=1 in the environment too.
         confirm_run_unsafe_code=a.allow_code,
@@ -81,6 +91,33 @@ def main() -> int:
                        "configs": res.get("configs"), "model": a.model,
                        "revision": a.revision, "limit": a.limit}, f, indent=2, default=str)
         print(f"\nwrote {a.out}")
+
+        # per-sample dump: one jsonl per task next to the results json. Holds the
+        # prompt, the raw resp, the filtered/graded resp, the gold target, the source
+        # doc, and the per-doc metric -- everything needed to see WHAT the model
+        # emitted and HOW it was extracted/graded. This is the debugging goldmine.
+        if a.log_samples and res.get("samples"):
+            stem = a.out[:-5] if a.out.endswith(".json") else a.out
+            for task, samples in res["samples"].items():
+                spath = f"{stem}.{task}.samples.jsonl"
+                with open(spath, "w") as sf:
+                    for s in samples:
+                        args = s.get("arguments") or []
+                        a0 = args[0] if args else None
+                        prompt = a0[0] if isinstance(a0, (list, tuple)) else a0
+                        rec = {
+                            "doc_id": s.get("doc_id"),
+                            "task": task,
+                            "prompt": prompt,
+                            "resps": s.get("resps"),
+                            "filtered_resps": s.get("filtered_resps"),
+                            "target": s.get("target"),
+                            "doc": s.get("doc"),
+                            "metrics": {k: v for k, v in s.items()
+                                        if isinstance(v, (int, float, bool))},
+                        }
+                        sf.write(json.dumps(rec, default=str) + "\n")
+                print(f"wrote {len(samples)} samples -> {spath}")
     return 0
 
 

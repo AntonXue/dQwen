@@ -57,6 +57,39 @@ fi
 echo ">> installing MATH verification deps (sympy, math_verify, antlr4 4.11)"
 $PIP install -q "antlr4-python3-runtime==4.11" math_verify sympy || true
 
+# PATCH 3: HF `evaluate` code_eval defaults to num_workers=4, leaving humaneval/mbpp
+# grading badly under-parallelised on many-core boxes (and serialising the per-program
+# 3s-timeout tail while the GPU sits idle). lm_eval calls .compute() with no num_workers,
+# so we inject a sane, env-overridable default (LM_EVAL_CODE_WORKERS, default 32).
+# Idempotent: keyed on the _CODE_WORKERS marker.
+echo ">> patching lm_eval code_eval workers (mbpp/humaneval -> LM_EVAL_CODE_WORKERS, default 32)"
+$PY - "$SP" <<'PYEOF'
+import os, sys
+sp = sys.argv[1]
+imp = 'import evaluate as hf_evaluate\n'
+block = ('import os\n\nimport evaluate as hf_evaluate\n\n'
+         '# dqeval patch: HF code_eval defaults to num_workers=4; bump to a sane,\n'
+         '# env-overridable default so grading uses the cores available.\n'
+         '_CODE_WORKERS = int(os.environ.get("LM_EVAL_CODE_WORKERS") or min(32, os.cpu_count() or 8))\n')
+targets = {
+    os.path.join(sp, "lm_eval/tasks/mbpp/utils.py"):
+        ('        k=[1],\n    )[0]["pass@1"]',
+         '        k=[1],\n        num_workers=_CODE_WORKERS,\n    )[0]["pass@1"]'),
+    os.path.join(sp, "lm_eval/tasks/humaneval/utils.py"):
+        ('        k=k,\n    )',
+         '        k=k,\n        num_workers=_CODE_WORKERS,\n    )'),
+}
+for path, (old, new) in targets.items():
+    if not os.path.exists(path):
+        print("   skip (absent):", path); continue
+    src = open(path).read()
+    if "_CODE_WORKERS" in src:
+        print("   already patched:", os.path.basename(os.path.dirname(path))); continue
+    src = src.replace(imp, block, 1).replace(old, new, 1)
+    open(path, "w").write(src)
+    print("   patched:", path)
+PYEOF
+
 echo ">> verifying import under transformers $($PY -c 'import transformers; print(transformers.__version__)')"
 $PY -c "from lm_eval import simple_evaluate; from lm_eval.api.registry import register_model; print('lm_eval import OK')"
 echo ">> done"

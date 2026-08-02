@@ -63,6 +63,12 @@ MODELS: dict[str, ModelSpec] = {
     "dqwen3.5-2b-base":   ModelSpec("EER6b/dQwen3.5-2B-Base",   "dqwen", 248061, 248044),
     "dqwen3.5-4b-base":   ModelSpec("EER6b/dQwen3.5-4B-Base",   "dqwen", 248061, 248044),
     "dqwen3.5-9b-base":   ModelSpec("EER6b/dQwen3.5-9B-Base",   "dqwen", 248061, 248044),
+    # LR-sweep diagnostic endpoints. 0.8B v1/v2 = a0/a1 matched pair (differ ONLY in
+    # mixture: same LR 1e-4, seed, order, schedule, steps) -> clean v1-vs-v2 A/B.
+    # 4B = arm b2 (v2-only, no v1 twin) -> the size where code pass@1 isn't floored.
+    "dqwen3.5-0.8b-base-v1": ModelSpec("EER6b/dQwen3.5-0.8B-Base-test-v1", "dqwen", 248061, 248044),
+    "dqwen3.5-0.8b-base-v2": ModelSpec("EER6b/dQwen3.5-0.8B-Base-test-v2", "dqwen", 248061, 248044),
+    "dqwen3.5-4b-base-v2":   ModelSpec("EER6b/dQwen3.5-4B-Base-test",       "dqwen", 248061, 248044),
     "dqwen3-0.6b-base":   ModelSpec("EER6b/dQwen3-0.6B-Base",   "dqwen", 151660, 151643),
     "dqwen3-1.7b-base":   ModelSpec("EER6b/dQwen3-1.7B-Base",   "dqwen", 151660, 151643),
     # ---- comparators -----------------------------------------------------

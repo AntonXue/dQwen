@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import io
+import json
 import signal
 import sys
 
@@ -80,6 +81,9 @@ def main() -> int:
     adapter = load(a.model, revision=a.revision)      # loaded ONCE
     probs = list(get_human_eval_plus().items())[:a.limit]
     step_vals = [int(s) for s in a.steps.split(",")]
+    save_path = ("/home/ayx98/foo/dQwen/.claude/worktrees/eval/_runs/"
+                 f"he_stepsweep_gens_{a.model.replace('/', '_')}.jsonl")
+    sf = open(save_path, "w")
 
     print(f"\nmodel={a.model}  HumanEval(base, n={len(probs)})  "
           f"gen={a.gen_length} block={a.block_length} mode={a.mode} order={a.order}")
@@ -94,8 +98,13 @@ def main() -> int:
             ids = adapter.encode(prob["prompt"])
             out = unified.generate(adapter, ids, cfg, stop_strings=CODE_STOPS)
             fwds += out.n_forward
-            if grade(prob["prompt"], _truncate(out.text), prob["test"], prob["entry_point"]):
-                npass += 1
+            ext = _truncate(out.text)
+            passed = grade(prob["prompt"], ext, prob["test"], prob["entry_point"])
+            npass += passed
+            sf.write(json.dumps({"steps_per_block": spb, "task_id": tid,
+                                 "raw": out.text[:1500], "extracted": ext[:800],
+                                 "passed": bool(passed), "n_forward": out.n_forward}) + "\n")
+        sf.flush()
         acc = npass / len(probs) * 100
         mf = fwds / len(probs)
         rows.append((spb, acc, mf))
@@ -103,6 +112,7 @@ def main() -> int:
 
     print("\nfrontier (pass@1 @ mean_fwd):",
           "  ".join(f"{a:.0f}%@{f:.0f}" for _, a, f in rows))
+    sf.close(); print(f"saved generations -> {save_path}", flush=True)
     return 0
 
 
