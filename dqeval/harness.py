@@ -64,6 +64,14 @@ class DQEvalLM(LM):
             top_p=float(top_p), top_k=int(top_k),
             temperature=float(temperature), cfg_scale=float(cfg_scale),
         )
+        # Second line of defence behind run_eval's --allow-append gate, for callers
+        # that build model_args themselves. Warn rather than raise: SDAR is genuinely
+        # block-append, so this is "are you sure", not "you are wrong".
+        if self.decode.mode != "full":
+            print(f"!! dqeval: mode={self.decode.mode!r}, NOT the full-canvas champion. "
+                  "Full-canvas beat append head-to-head (dQwen3.5-9B HumanEval "
+                  "62.20 -> 64.63); numbers from this run are not comparable to the "
+                  "published grid. Intended only for SDAR.")
 
     # -- required by lm-eval for request chunking --------------------------
     @property

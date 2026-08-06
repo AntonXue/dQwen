@@ -1,5 +1,10 @@
-.claude/          # agent worktrees + local settings
+# agent worktrees + local settings. NOTE: git only honours '#' at the START of a
+# line, so a trailing comment here made the pattern literal and matched nothing --
+# leaving a whole second checkout (and _runs/, GBs of eval dumps) untracked-visible.
+.claude/
 __pycache__/
+# scratch launcher logs from background eval queues
+_*.out
 *.py[cod]
 *.egg-info/
 .venv*/

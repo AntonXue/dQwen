@@ -1,0 +1,34 @@
+# MBPP with a markdown code fence instead of the [BEGIN]/[DONE] scaffold.
+#
+# WHY THIS EXISTS: stock `mbpp` wraps the solution in [BEGIN] ... [DONE], a marker
+# pair that appears nowhere in natural code and only in MBPP-shaped eval/SFT data.
+# A model trained on such data can score well by recognising the harness rather than
+# by solving the problem. Running both delimiters against one model separates the two:
+# capability transfers across delimiters, scaffold familiarity does not.
+#
+# EXACTLY ONE THING CHANGES vs stock mbpp -- the delimiter (and its matching stop
+# string). Persona, task text, the three assert lines, the shot count and the three
+# few-shot problems are all identical, imported from lm_eval's own task via utils.py.
+task: mbpp_ticks
+dataset_path: google-research-datasets/mbpp
+dataset_name: full
+unsafe_code: true
+output_type: generate_until
+test_split: test
+doc_to_text: "You are an expert Python programmer, and here is your task: {{text}} Your code should pass these tests:\n\n{{test_list[0]}}\n{{test_list[1]}}\n{{test_list[2]}}\n```python\n"
+doc_to_target: "{% if is_fewshot is defined %}{{code}}\n```{% else %}{{test_list[0]}}\n{{test_list[1]}}\n{{test_list[2]}}{% endif %}"
+target_delimiter: ""
+metric_list:
+  - metric: !function utils.pass_at_1
+    aggregation: mean
+    higher_is_better: true
+generation_kwargs:
+  until:
+    - "```"
+  do_sample: false
+num_fewshot: 3
+fewshot_config:
+  sampler: first_n
+  samples: !function utils.list_fewshot_samples
+metadata:
+  version: 1.0

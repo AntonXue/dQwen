@@ -63,9 +63,16 @@ MODELS: dict[str, ModelSpec] = {
     "dqwen3.5-2b-base":   ModelSpec("EER6b/dQwen3.5-2B-Base",   "dqwen", 248061, 248044),
     "dqwen3.5-4b-base":   ModelSpec("EER6b/dQwen3.5-4B-Base",   "dqwen", 248061, 248044),
     "dqwen3.5-9b-base":   ModelSpec("EER6b/dQwen3.5-9B-Base",   "dqwen", 248061, 248044),
-    # LR-sweep diagnostic endpoints. 0.8B v1/v2 = a0/a1 matched pair (differ ONLY in
-    # mixture: same LR 1e-4, seed, order, schedule, steps) -> clean v1-vs-v2 A/B.
-    # 4B = arm b2 (v2-only, no v1 twin) -> the size where code pass@1 isn't floored.
+    # v3-MIXTURE production runs. Same recipe as the entries above (LR ladder, seed,
+    # schedule) -- the mixture is the only deliberate change, so `-base` vs `-base-v3`
+    # at a matched step count is the mixture A/B. 0.8B main == step50000-swa, which is
+    # budget-matched to the released v1 (also 50k); step25000-swa is the half-budget leg.
+    "dqwen3.5-0.8b-base-v3": ModelSpec("EER6b/dQwen3.5-0.8B-Base-v3", "dqwen", 248061, 248044),
+    "dqwen3.5-4b-base-v3":   ModelSpec("EER6b/dQwen3.5-4B-Base-v3",   "dqwen", 248061, 248044),
+    "dqwen3.5-9b-base-v3":   ModelSpec("EER6b/dQwen3.5-9B-Base-v3",   "dqwen", 248061, 248044),
+    # ⚠ DEAD REPOS (404 as of 2026-08-05) -- the LR-sweep a0/a1 diagnostic pair and the
+    # 4B arm-b2 test were deleted when the v2* ablation repos were consolidated. Kept so
+    # the `ov_*` runs in _runs/ remain traceable; do not use without re-pointing them.
     "dqwen3.5-0.8b-base-v1": ModelSpec("EER6b/dQwen3.5-0.8B-Base-test-v1", "dqwen", 248061, 248044),
     "dqwen3.5-0.8b-base-v2": ModelSpec("EER6b/dQwen3.5-0.8B-Base-test-v2", "dqwen", 248061, 248044),
     "dqwen3.5-4b-base-v2":   ModelSpec("EER6b/dQwen3.5-4B-Base-test",       "dqwen", 248061, 248044),

@@ -29,8 +29,14 @@ def main() -> int:
     ap.add_argument("--block-length", type=int, default=32)
     ap.add_argument("--steps-per-block", type=int, default=32)
     ap.add_argument("--mode", choices=["append", "full", "window"], default="full",
-                    help="full = LLaDA/Dream native (whole canvas visible, reveal "
-                         "block-by-block); append = growing canvas (dQwen champion)")
+                    help="full = LLaDA/Dream native, the champion (whole canvas visible, "
+                         "reveal block-by-block). append/window need --allow-append.")
+    ap.add_argument("--allow-append", action="store_true",
+                    help="required to run --mode append/window. Full-canvas BEAT append "
+                         "head-to-head (dQwen3.5-9B HumanEval 62.20 -> 64.63; LLaDA 32.32 -> "
+                         "32.93 = its published number), so append is not a stylistic "
+                         "alternative -- it is the losing decode, kept only because SDAR's "
+                         "architecture is block-append and has no full-canvas variant.")
     ap.add_argument("--order", default="low_confidence",
                     choices=["low_confidence", "entropy", "topk_margin", "random", "sequential"],
                     help="unmasking order (Dream uses 'entropy')")
@@ -38,6 +44,8 @@ def main() -> int:
     ap.add_argument("--top-p", type=float, default=1.0)
     ap.add_argument("--allow-code", action="store_true",
                     help="permit humaneval/mbpp to execute generated code")
+    ap.add_argument("--include-path", default=None,
+                    help="extra task-yaml directory (dqeval/tasks holds our variants)")
     ap.add_argument("--out", default=None, help="write full results json here")
     ap.add_argument("--no-log-samples", action="store_false", dest="log_samples",
                     help="disable per-sample dumping (ON by default: prompts + raw and "
@@ -46,6 +54,34 @@ def main() -> int:
                          "regenerating)")
     ap.set_defaults(log_samples=True)
     a = ap.parse_args()
+
+    # --- foot-gun guards -------------------------------------------------
+    # append is reachable but never by accident: it silently costs ~2.4pp on code
+    # and produces numbers that look publishable but are not comparable to the grid.
+    if a.mode != "full" and not a.allow_append:
+        ap.error(
+            f"--mode {a.mode} requires --allow-append.\n"
+            "  full-canvas is the champion decode and beat append head-to-head; append is\n"
+            "  retained only for SDAR, whose architecture has no full-canvas variant.\n"
+            "  If you are not evaluating SDAR, you almost certainly want the default."
+        )
+
+    # MMLU (and friends) publish AT a shot count; lm-eval's task default is 0, so
+    # omitting --num-fewshot silently produces a 0-shot run that looks normal and is
+    # not comparable to anything published. This exact slip cost a full round on
+    # 2026-08-05 (0-shot 24.73 vs the correct 5-shot 26.46).
+    _PUBLISHED_SHOTS = {"mmlu": 5, "gsm8k_cot": 8, "mbpp": 3, "mbpp_ticks": 3, "humaneval": 0}
+    if a.num_fewshot is None:
+        for t in a.tasks.split(","):
+            want = _PUBLISHED_SHOTS.get(t.strip())
+            if want:
+                print(f"!! WARNING: --num-fewshot not set and {t!r} publishes at {want}-shot.\n"
+                      f"   lm-eval will use the TASK default, which may be 0. Pass "
+                      f"--num-fewshot {want} to match the published protocol.")
+
+    print(f">> decode: mode={a.mode} gen_length={a.gen_length} block={a.block_length} "
+          f"steps={a.steps_per_block} order={a.order} temp={a.temperature} "
+          f"| tasks={a.tasks} num_fewshot={a.num_fewshot} limit={a.limit}")
 
     model_args = (
         f"pretrained={a.model},mc_num={a.mc_num},max_length={a.max_length},"
@@ -56,9 +92,15 @@ def main() -> int:
     if a.revision:
         model_args += f",revision={a.revision}"
 
+    task_manager = None
+    if a.include_path:
+        from lm_eval.tasks import TaskManager
+        task_manager = TaskManager(include_path=a.include_path)
+
     res = simple_evaluate(
         model="dqeval",
         model_args=model_args,
+        task_manager=task_manager,
         tasks=a.tasks.split(","),
         limit=a.limit,
         num_fewshot=a.num_fewshot,
@@ -89,7 +131,17 @@ def main() -> int:
         with open(a.out, "w") as f:
             json.dump({"results": res["results"], "versions": res.get("versions"),
                        "configs": res.get("configs"), "model": a.model,
-                       "revision": a.revision, "limit": a.limit}, f, indent=2, default=str)
+                       "revision": a.revision, "limit": a.limit,
+                       # decode provenance. Without this a result json cannot be told
+                       # apart from one produced at a different gen_length or in append
+                       # mode -- an ambiguity that has already forced a full re-run.
+                       "decode": {"mode": a.mode, "gen_length": a.gen_length,
+                                  "block_length": a.block_length,
+                                  "steps_per_block": a.steps_per_block,
+                                  "order": a.order, "temperature": a.temperature,
+                                  "top_p": a.top_p, "mc_num": a.mc_num,
+                                  "max_length": a.max_length},
+                       "model_args": model_args}, f, indent=2, default=str)
         print(f"\nwrote {a.out}")
 
         # per-sample dump: one jsonl per task next to the results json. Holds the
