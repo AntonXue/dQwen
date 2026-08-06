@@ -58,3 +58,28 @@ unified split by design:
 
 We have Dream's native sampler (`families/dream/sampler_native.py`); pointing it at
 HumanEval with Dream's config is the next step to reproduce 57.9 / 66.5.
+
+## MBPP re-measurement (2026-08-05) — the undersell is Dream-Coder, not the Dream family
+
+Full-canvas, block=32, steps=32, low-confidence, greedy, gen=512, n=500, stock `[BEGIN]`.
+
+| model | ours | published | diff |
+|---|--:|--:|--:|
+| LLaDA-8B-Base | **40.80** | 39–40 | +0.8 ✓ |
+| Dream-v0-Base-7B | **56.00** | 56.2 | **−0.2 ✓** |
+| Dream-Coder-v0-Base-7B | **63.20** | 75.9 | −12.7 ✗ |
+
+**This narrows the caveat above.** Dream-v0 reproduces its published MBPP essentially exactly
+under our unified protocol, so "generic block-diffusion undersells Dream" is NOT a family
+property — on MBPP it is specific to **Dream-Coder**. The HumanEval gaps that motivated the
+original caveat (Dream 41.5 vs 57.9, Dream-Coder 59.8 vs 66.5) still stand; the point is that
+the undersell is benchmark- and model-specific rather than a blanket property of the protocol,
+and should be stated that way. Three of three comparators reproducing to ≤1pp on at least one
+benchmark is the harness result to lead with.
+
+⚠ **LLaDA's MBPP 41.2, as carried in the v1 reference grid, is an APPEND-mode number**
+(source: `_runs/mbpp_llada_blockdiff.json`; no `mbpp_llada_full.json` exists) even though that
+grid describes itself as full-canvas. The full-canvas value is **40.80**.
+
+Format sensitivity (stock `[BEGIN]` vs a ```python fence) is model-specific and is documented
+in `mixture_v1_vs_v3_08b.md` §3 — do NOT mix the two formats within a comparison table.

@@ -14,7 +14,14 @@
 | HumanEval (n=164) | 29.27 | **33.54** | +4.27 | 0.23 |
 | MBPP `[BEGIN]` (n=500) | 19.20 | **23.60** | +4.40 | 0.023 |
 | MBPP fence (n=500) | 23.20 | **29.60** | +6.40 | 0.0010 |
-| GSM8K (8-shot, n=1319, flex) | 6.67 | *pending* | — | — |
+| GSM8K strict (8-shot, n=1319) | 6.14 | **7.43** | +1.29 | 0.16 |
+| GSM8K flex (8-shot, n=1319) | 6.67 | **7.81** | +1.14 | 0.23 |
+
+**All six deltas are positive.** MMLU and MBPP carry the significance; HumanEval and GSM8K
+are directionally consistent but underpowered (GSM8K especially — at 0.8B both models sit
+near the floor on multi-step arithmetic, so its 74-vs-57 discordant split is mostly churn).
+State this as "v3 dominates across the board, with MMLU and MBPP doing the statistical
+work" — not "every benchmark significantly improved".
 
 Code share fell **71% → 50%** between the mixtures and code performance **rose ~4.4pp**.
 The v1 mixture was spending ~21 points of token budget on code capability it was not
@@ -79,11 +86,45 @@ exposure — but the **task → fenced-solution PATTERN**, 0% → 17% of tokens 
 `code_sft` (99.7% fenced) and `code_concepts_verified_instruct` (100% fenced). `code_cc`'s
 fences sit inside web prose instead.
 
-⚠ **Do not quote fenced MBPP against published comparator numbers** (LLaDA 39–40,
-Dream 56.2, Dream-Coder 75.9) — those are stock-`[BEGIN]`, and the fence hands us a format
-advantage they did not get. Either report stock as the headline with fence labelled
-secondary, or run the comparators fenced too. The comparator matrix (LLaDA-8B,
-Dream-v0-7B, Dream-Coder-7B × stock/fence) is in flight; results to follow.
+### The comparator matrix settles what the fence effect IS
+
+All five models, same decode, n=500, stock `[BEGIN]` vs `mbpp_ticks` fence:
+
+| model | stock | fence | delta | McNemar p | published |
+|---|--:|--:|--:|--:|--:|
+| dQwen3.5-0.8B-v1 | 19.20 | 23.20 | **+4.00** | 0.0066 | — |
+| dQwen3.5-0.8B-v3 | 23.60 | 29.60 | **+6.00** | 0.0002 | — |
+| Dream-Coder-7B-Base | 63.20 | 63.40 | +0.20 | 1.000 | 75.9 |
+| LLaDA-8B-Base | 40.80 | 38.40 | −2.40 | 0.088 | 39–40 |
+| Dream-v0-7B-Base | 56.00 | 53.00 | −3.00 | 0.072 | 56.2 |
+
+**The fence gain is corpus-specific to dQwen, NOT a property of masked-diffusion decoding.**
+Were it a decode artifact (cleaner stop string, less trailing garbage graded), every family
+would gain. Instead the sign tracks code-instruction exposure monotonically: dQwen (17% of
+tokens in task→fenced-solution shape) gains; **Dream-Coder, the code specialist, is exactly
+indifferent**; the two general-purpose models degrade. Dream-Coder's zero is what makes the
+mechanism credible rather than a just-so story.
+
+⚠ **Therefore a fenced MBPP column is NOT a fair common protocol** — it is worth +6 to us and
+−3 to them, a ~9pp swing that has nothing to do with coding ability. **Stock `[BEGIN]` stays
+the headline for every cross-model table**; fenced numbers belong in a labelled
+format-sensitivity section as a finding about DATA, not a benchmark result.
+
+Residual caveat that cannot be closed: `[BEGIN]` is 0.000% of *our* corpus, but LLaDA's and
+Dream's corpora are not public at row level, so part of the split could be *their* scaffold
+familiarity rather than purely our fence familiarity. Hedge accordingly.
+
+### Two comparator facts worth correcting elsewhere
+
+1. **The "our protocol undersells the Dream family" caveat is too broad.** Dream-v0 reproduces
+   its published MBPP to **0.2pp** (56.00 vs 56.2) and LLaDA to +0.8 (40.80 vs 39–40). Only
+   **Dream-Coder** is off (63.20 vs 75.9, −12.7). That is one model, not a family or a harness
+   property.
+2. **LLaDA's MBPP 41.2 in the v1 reference grid is an APPEND-mode number.** Its source file is
+   `_runs/mbpp_llada_blockdiff.json` and no `mbpp_llada_full.json` exists, yet the grid header
+   describes itself as full-canvas. The full-canvas value measured here is **40.80**. (For
+   reference, append-vs-full on LLaDA is within noise and opposite-signed across benchmarks:
+   HumanEval full won by +0.61, MBPP full loses by 0.4 — unlike dQwen, where full won by +2.43.)
 
 ## 4. What to do next
 - **Run this battery on 4B-v3 / 9B-v3.** 4B is where code pass@1 is not floored and MMLU
