@@ -12,12 +12,15 @@ Full canvas, gen=512, block=32, steps=32, low-confidence, greedy, bs=1, 0-shot.
 
 | | HumanEval (n=164) | MBPP (n=500) | MMLU 5-shot |
 |---|--:|--:|--:|
-| **dQwen3-1.7B-Base** (ours, v1-era recipe, 50k) | **42.68** | **35.00** | *pending* |
-| **CoDA-v0-Base** (Salesforce) | **23.17** | *pending* | *pending* |
-| delta | **+19.51** | — | — |
+| **dQwen3-1.7B-Base** (ours, v1-era recipe, 50k) | **42.68** | **35.00** | **36.55** |
+| **CoDA-v0-Base** (Salesforce) | 23.17 | 34.40 | 26.22 |
+| delta | **+19.51** | **+0.60** | **+10.33** |
 
-**Our adaptation of the same backbone is ~1.8x theirs on HumanEval**, and that is with our
-*superseded* v1-era mixture.
+**The win is HumanEval and knowledge — MBPP is a TIE (+0.60).** Do not summarise this as
+"~1.8x better"; that is true of HumanEval only. CoDA at 26.22 MMLU sits essentially at the
+25% chance floor, i.e. it traded away general knowledge entirely — the same pathology v1 showed
+at 0.8B/2B. Our 36.55 exactly reproduces the documented `dQwen3-1.7B` value. All of this is
+with our *superseded* v1-era mixture.
 
 ⚠ **CoDA's published HumanEval is 29.3, not 23.17, and the gap is protocol.** From their
 arXiv source (2510.03270, `sections/experiments.tex`): they cap generation at **768 tokens**
