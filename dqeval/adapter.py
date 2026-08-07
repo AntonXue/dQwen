@@ -12,11 +12,12 @@ TWO logit surfaces, and the distinction is load-bearing:
   logits(ids)      canonical: logits[:, i] is the distribution FOR position i.
                    PORTABLE samplers use this, so one engine runs on any family.
 
-Dream is the only family whose raw output is AR-aligned; its adapter overrides
-`_canonicalize` to apply `cat([l[:, :1], l[:, :-1]])` -- the same expression their
-own sampler and eval wrapper each apply once. Running Dream's native sampler on
-canonicalised logits would double-shift it: silent, off-by-one, no exception. That
-is precisely why the two surfaces are separate methods rather than a config flag.
+TWO families have AR-aligned raw output -- Dream and CoDA -- and both override
+`_canonicalize` with `cat([l[:, :1], l[:, :-1]])`, the same expression each of
+their own samplers applies once after every forward. Running either family's
+native sampler on canonicalised logits would double-shift it: silent,
+off-by-one, no exception. That is precisely why the two surfaces are separate
+methods rather than a config flag.
 """
 
 from __future__ import annotations
@@ -90,6 +91,16 @@ MODELS: dict[str, ModelSpec] = {
     "sdar-1.7b-chat": ModelSpec(
         "JetLM/SDAR-1.7B-Chat", "sdar", 151669, auto_class="AutoModelForCausalLM",
         notes="repo is missing fused_linear_diffusion_cross_entropy.py; see families/sdar/compat.py"),
+    # CoDA: Salesforce's masked DLM adapted from Qwen3-1.7B -- the SAME backbone as
+    # our dQwen3-1.7B control, so this is the closest available recipe-isolating
+    # comparison (differs in data + budget, not in starting weights).
+    "coda-1.7b-base": ModelSpec(
+        "Salesforce/CoDA-v0-Base", "coda", 151669, 151643,
+        notes="AR-aligned raw logits (shift in _canonicalize); needs the "
+              "CoDAModel._supports_sdpa shim on transformers>=4.54"),
+    "coda-1.7b-instruct": ModelSpec(
+        "Salesforce/CoDA-v0-Instruct", "coda", 151669, 151643,
+        notes="same shims as coda-1.7b-base"),
     "sdar-4b-chat": ModelSpec(
         "JetLM/SDAR-4B-Chat", "sdar", 151669, auto_class="AutoModelForCausalLM",
         notes="same missing-module defect as SDAR-1.7B"),
@@ -179,6 +190,7 @@ _FAMILY_MODULES = {
     "llada": "dqeval.families.llada.adapter",
     "dream": "dqeval.families.dream.adapter",
     "sdar": "dqeval.families.sdar.adapter",
+    "coda": "dqeval.families.coda.adapter",
     "dqwen": "dqeval.families.dqwen.adapter",
 }
 
