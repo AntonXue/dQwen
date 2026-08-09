@@ -18,6 +18,7 @@ import argparse
 import contextlib
 import io
 import json
+import os
 import signal
 import sys
 
@@ -69,6 +70,16 @@ def main() -> int:
     ap.add_argument("--mode", default="full")
     ap.add_argument("--order", default="low_confidence")
     ap.add_argument("--limit", type=int, default=80)
+    # Parallelism mechanism. "static" = LLaDA's even split: commit exactly
+    # gen_length/steps_per_block tokens per step (FIXED k, k = block/steps_per_block).
+    # "dynamic" = commit every position whose confidence clears --thresholds, so k
+    # varies per step and the model decides its own parallelism. The two answer
+    # different questions: static asks "how well does it tolerate a forced k",
+    # dynamic asks "can it TELL when parallel commits are safe".
+    ap.add_argument("--commit", default="static", choices=["static", "dynamic"])
+    ap.add_argument("--thresholds", default="0.9",
+                    help="dynamic only: comma-separated confidence thresholds")
+    ap.add_argument("--out", default=None, help="generations jsonl (default: _runs/)")
     a = ap.parse_args()
 
     import logging
@@ -81,8 +92,9 @@ def main() -> int:
     adapter = load(a.model, revision=a.revision)      # loaded ONCE
     probs = list(get_human_eval_plus().items())[:a.limit]
     step_vals = [int(s) for s in a.steps.split(",")]
-    save_path = ("/home/ayx98/foo/dQwen/.claude/worktrees/eval/_runs/"
-                 f"he_stepsweep_gens_{a.model.replace('/', '_')}.jsonl")
+    tag = f"{a.model.replace('/', '_')}_{a.revision or 'main'}_{a.commit}"
+    save_path = a.out or f"/home/ayx98/foo/dQwen/_runs/stepsweep/he_stepsweep_{tag}.jsonl"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
     sf = open(save_path, "w")
 
     print(f"\nmodel={a.model}  HumanEval(base, n={len(probs)})  "
@@ -90,9 +102,17 @@ def main() -> int:
     print(f"{'steps/blk':>9}{'pass@1':>9}{'mean_fwd':>10}")
     print("-" * 28)
     rows = []
-    for spb in step_vals:
+    # static -> sweep steps_per_block (forced k). dynamic -> sweep threshold at the
+    # max step budget, letting the model choose k itself.
+    if a.commit == "dynamic":
+        cells = [(a.block_length, float(t)) for t in a.thresholds.split(",")]
+    else:
+        cells = [(spb, None) for spb in step_vals]
+    for spb, thr in cells:
         cfg = DecodeConfig(gen_length=a.gen_length, block_length=a.block_length,
-                           steps_per_block=spb, mode=a.mode, order=a.order, temperature=0.0)
+                           steps_per_block=spb, mode=a.mode, order=a.order, temperature=0.0,
+                           commit=a.commit,
+                           **({"confidence_threshold": thr} if thr is not None else {}))
         npass, fwds = 0, 0
         for tid, prob in probs:
             ids = adapter.encode(prob["prompt"])
@@ -101,14 +121,15 @@ def main() -> int:
             ext = _truncate(out.text)
             passed = grade(prob["prompt"], ext, prob["test"], prob["entry_point"])
             npass += passed
-            sf.write(json.dumps({"steps_per_block": spb, "task_id": tid,
+            sf.write(json.dumps({"steps_per_block": spb, "threshold": thr, "task_id": tid,
                                  "raw": out.text[:1500], "extracted": ext[:800],
                                  "passed": bool(passed), "n_forward": out.n_forward}) + "\n")
         sf.flush()
         acc = npass / len(probs) * 100
         mf = fwds / len(probs)
-        rows.append((spb, acc, mf))
-        print(f"{spb:>9}{acc:>8.1f}%{mf:>10.1f}", flush=True)
+        rows.append((thr if thr is not None else spb, acc, mf))
+        label = f"tau={thr:g}" if thr is not None else str(spb)
+        print(f"{label:>9}{acc:>8.1f}%{mf:>10.1f}", flush=True)
 
     print("\nfrontier (pass@1 @ mean_fwd):",
           "  ".join(f"{a:.0f}%@{f:.0f}" for _, a, f in rows))

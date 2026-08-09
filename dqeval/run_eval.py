@@ -70,7 +70,13 @@ def main() -> int:
     # omitting --num-fewshot silently produces a 0-shot run that looks normal and is
     # not comparable to anything published. This exact slip cost a full round on
     # 2026-08-05 (0-shot 24.73 vs the correct 5-shot 26.46).
-    _PUBLISHED_SHOTS = {"mmlu": 5, "gsm8k_cot": 8, "mbpp": 3, "mbpp_ticks": 3, "humaneval": 0}
+    # Shot counts follow Dream's base-model table (arXiv:2508.15487), which is our
+    # comparison target; SDAR (arXiv:2510.06303) matches on the overlapping tasks.
+    # 0-shot entries are listed explicitly so "not set" stays distinguishable from
+    # "deliberately zero".
+    _PUBLISHED_SHOTS = {"mmlu": 5, "gsm8k_cot": 8, "mbpp": 3, "mbpp_ticks": 3, "humaneval": 0,
+                        "arc_easy": 0, "arc_challenge": 0, "hellaswag": 0, "piqa": 0,
+                        "race": 0, "race_sub": 0, "hellaswag_sub": 0, "winogrande": 5, "bbh_fewshot": 3, "minerva_math": 4}
     if a.num_fewshot is None:
         for t in a.tasks.split(","):
             want = _PUBLISHED_SHOTS.get(t.strip())

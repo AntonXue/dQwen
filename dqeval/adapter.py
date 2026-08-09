@@ -69,6 +69,7 @@ MODELS: dict[str, ModelSpec] = {
     # at a matched step count is the mixture A/B. 0.8B main == step50000-swa, which is
     # budget-matched to the released v1 (also 50k); step25000-swa is the half-budget leg.
     "dqwen3.5-0.8b-base-v3": ModelSpec("EER6b/dQwen3.5-0.8B-Base-v3", "dqwen", 248061, 248044),
+    "dqwen3.5-2b-base-v3":   ModelSpec("EER6b/dQwen3.5-2B-Base-v3",   "dqwen", 248061, 248044),
     "dqwen3.5-4b-base-v3":   ModelSpec("EER6b/dQwen3.5-4B-Base-v3",   "dqwen", 248061, 248044),
     "dqwen3.5-9b-base-v3":   ModelSpec("EER6b/dQwen3.5-9B-Base-v3",   "dqwen", 248061, 248044),
     # ⚠ DEAD REPOS (404 as of 2026-08-05) -- the LR-sweep a0/a1 diagnostic pair and the
@@ -78,6 +79,11 @@ MODELS: dict[str, ModelSpec] = {
     "dqwen3.5-0.8b-base-v2": ModelSpec("EER6b/dQwen3.5-0.8B-Base-test-v2", "dqwen", 248061, 248044),
     "dqwen3.5-4b-base-v2":   ModelSpec("EER6b/dQwen3.5-4B-Base-test",       "dqwen", 248061, 248044),
     "dqwen3-0.6b-base":   ModelSpec("EER6b/dQwen3-0.6B-Base",   "dqwen", 151660, 151643),
+    # v3-recipe backbone ablation: Qwen3-1.7B (FULL-attention) under the same recipe as the
+    # hybrid 2B -- argparse.json differs in 2 of 22 keys. Also the same backbone as
+    # Salesforce/CoDA-v0-Base, so this is the recipe-controlled CoDA comparison.
+    # Qwen3 ids (151660/151643), NOT Qwen3.5's -- the publish script's own latent bug.
+    "dqwen3-1.7b-base-v3": ModelSpec("EER6b/dQwen3-1.7B-Base-v3", "dqwen", 151660, 151643),
     "dqwen3-1.7b-base":   ModelSpec("EER6b/dQwen3-1.7B-Base",   "dqwen", 151660, 151643),
     # ---- comparators -----------------------------------------------------
     "llada-8b-base":     ModelSpec("GSAI-ML/LLaDA-8B-Base",     "llada", 126336),

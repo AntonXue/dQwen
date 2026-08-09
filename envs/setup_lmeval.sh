@@ -51,6 +51,23 @@ else
   echo ">> gsm8k task yamls already patched (or absent)"
 fi
 
+# PATCH 4: bare dataset ids. Newer huggingface_hub requires `namespace/name`, and
+# newer `datasets` refuses script-based loaders. Same class as the gsm8k patch above.
+#   hellaswag -> Rowan/hellaswag      (parquet, no script)
+#   winogrande -> allenai/winogrande  (parquet, no script)
+# NOT patched: piqa. Its canonical repo (ybisk/piqa) is script-based with no official
+# parquet mirror; third-party mirrors exist but are unvetted, and silently swapping a
+# benchmark's data source is exactly the kind of change that invalidates a comparison.
+# Left failing on purpose -- decide provenance before enabling.
+for pair in "hellaswag:Rowan/hellaswag" "winogrande:allenai/winogrande"; do
+  name="${pair%%:*}"; repo="${pair##*:}"
+  d="$SP/lm_eval/tasks/$name"
+  if [ -d "$d" ] && grep -rql "^dataset_path: $name$" "$d"/*.yaml 2>/dev/null; then
+    echo ">> patching $name dataset_path -> $repo"
+    sed -i "s|^dataset_path: $name$|dataset_path: $repo|" "$d"/*.yaml
+  fi
+done
+
 # MATH answer verification: minerva_math needs these (same as LLaDA's eval script).
 # NOTE antlr4-python3-runtime==4.11 conflicts with omegaconf/hydra's 4.9 pin -- benign
 # here (we don't use hydra), and it's what math_verify requires.
