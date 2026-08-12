@@ -119,3 +119,21 @@ wrong. Not yet ruled: whether to patch the comparator via process_docs
 (a string fix on doc["test"] in a local task variant) or accept +
 disclose the over-credit (it only fires on wrong-nonempty vs
 expected-empty).
+
+## UPDATE 4: both grader defects FIXED — full reconciliation achieved
+
+Anton's rulings: grading timeout 3s -> 10s (env patch LM_EVAL_CODE_TIMEOUT
+in setup_lmeval.sh PATCH 3; ~3ms/case on 1000-case suites was absurd and
+load-sensitive); comparator soundness patched via process_docs
+(utils.plus_process_docs string-fixes the is_floats([]) line in every
+rendered test; bespoke-comparator docs like HumanEval/32 skipped; >=80%
+match guard against format drift). humaneval-plus now runs the local
+`humaneval_plus_sound` task.
+
+Validated on the four residual flips: /62 FAIL, /96 FAIL (wrong solutions
+finally caught), /139 pass (10s suffices), /100 pass. Against
+generous-timeout official EvalPlus that is 0/1640 substantive
+disagreements. Against the FROZEN record: 1 remains — /100, where the
+frozen EvalPlus run's own calibrated timeout was too tight and the grid
+side is correct. Expected grid restamp of the Table-4 HEval+ column:
+family + 0.8B/2B/4B AR identical; 9B AR +0.61 (63.41 -> 64.02).

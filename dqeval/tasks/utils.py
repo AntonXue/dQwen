@@ -7,6 +7,11 @@ that drifted would turn a one-variable probe into a two-variable one.
 """
 
 from lm_eval.tasks.mbpp.utils import list_fewshot_samples, pass_at_1  # noqa: F401
+# STOCK humaneval grading path, re-exported for humaneval_plus_sound.yaml
+from lm_eval.tasks.humaneval.utils import (  # noqa: F401
+    build_predictions,
+    pass_at_k,
+)
 
 # Re-exported so the RACE variant's yaml can reference the STOCK preprocessing by
 # `!function utils.*` instead of copying it (copies drift; imports cannot).
@@ -43,3 +48,32 @@ def race_sub_process_docs(dataset):
     """Seeded 1000-doc sample of RACE-high test (1,045) -- near-full, but sampled
     rather than truncated so the article grouping cannot skew it."""
     return _subsample(dataset)
+
+
+# --- plus-suite comparator soundness -----------------------------------------
+# The rendered test scripts in evalplus/humanevalplus + evalplus/mbppplus carry
+# an inline comparator whose `is_floats([])` is vacuously True (all() on
+# empty), routing empty-expected checks into np.allclose -- and numpy
+# broadcasts shape (1,) against (0,) to an empty result, so
+# np.allclose([wrong], []) == True: any WRONG non-empty output passes whenever
+# the expected value is an empty list/tuple. Caught 2026-08-12 (HumanEval/62 +
+# /96 grader A/B vs the evalplus package, which compares these correctly).
+
+_UNSOUND = "        return all(isinstance(i, float) for i in x)"
+_SOUND = "        return len(x) > 0 and all(isinstance(i, float) for i in x)"
+
+
+def _sound_test(doc):
+    # a few problems render a bespoke comparator instead (e.g. HumanEval/32
+    # checks a residual tolerance); those don't carry this bug -- skip them
+    return {**doc, "test": doc["test"].replace(_UNSOUND, _SOUND, 1)}
+
+
+def plus_process_docs(dataset):
+    n = sum(_UNSOUND in t for t in dataset["test"])
+    if not n or n < 0.8 * len(dataset):
+        raise ValueError(
+            f"comparator soundness patch matched {n}/{len(dataset)} docs -- "
+            "the rendered format drifted; re-derive the patch."
+        )
+    return dataset.map(_sound_test)

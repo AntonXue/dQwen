@@ -40,7 +40,7 @@ from pathlib import Path
 # --------------------------------------------------------------------------
 BENCH = {
     "humaneval":  dict(task="humaneval",    gen=512,  shots=0, shards=1, unsafe=True),
-    "humaneval-plus": dict(task="humaneval_plus", gen=512, shots=0, shards=1, unsafe=True),
+    "humaneval-plus": dict(task="humaneval_plus_sound", gen=512, shots=0, shards=1, unsafe=True),
     "mbpp":       dict(task="mbpp",         gen=512,  shots=3, shards=1, unsafe=True),
     "mbpp-plus":  dict(task="mbpp_plus_full", gen=512, shots=3, shards=1, unsafe=True),
     "mbpp-fence": dict(task="mbpp_ticks",   gen=512,  shots=3, shards=1, unsafe=True),
