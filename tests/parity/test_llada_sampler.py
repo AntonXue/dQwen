@@ -54,7 +54,7 @@ def main() -> int:
     spb = a.steps_per_block or a.block_length
     cfg = DecodeConfig(
         gen_length=a.gen_length, block_length=a.block_length, steps_per_block=spb,
-        mode="full", temperature=0.0, order="low_confidence", commit="static",
+        temperature=0.0, order="low_confidence", commit="static",
     )
     print(f"cfg: gen={cfg.gen_length} block={cfg.block_length} "
           f"steps/block={cfg.steps_per_block} blocks={cfg.num_blocks} greedy={cfg.greedy}")

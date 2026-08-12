@@ -100,15 +100,14 @@ def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
              cfg: DecodeConfig, stop_strings=None) -> GenOutput:
     """Block-diffusion decode of ONE prompt. `prompt_ids` is [1, L].
 
-    `stop_strings`: after each block completes, the decoded prefix is checked for
-    these; the first hit ends decoding and truncates the output there. Because a
-    masked DLM does not self-terminate the way an AR model emits EOS, this is what
-    keeps generative tasks (humaneval's `\\ndef`/`\\nclass`, gsm8k's `\\n\\n`) from
-    running to the full canvas and ending mid-statement. Works in append AND full
-    mode -- both reveal blocks left-to-right, so the completed prefix is contiguous
-    in either -- and saves the forwards that would denoise the rest of the canvas
-    (why full-canvas HumanEval measures ~110 forwards, not gen_length). Window mode
-    has no such prefix guarantee and is not checked.
+    `stop_strings`: after each block completes, the decoded prefix (contiguous,
+    since blocks reveal left-to-right) is checked for these; the first hit ends
+    decoding and truncates the output there. Because a masked DLM does not
+    self-terminate the way an AR model emits EOS, this is what keeps generative
+    tasks (humaneval's `\\ndef`/`\\nclass`, gsm8k's `\\n\\n`) from running to the
+    full canvas and ending mid-statement -- and it saves the forwards that would
+    denoise the rest of the canvas (why HumanEval measures ~110 forwards, not
+    gen_length).
     """
     if prompt_ids.dim() != 2 or prompt_ids.size(0) != 1:
         raise ValueError(f"bs=1 only; got prompt_ids of shape {tuple(prompt_ids.shape)}")
@@ -122,13 +121,12 @@ def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
     canvas = torch.full((1, p_len + cfg.gen_length), mask_id, dtype=torch.long, device=dev)
     canvas[:, :p_len] = prompt_ids
     n_forward = 0
-    stop_text = None       # set when a stop string is hit in append mode
+    stop_text = None       # set when a stop string is hit
 
     for b in range(cfg.num_blocks):
         lo = p_len + b * cfg.block_length
         hi = lo + cfg.block_length
-        # "append" grows the canvas block by block; "full"/"window" see it all.
-        end = hi if cfg.mode == "append" else canvas.size(1)
+        end = canvas.size(1)   # full canvas, always (append mode removed 2026-08-12)
 
         n_masked = int((canvas[0, lo:hi] == mask_id).sum())
         schedule = _transfer_schedule(n_masked, cfg.steps_per_block, dev)
@@ -160,11 +158,10 @@ def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
             blk[take] = x0[take]
             canvas[0, lo:hi] = blk
 
-        # early stop: after a block completes, blocks 0..b are a contiguous revealed
-        # prefix in BOTH append and full mode (both reveal blocks left-to-right), so
-        # checking the decoded prefix for a stop string works for either. In full
-        # mode this also avoids denoising the trailing blocks once the answer ends.
-        if stop_strings and cfg.mode in ("append", "full"):
+        # early stop: after a block completes, blocks 0..b are a contiguous
+        # revealed prefix, so checking it for a stop string is sound -- and it
+        # avoids denoising the trailing blocks once the answer has ended.
+        if stop_strings:
             gen_text = adapter.decode(canvas[0, p_len:hi])
             cut = _stop_cut(gen_text, stop_strings)
             if cut is not None:

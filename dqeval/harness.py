@@ -72,7 +72,7 @@ def truncate_at(text, stops):
 class DQEvalLM(LM):
     def __init__(self, pretrained, revision=None, *, batch_size=1,
                  max_length=2048, gen_length=1024, block_length=32,
-                 steps_per_block=32, mode="full", order="low_confidence",
+                 steps_per_block=32, order="low_confidence",
                  top_p=1.0, top_k=0, mc_num=128, mc_bs=16,
                  temperature=0.0, cfg_scale=0.0,
                  commit="static", confidence_threshold=0.9, **kw):
@@ -84,19 +84,11 @@ class DQEvalLM(LM):
         # decode config for generate_until; loglikelihood tasks ignore it
         self.decode = DecodeConfig(
             gen_length=int(gen_length), block_length=int(block_length),
-            steps_per_block=int(steps_per_block), mode=mode, order=order,
+            steps_per_block=int(steps_per_block), order=order,
             top_p=float(top_p), top_k=int(top_k),
             temperature=float(temperature), cfg_scale=float(cfg_scale),
             commit=commit, confidence_threshold=float(confidence_threshold),
         )
-        # Second line of defence behind run_eval's --allow-append gate, for callers
-        # that build model_args themselves. Warn rather than raise: SDAR is genuinely
-        # block-append, so this is "are you sure", not "you are wrong".
-        if self.decode.mode != "full":
-            print(f"!! dqeval: mode={self.decode.mode!r}, NOT the full-canvas champion. "
-                  "Full-canvas beat append head-to-head (dQwen3.5-9B HumanEval "
-                  "62.20 -> 64.63); numbers from this run are not comparable to the "
-                  "published grid. Intended only for SDAR.")
 
     # -- required by lm-eval for request chunking --------------------------
     @property

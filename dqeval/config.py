@@ -11,7 +11,6 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Literal, Optional
 
-Mode = Literal["append", "window", "full"]
 Order = Literal["low_confidence", "entropy", "topk_margin", "random", "sequential"]
 Commit = Literal["static", "dynamic"]
 
@@ -27,16 +26,16 @@ class DecodeConfig:
     """
 
     # --- canvas -----------------------------------------------------------
+    # Decoding is ALWAYS full-canvas: the whole answer canvas is visible from
+    # the start and blocks are revealed left-to-right (LLaDA/Dream native
+    # style). There used to be a `mode` knob here ("append" grew the canvas
+    # block-by-block with no trailing masks, biasing the model toward short
+    # stub answers; "window" was never implemented beyond the type). append
+    # lost the head-to-head (dQwen3.5-9B HumanEval 62.20 -> 64.63 full;
+    # LLaDA 32.32 -> 32.93 = its published number) and its one genuine user,
+    # SDAR, is out of the comparator set -- both modes REMOVED 2026-08-12.
     gen_length: int = 1024   # LLaDA-style default answer canvas
     block_length: int = 32          # semi-AR granularity within the canvas
-    # DEFAULT: "full" -- the whole answer canvas is visible from the start and blocks
-    # are revealed left-to-right (LLaDA/Dream native style). This is deliberate:
-    # "append" grows the canvas block-by-block with NO trailing masks, which
-    # pre-signals the model that it is near the end of the sequence and biases it
-    # toward short / stub answers (the "# TODO: pass" behaviour observed in code
-    # eval). "append" is retained only as an explicit opt-in (it is dQwen's historical
-    # champion decode) and is a candidate for deprecation.
-    mode: Mode = "full"
     # --- schedule ---------------------------------------------------------
     steps_per_block: int = 32
     # --- token sampling ---------------------------------------------------
@@ -103,44 +102,32 @@ PRESETS: dict[str, Preset] = {
     "llada_official_1024": Preset(
         DecodeConfig(
             gen_length=1024, block_length=1024, steps_per_block=1024,
-            mode="full", temperature=0.0, order="low_confidence", commit="static",
+            temperature=0.0, order="low_confidence", commit="static",
         ),
         "ML-GSAI/LLaDA@96441d4 EVAL.md (gen_length=steps=block_length=1024)",
     ),
     "llada_official_256": Preset(
         DecodeConfig(
             gen_length=256, block_length=256, steps_per_block=256,
-            mode="full", temperature=0.0, order="low_confidence", commit="static",
+            temperature=0.0, order="low_confidence", commit="static",
         ),
         "ML-GSAI/LLaDA@96441d4 EVAL.md (gen_length=steps=block_length=256)",
     ),
-    # ---- SDAR ------------------------------------------------------------
-    # threshold 0.9 is the LMDeploy/OpenCompass value behind the published table,
-    # NOT generate.py's 0.85 default and NOT JetEngine's 0.75.
-    # mode="append" here is NOT a stylistic default -- SDAR's architecture IS
-    # block-append (KV-cached semi-AR); it has no full-canvas variant. This is the one
-    # family that genuinely requires append, which is why append is retained (demoted
-    # from default, not removed).
-    "sdar_published": Preset(
-        DecodeConfig(
-            gen_length=256, block_length=4, steps_per_block=4,
-            mode="append", temperature=0.0,
-            order="low_confidence", commit="dynamic", confidence_threshold=0.9,
-        ),
-        "JetAstra/SDAR@6a12cdb README eval setup + eval_sdar_lmdeploy.py "
-        "(block=4, steps=4, low_confidence_dynamic, threshold=0.9, greedy)",
-    ),
     # ---- dQwen -----------------------------------------------------------
-    # Historical champion was block_append (mode="append"), but a head-to-head found
-    # full-canvas BEATS it: HumanEval dQwen3.5-9B append 62.20 -> full 64.63 (+2.43),
-    # LLaDA 32.32 -> 32.93 (=published). dQwen3.5 is trained with STANDARD DLM masking
-    # (random masking over the full sequence), so full-canvas is the decode aligned
-    # with its training -- append was the mismatch, which is why it lost. The champion
-    # is now full-canvas; append stays reachable via explicit mode="append".
+    # ("sdar_published", the one block-append preset, was removed with append
+    # mode on 2026-08-12 -- SDAR is out of the comparator set. Its receipts,
+    # should it return: block=4, steps=4, dynamic threshold=0.9 per the
+    # LMDeploy path behind their published table; see third_party/LOCKFILE.md.)
+    #
+    # Historical champion was block-append, but a head-to-head found
+    # full-canvas BEATS it: HumanEval dQwen3.5-9B append 62.20 -> full 64.63,
+    # LLaDA 32.32 -> 32.93 (=published). dQwen3.5 is trained with STANDARD DLM
+    # masking (random masking over the full sequence), so full-canvas is the
+    # decode aligned with its training -- append was the mismatch.
     "dqwen_champion": Preset(
         DecodeConfig(
             gen_length=1024, block_length=32, steps_per_block=32,
-            mode="full", temperature=0.0,
+            temperature=0.0,
             order="low_confidence", commit="static", sigma_scale=0.0,
         ),
         "gen=1024, block=32, steps_per_block=32, low_confidence, full-canvas, greedy "

@@ -67,7 +67,6 @@ def main() -> int:
     ap.add_argument("--steps", default="32,8,4,2", help="comma-separated steps_per_block")
     ap.add_argument("--gen-length", type=int, default=512)
     ap.add_argument("--block-length", type=int, default=32)
-    ap.add_argument("--mode", default="full")
     ap.add_argument("--order", default="low_confidence")
     ap.add_argument("--limit", type=int, default=80)
     # Parallelism mechanism. "static" = LLaDA's even split: commit exactly
@@ -100,7 +99,7 @@ def main() -> int:
     sf = open(save_path, "w")
 
     print(f"\nmodel={a.model}  HumanEval(base, n={len(probs)})  "
-          f"gen={a.gen_length} block={a.block_length} mode={a.mode} order={a.order}")
+          f"gen={a.gen_length} block={a.block_length} order={a.order}")
     print(f"{'steps/blk':>9}{'pass@1':>9}{'mean_fwd':>10}")
     print("-" * 28)
     rows = []
@@ -112,7 +111,7 @@ def main() -> int:
         cells = [(spb, None) for spb in step_vals]
     for spb, thr in cells:
         cfg = DecodeConfig(gen_length=a.gen_length, block_length=a.block_length,
-                           steps_per_block=spb, mode=a.mode, order=a.order, temperature=0.0,
+                           steps_per_block=spb, order=a.order, temperature=0.0,
                            commit=a.commit,
                            **({"confidence_threshold": thr} if thr is not None else {}))
         npass, fwds = 0, 0

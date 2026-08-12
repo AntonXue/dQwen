@@ -37,8 +37,10 @@ TOUCHUPS -- the complete list:
      also does `past_key_value[self.layer_idx]`, and DynamicCache is no longer
      subscriptable in 5.13). It needs its own compat shim, analogous to Dream's
      `from_model_config` shim. Until then `generate()` raises with this diagnosis.
-     WORKAROUND: the unified sampler with PRESETS["sdar_published"] runs the same
-     algorithm without the KV-cache path, and works today.
+     NB the old workaround (unified sampler in append mode via the
+     "sdar_published" preset) was REMOVED with append mode on 2026-08-12 —
+     SDAR is out of the comparator set. If SDAR returns, this shim is the path;
+     the preset's receipts are preserved in dqeval/config.py.
 
 WHICH THRESHOLD: `confidence_threshold` defaults to 0.85 in their generate.py, 0.75
 in JetEngine, and 0.9 in the LMDeploy path that produced their published table. We
@@ -188,8 +190,9 @@ def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
                 "kv_len == q_len while its mask expects the full prefix.\n"
                 "Root cause is in SDAR's remote code, not ours, and it needs its own "
                 "compat shim (analogous to Dream's from_model_config shim).\n"
-                "Use the unified sampler with PRESETS['sdar_published'] meanwhile -- "
-                "it reproduces the same algorithm without the KV-cache path."
+                "(The old workaround -- unified sampler in append mode via the "
+                "'sdar_published' preset -- was removed with append mode on "
+                "2026-08-12; receipts in dqeval/config.py.)"
             )
 
     schedule = _num_transfer_tokens(block_length, cfg.steps_per_block)

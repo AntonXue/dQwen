@@ -28,15 +28,6 @@ def main() -> int:
     ap.add_argument("--gen-length", type=int, default=1024)
     ap.add_argument("--block-length", type=int, default=32)
     ap.add_argument("--steps-per-block", type=int, default=32)
-    ap.add_argument("--mode", choices=["append", "full", "window"], default="full",
-                    help="full = LLaDA/Dream native, the champion (whole canvas visible, "
-                         "reveal block-by-block). append/window need --allow-append.")
-    ap.add_argument("--allow-append", action="store_true",
-                    help="required to run --mode append/window. Full-canvas BEAT append "
-                         "head-to-head (dQwen3.5-9B HumanEval 62.20 -> 64.63; LLaDA 32.32 -> "
-                         "32.93 = its published number), so append is not a stylistic "
-                         "alternative -- it is the losing decode, kept only because SDAR's "
-                         "architecture is block-append and has no full-canvas variant.")
     ap.add_argument("--order", default="low_confidence",
                     choices=["low_confidence", "entropy", "topk_margin", "random", "sequential"],
                     help="unmasking order (Dream uses 'entropy')")
@@ -56,16 +47,10 @@ def main() -> int:
     a = ap.parse_args()
 
     # --- foot-gun guards -------------------------------------------------
-    # append is reachable but never by accident: it silently costs ~2.4pp on code
-    # and produces numbers that look publishable but are not comparable to the grid.
-    if a.mode != "full" and not a.allow_append:
-        ap.error(
-            f"--mode {a.mode} requires --allow-append.\n"
-            "  full-canvas is the champion decode and beat append head-to-head; append is\n"
-            "  retained only for SDAR, whose architecture has no full-canvas variant.\n"
-            "  If you are not evaluating SDAR, you almost certainly want the default."
-        )
-
+    # (--mode and its --allow-append gate were removed 2026-08-12: decoding is
+    # always full-canvas now; append lost the head-to-head and its one user,
+    # SDAR, is out of the comparator set. See dqeval/config.py for receipts.)
+    #
     # MMLU (and friends) publish AT a shot count; lm-eval's task default is 0, so
     # omitting --num-fewshot silently produces a 0-shot run that looks normal and is
     # not comparable to anything published. This exact slip cost a full round on
@@ -85,14 +70,14 @@ def main() -> int:
                       f"   lm-eval will use the TASK default, which may be 0. Pass "
                       f"--num-fewshot {want} to match the published protocol.")
 
-    print(f">> decode: mode={a.mode} gen_length={a.gen_length} block={a.block_length} "
+    print(f">> decode: gen_length={a.gen_length} block={a.block_length} "
           f"steps={a.steps_per_block} order={a.order} temp={a.temperature} "
           f"| tasks={a.tasks} num_fewshot={a.num_fewshot} limit={a.limit}")
 
     model_args = (
         f"pretrained={a.model},mc_num={a.mc_num},max_length={a.max_length},"
         f"gen_length={a.gen_length},block_length={a.block_length},"
-        f"steps_per_block={a.steps_per_block},mode={a.mode},order={a.order},"
+        f"steps_per_block={a.steps_per_block},order={a.order},"
         f"temperature={a.temperature},top_p={a.top_p}"
     )
     if a.revision:
@@ -139,9 +124,9 @@ def main() -> int:
                        "configs": res.get("configs"), "model": a.model,
                        "revision": a.revision, "limit": a.limit,
                        # decode provenance. Without this a result json cannot be told
-                       # apart from one produced at a different gen_length or in append
-                       # mode -- an ambiguity that has already forced a full re-run.
-                       "decode": {"mode": a.mode, "gen_length": a.gen_length,
+                       # apart from one produced at a different gen_length or block
+                       # size -- an ambiguity that has already forced a full re-run.
+                       "decode": {"gen_length": a.gen_length,
                                   "block_length": a.block_length,
                                   "steps_per_block": a.steps_per_block,
                                   "order": a.order, "temperature": a.temperature,
