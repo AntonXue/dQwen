@@ -62,23 +62,38 @@ def grid_rows():
                str(jl.relative_to(RUNS)))
 
 
-def regrade_rows():
+def _passk(rj):
+    ev = json.loads(rj.read_text())["eval"]
+    n = len(ev)
+    base = sum(r[0]["base_status"] == "pass" for r in ev.values())
+    plus = sum(r[0]["plus_status"] == "pass" for r in ev.values())
+    return n, f"{100 * base / n:.2f}/{100 * plus / n:.2f}"
+
+
+def evalplus_rows():
+    # regrades/: <stamp>__<model>__<bench>__from-<src>; evalplus/ (generated
+    # under EvalPlus prompts): <model>__<bench>__<decode>, launch time in the
+    # .launches.jsonl sidecar
     for rj in sorted(RUNS.glob("regrades/*_eval_results.json")):
-        ev = json.loads(rj.read_text())["eval"]
-        n = len(ev)
-        base = sum(r[0]["base_status"] == "pass" for r in ev.values())
-        plus = sum(r[0]["plus_status"] == "pass" for r in ev.values())
+        n, v = _passk(rj)
         parts = rj.name.removesuffix("_eval_results.json").split("__")
-        stamp, model = parts[0], parts[1]
-        bench = parts[2] if len(parts) > 2 else "?"
-        yield (stamp, model, bench, "regrade", f"n={n}",
-               "pass@1 base/plus", f"{100 * base / n:.2f}/{100 * plus / n:.2f}",
-               str(rj.relative_to(RUNS)))
+        yield (parts[0], parts[1], parts[2], "regrade", f"n={n}",
+               "pass@1 base/plus", v, str(rj.relative_to(RUNS)))
+    for rj in sorted(RUNS.glob("evalplus/*_eval_results.json")):
+        n, v = _passk(rj)
+        parts = rj.name.removesuffix("_eval_results.json").split("__")
+        stamp = "-"
+        side = rj.with_name(rj.name.replace("_eval_results.json",
+                                            ".jsonl.launches.jsonl"))
+        if side.exists():
+            stamp = json.loads(side.read_text().splitlines()[0])["launched_at"]
+        yield (stamp, parts[0], parts[1], parts[2], f"n={n}",
+               "pass@1 base/plus", v, str(rj.relative_to(RUNS)))
 
 
 def main():
     needle = sys.argv[1] if len(sys.argv) > 1 else ""
-    rows = [r for r in list(grid_rows()) + list(regrade_rows())
+    rows = [r for r in list(grid_rows()) + list(evalplus_rows())
             if needle in "\t".join(r)]
     rows.sort(key=lambda r: (r[2], r[1], r[3], r[0]))
     if not rows:

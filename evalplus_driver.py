@@ -6,8 +6,16 @@ papers report (Dream-Coder's 60.4 HE+, 61.6 MBPP+). This driver reuses the SAME
 generation path as our lm-eval `generate_until` (block-diffusion decode, early-stop,
 code-fence stop) so the base numbers stay consistent -- only the GRADING is denser.
 
-    python -m dqeval.evalplus_driver --model dream-coder-7b-base --dataset humaneval
-    python -m dqeval.evalplus_driver --model canonical --dataset humaneval   # grade-path self-test (no GPU)
+    python evalplus_driver.py --model dqwen3.5-2b-base-v3 --revision step50000-swa \
+        --dataset mbpp --gen-length 512 --block-length 512 --steps-per-block 512
+    python evalplus_driver.py --model Qwen/Qwen3.5-2B --ar --dataset mbpp --gen-length 512
+    python evalplus_driver.py --model canonical --dataset humaneval   # grade-path self-test (no GPU)
+
+Generation mode mirrors run.py's idempotency contract: output goes to the
+_runs/evalplus/ store under a DETERMINISTIC name, completions append
+incrementally (a killed run loses at most one doc), re-running the same
+command resumes, and grading runs only once the problem set is complete --
+so these queue on SLURM exactly like grid cells.
 
 `--model canonical` writes EvalPlus's own reference solutions as the samples, which
 must score ~100% -- a way to validate the grading integration with no model/GPU.
@@ -121,6 +129,41 @@ def main() -> int:
     if a.limit:
         items = items[:a.limit]
 
+    root = os.path.dirname(os.path.abspath(__file__))
+
+    # ---- output path first: generation mode uses a deterministic store name
+    # (resume + grade-when-complete); regrades are stamped events.
+    if a.from_file:
+        # identity from the source: grid cells carry it in their meta record
+        with open(a.from_file) as f:
+            first = json.loads(f.readline())
+        if first.get("kind") == "meta":
+            c = first["cell"]
+            tag = f"{c['model'].replace('/', '_')}@{c['revision'] or 'main'}"
+            src = "grid_v1-" + c["decode"]
+        else:
+            tag = os.path.basename(a.from_file)
+            for suf in (".samples.jsonl", ".jsonl", "." + a.dataset):
+                tag = tag.removesuffix(suf)
+            src = os.path.basename(os.path.dirname(a.from_file)) or "file"
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        default = os.path.join(root, "_runs", "regrades",
+                               f"{stamp}__{tag}__{a.dataset}-plus__from-{src}.jsonl")
+    elif a.model == "canonical":
+        tag = "canonical"
+        default = os.path.join(tempfile.mkdtemp(), f"canonical_{a.dataset}.jsonl")
+    else:
+        tag = f"{a.model.replace('/', '_')}@{a.revision or 'main'}"
+        decode = ("ar" if a.ar else
+                  ("standard" if a.block_length >= a.gen_length
+                   else f"block{a.block_length}") + f"-static-s{a.steps_per_block}")
+        default = os.path.join(root, "_runs", "evalplus",
+                               f"{tag}__{a.dataset}-plus__{decode}.jsonl")
+    spath = a.samples or default
+    if os.path.dirname(spath):
+        os.makedirs(os.path.dirname(spath), exist_ok=True)
+
+    # ---- produce samples
     samples = []
     if a.from_file:
         if a.dataset != "humaneval":
@@ -150,69 +193,75 @@ def main() -> int:
         for tid, prob in items:
             samples.append({"task_id": tid,
                             "solution": prob["prompt"] + prob["canonical_solution"]})
-    elif a.ar:
-        import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-        from dqeval.grid import _pin_math_sdpa
-        _pin_math_sdpa()   # same deterministic backend as GATE cells
-        tok = AutoTokenizer.from_pretrained(a.model, revision=a.revision)
-        model = AutoModelForCausalLM.from_pretrained(
-            a.model, revision=a.revision, torch_dtype=torch.bfloat16,
-            device_map="cuda").eval()
-        stops = stops_for(a.dataset)
-        for i, (tid, prob) in enumerate(items):
-            comp = generate_completion_ar(model, tok, prob["prompt"],
-                                          a.gen_length, stops)
-            samples.append({"task_id": tid, "solution": prob["prompt"] + comp})
-            if (i + 1) % 20 == 0:
-                print(f"  generated {i + 1}/{len(items)}", flush=True)
     else:
-        from dqeval.adapter import load
-        from dqeval.sampler import DecodeConfig
-        from dqeval.grid import _pin_math_sdpa
-        _pin_math_sdpa()   # same deterministic backend as GATE cells
-        adapter = load(a.model, revision=a.revision)
-        cfg = DecodeConfig(gen_length=a.gen_length, block_length=a.block_length,
-                           steps_per_block=a.steps_per_block, temperature=0.0)
-        stops = stops_for(a.dataset)
-        for i, (tid, prob) in enumerate(items):
-            comp = generate_completion(adapter, prob["prompt"], cfg, stops)
-            samples.append({"task_id": tid, "solution": prob["prompt"] + comp})
-            if (i + 1) % 20 == 0:
-                print(f"  generated {i + 1}/{len(items)}", flush=True)
-
-    if a.from_file:
-        # identity from the source: grid cells carry it in their meta record
-        with open(a.from_file) as f:
-            first = json.loads(f.readline())
-        if first.get("kind") == "meta":
-            c = first["cell"]
-            tag = f"{c['model'].replace('/', '_')}@{c['revision'] or 'main'}"
-            src = "grid_v1-" + c["decode"]
+        done = set()
+        if os.path.exists(spath):
+            with open(spath) as f:
+                done = {json.loads(l)["task_id"] for l in f if l.strip()}
+            if done:
+                print(f"resuming: {len(done)}/{len(items)} already in {spath}")
+        todo = [(t, p) for t, p in items if t not in done]
+        if not todo:
+            print(f"all {len(items)} generations already present in {spath}")
         else:
-            tag = os.path.basename(a.from_file)
-            for suf in (".samples.jsonl", ".jsonl", "." + a.dataset):
-                tag = tag.removesuffix(suf)
-            src = os.path.basename(os.path.dirname(a.from_file)) or "file"
-        stamp = time.strftime("%Y%m%d-%H%M%S")
-        default = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "_runs", "regrades",
-            f"{stamp}__{tag}__{a.dataset}-plus__from-{src}.jsonl")
-    else:
-        tag = a.model.replace('/', '_')
-        default = os.path.join(tempfile.mkdtemp(), f"{tag}_{a.dataset}.jsonl")
-    spath = a.samples or default
-    if os.path.dirname(spath):
-        os.makedirs(os.path.dirname(spath), exist_ok=True)
-    with open(spath, "w") as f:
-        for s in samples:
-            f.write(json.dumps(s) + "\n")
-    print(f"wrote {len(samples)} samples -> {spath}", flush=True)
+            # provenance sidecar: one line per launch (the samples file itself
+            # must stay pure task_id/solution jsonl for EvalPlus)
+            with open(spath + ".launches.jsonl", "a") as lf:
+                lf.write(json.dumps(dict(
+                    launched_at=time.strftime("%Y%m%d-%H%M%S"), model=a.model,
+                    revision=a.revision, dataset=a.dataset, ar=a.ar,
+                    gen_length=a.gen_length, block_length=a.block_length,
+                    steps_per_block=a.steps_per_block, todo=len(todo))) + "\n")
+            stops = stops_for(a.dataset)
+            if a.ar:
+                import torch
+                from transformers import AutoModelForCausalLM, AutoTokenizer
+                from dqeval.grid import _pin_math_sdpa
+                _pin_math_sdpa()   # same deterministic backend as GATE cells
+                tok = AutoTokenizer.from_pretrained(a.model, revision=a.revision)
+                model = AutoModelForCausalLM.from_pretrained(
+                    a.model, revision=a.revision, torch_dtype=torch.bfloat16,
+                    device_map="cuda").eval()
+                gen = lambda prob: generate_completion_ar(   # noqa: E731
+                    model, tok, prob["prompt"], a.gen_length, stops)
+            else:
+                from dqeval.adapter import load
+                from dqeval.sampler import DecodeConfig
+                from dqeval.grid import _pin_math_sdpa
+                _pin_math_sdpa()   # same deterministic backend as GATE cells
+                adapter = load(a.model, revision=a.revision)
+                cfg = DecodeConfig(gen_length=a.gen_length,
+                                   block_length=a.block_length,
+                                   steps_per_block=a.steps_per_block,
+                                   temperature=0.0)
+                gen = lambda prob: generate_completion(      # noqa: E731
+                    adapter, prob["prompt"], cfg, stops)
+            with open(spath, "a") as f:
+                for i, (tid, prob) in enumerate(todo):
+                    f.write(json.dumps({"task_id": tid,
+                                        "solution": prob["prompt"] + gen(prob)})
+                            + "\n")
+                    f.flush()
+                    if (i + 1) % 20 == 0:
+                        print(f"  generated {i + 1}/{len(todo)} this launch "
+                              f"({len(done) + i + 1}/{len(items)} total)",
+                              flush=True)
+
+    if samples:                       # from_file / canonical: whole-file write
+        with open(spath, "w") as f:
+            for smp in samples:
+                f.write(json.dumps(smp) + "\n")
+        print(f"wrote {len(samples)} samples -> {spath}", flush=True)
 
     if a.limit:
         print("--limit set: skipping grading (EvalPlus requires the full "
               "problem set); samples are saved above.")
+        return 0
+    with open(spath) as f:
+        have = len({json.loads(l)["task_id"] for l in f if l.strip()})
+    if have < len(problems):
+        print(f"partial: {have}/{len(problems)} generations in {spath}; "
+              "re-run the same command to resume. Grading deferred.")
         return 0
 
     from evalplus.evaluate import evaluate
@@ -229,7 +278,6 @@ def main() -> int:
     else:
         print(f"NOTE: eval results not at {rpath}; check EvalPlus stdout above.")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
