@@ -13,15 +13,21 @@ Two SDAR-specific wrinkles handled in compat.py:
     instead of logits.
 """
 
-from __future__ import annotations
-
 from typing import Optional
-
 import torch
-
 from dqeval import models as hf
 from dqeval.models import ModelAdapter, ModelSpec
-
+import sys
+import types
+import transformers.dynamic_module_utils as dmu
+from transformers import AutoConfig
+from transformers.dynamic_module_utils import get_class_from_dynamic_module
+import torch.nn.functional as F
+from transformers.cache_utils import DynamicCache
+from dqeval.models import ModelAdapter
+from dqeval.samplers import GenOutput
+from dqeval.samplers import DecodeConfig
+from torch.nn.attention.flex_attention import create_block_mask
 
 
 class SDARAdapter(ModelAdapter):
@@ -52,10 +58,7 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return SDARAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-# ==========================================================================
 # (merged from dqeval/families/sdar/compat.py)
-# ==========================================================================
-
 """SDAR compat for transformers 5.13, plus one upstream repo defect.
 
 Two DIFFERENT kinds of patch live here, and the distinction matters for how we
@@ -73,19 +76,10 @@ in @torch.compile(max-autotune-no-cudagraphs), which is itself nondeterministic)
 """
 
 
-import sys
-import types
-from typing import Optional
-
-import torch
-import transformers.dynamic_module_utils as dmu
-
 MISSING_MODULE = "fused_linear_diffusion_cross_entropy"
 
 
-# --------------------------------------------------------------------------
 # Repo defect: modeling_sdar.py imports a module their repo does not ship.
-# --------------------------------------------------------------------------
 class _TrainingOnlySymbol:
     def __init__(self, *a, **kw):
         raise RuntimeError(
@@ -129,8 +123,6 @@ def resolve(repo: str, revision: Optional[str] = None,
     ModuleNotFoundError tell us the exact name, register the stub there, and retry.
     Nothing is written to the shared HuggingFace module cache.
     """
-    from transformers import AutoConfig
-    from transformers.dynamic_module_utils import get_class_from_dynamic_module
 
     _install_import_filter()
     cfg = AutoConfig.from_pretrained(repo, revision=revision, trust_remote_code=True)
@@ -149,9 +141,7 @@ def resolve(repo: str, revision: Optional[str] = None,
     raise RuntimeError(f"{repo}: stub registration did not converge")
 
 
-# --------------------------------------------------------------------------
 # Version shims
-# --------------------------------------------------------------------------
 def _rope_default_4x(config=None, device=None, seq_len=None, **rope_kwargs):
     """Verbatim transformers 4.57.1 `_compute_default_rope_parameters`.
 
@@ -216,10 +206,7 @@ def repair_rope(model) -> str:
     return f"post-load inv_freq recompute via rope_init_fn ({n} modules)"
 
 
-# ==========================================================================
 # (merged from dqeval/families/sdar/sampler_native.py)
-# ==========================================================================
-
 """SDAR's own sampler, vendored from `generate.py` (JetAstra/SDAR @ 6a12cdb).
 
 Their sampler lives in their GitHub repo, not the HF repo -- but it runs against the
@@ -273,14 +260,6 @@ into their family's specifics; that is what the native/portable split is for.
 """
 
 
-import torch
-import torch.nn.functional as F
-from transformers.cache_utils import DynamicCache
-
-from dqeval.models import ModelAdapter
-from dqeval.samplers import GenOutput
-from dqeval.samplers import DecodeConfig
-
 NEG_INF = float("-inf")
 
 
@@ -332,7 +311,6 @@ def _as_block_mask(mask_bool: torch.Tensor):
     The lambda is copied verbatim from SDAR's own training path,
     modeling_sdar.py:798-803, so the construction is theirs.
     """
-    from torch.nn.attention.flex_attention import create_block_mask
     return create_block_mask(
         lambda b, h, q_idx, kv_idx: mask_bool[b, q_idx, kv_idx],
         B=mask_bool.size(0), H=None,

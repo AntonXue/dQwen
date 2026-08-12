@@ -31,14 +31,11 @@ takes the inference branch when the module is in eval mode (`hf.materialize`
 calls `.eval()`); in train mode it expects labels and does its own masking.
 """
 
-from __future__ import annotations
-
 from typing import Optional
-
 import torch
-
 from dqeval import models as hf
 from dqeval.models import ModelAdapter, ModelSpec
+import sys
 
 
 class CoDAAdapter(ModelAdapter):
@@ -83,10 +80,7 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return CoDAAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-# ==========================================================================
 # (merged from dqeval/families/coda/compat.py)
-# ==========================================================================
-
 """CoDA compat shims for transformers 5.13.
 
 PRINCIPLE (inherited from the Dream/SDAR ports): a shim RESTORES a behaviour
@@ -107,11 +101,6 @@ NOT needed for CoDA (recorded so nobody re-adds it): the tf5 `rope_theta` ->
 `rope_parameters` migration is irrelevant here, because CoDA ships its own
 `CoDARotaryEmbedding` instead of using HF's shared `ROPE_INIT_FUNCTIONS`.
 """
-
-
-import sys
-
-import torch
 
 
 def apply_shims(cfg, klass) -> list[str]:

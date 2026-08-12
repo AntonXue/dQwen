@@ -1,23 +1,18 @@
-"""Code-execution grading, shared by the code benchmarks.
+"""Code-execution grading for the code benchmarks (HF code_eval underneath).
 
-This replaces two things the repo used to depend on:
-  * lm-eval's stock `humaneval/utils.py` + `mbpp/utils.py` metric functions
-    (behavior-identical copies live here, so setup_lmeval.sh no longer has
-    to patch site-packages for workers/timeout);
-  * the EvalPlus grader (removed 2026-08-12; grader A/B on 1,640 saved
-    gradings: verdict-identical once both sides' defects were fixed).
+Knobs, recorded per-cell in the meta record's provenance:
+  LM_EVAL_CODE_WORKERS  parallel grading processes     (default: cores, <=32)
+  LM_EVAL_CODE_TIMEOUT  seconds per problem's WHOLE test script (default 10
+                        -- the plus suites run ~1000 cases per problem, and
+                        a tight budget makes verdicts machine-load-sensitive)
 
-Knobs (recorded per-cell in the meta record's provenance):
-  LM_EVAL_CODE_WORKERS  parallel grading processes   (default: cores, <=32)
-  LM_EVAL_CODE_TIMEOUT  seconds per problem's WHOLE test script (default 10;
-                        HF code_eval's stock 3s is ~3ms/case on the
-                        1000-case plus suites and makes verdicts
-                        machine-load-sensitive)
+Grader lineage and the EvalPlus agreement study:
+_claude/20260812-113000-lmeval-only-plus-columns-evalplus-removed.md
 """
 
-from __future__ import annotations
-
 import os
+import evaluate as hf_evaluate
+
 
 _CODE_WORKERS = int(os.environ.get("LM_EVAL_CODE_WORKERS") or min(32, os.cpu_count() or 8))
 _CODE_TIMEOUT = float(os.environ.get("LM_EVAL_CODE_TIMEOUT") or 10.0)
@@ -30,7 +25,6 @@ def _metric():
     HF_ALLOW_CODE_EVAL=1, which run.py sets for unsafe benchmarks)."""
     global _code_eval
     if _code_eval is None:
-        import evaluate as hf_evaluate
         _code_eval = hf_evaluate.load("code_eval")
     return _code_eval
 
@@ -58,7 +52,7 @@ def build_predictions(resps: list, docs: list) -> list:
     return [[doc["prompt"] + r for r in resp] for resp, doc in zip(resps, docs)]
 
 
-# --- plus-suite comparator soundness -----------------------------------------
+# plus-suite comparator soundness
 # The rendered test scripts in evalplus/humanevalplus + evalplus/mbppplus carry
 # an inline comparator whose `is_floats([])` is vacuously True (all() on
 # empty), routing empty-expected checks into np.allclose -- and numpy

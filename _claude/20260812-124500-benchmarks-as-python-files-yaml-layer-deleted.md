@@ -81,3 +81,27 @@ execution paths (AR generate, AR gsm8k, DLM block-decode via RecordingLM,
 DLM MC-NELBO via DQEvalLM.loglikelihood). hellaswag_sub/race_sub deleted
 earlier the same day (retention-probe orphans; striping obsoleted the
 subsample trick).
+
+## UPDATE 2: comment/dead-code pass + imports-at-top rule (same day)
+
+Anton's rules, all applied: no banner-style comments (dividers stripped,
+labels kept as plain comments); ALL imports at module top so each file's
+dependencies read at a glance (one documented exception: run.py defers its
+cell_runner import so --list/manifest inspection works without the ML
+stack); dead code deleted (PRESETS/get_preset/with_/full_ids/describe/chat
+-- zero callers, verified by grep; the parity test hardcodes its preset
+values); cell_runner's duplicate __main__ CLI deleted (run.py is THE CLI);
+`from __future__ import annotations` dropped everywhere (env is pinned
+py3.12, which needs none of it).
+
+REPAIRED while in there: models.pins() read third_party/pins.json and its
+errors said "run third_party/fetch.sh" -- NEITHER FILE EVER EXISTED.
+Replaced with a hardcoded UPSTREAM_PINS dict (values from LOCKFILE.md) and
+error messages carrying the actual clone+checkout command, so
+generate_upstream/parity fixtures are now actually reachable.
+
+Trap for the record: deleting chat() by index-slicing glued
+_FAMILY_MODULES onto the ModelAdapter class body as a class attribute --
+py_compile AND import smoke both passed (valid class attr!); only the
+functional smoke cell caught the NameError in load(). Cell-level smokes
+after every structural edit are not optional.

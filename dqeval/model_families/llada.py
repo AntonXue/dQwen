@@ -6,15 +6,15 @@ inherited identity and there is no eval-side shift. Confirmed by reading their
 `generate.py`, which consumes `model(x).logits` directly with no reindexing.
 """
 
-from __future__ import annotations
-
 from typing import Optional
-
 import torch
-
 from dqeval import models as hf
 from dqeval.models import ModelAdapter, ModelSpec
-
+import torch.nn.functional as F
+from dqeval.models import ModelAdapter
+from dqeval.samplers import GenOutput
+from dqeval.samplers import DecodeConfig
+from dqeval.models import on_path
 
 
 class LLaDAAdapter(ModelAdapter):
@@ -38,10 +38,7 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return LLaDAAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-# ==========================================================================
 # (merged from dqeval/families/llada/compat.py)
-# ==========================================================================
-
 """LLaDA compat shims for transformers 5.13.
 
 PRINCIPLE: a shim RESTORES a behaviour transformers 4.x had. It never invents one.
@@ -90,10 +87,7 @@ def apply_shims(cfg, klass) -> list[str]:
     return log
 
 
-# ==========================================================================
 # (merged from dqeval/families/llada/sampler_native.py)
-# ==========================================================================
-
 """LLaDA's own sampler, vendored from `generate.py` (ML-GSAI/LLaDA @ 96441d4).
 
 This is the "sampler shipped with LLaDA" path: the algorithm is reproduced exactly,
@@ -120,13 +114,6 @@ DELIBERATELY NOT CHANGED, though our unified engine does it differently:
     without a division -- unlike SDAR's script, which cannot express greedy at all.
 """
 
-
-import torch
-import torch.nn.functional as F
-
-from dqeval.models import ModelAdapter
-from dqeval.samplers import GenOutput
-from dqeval.samplers import DecodeConfig
 
 NEG_INF = float("-inf")
 
@@ -230,10 +217,7 @@ def generate_native(adapter: ModelAdapter, prompt_ids: torch.Tensor,
                      text=adapter.decode(gen_ids), n_forward=n_forward)
 
 
-# ==========================================================================
 # (merged from dqeval/families/llada/sampler_upstream.py)
-# ==========================================================================
-
 """Escape hatch: run LLaDA's `generate.py` verbatim from the pinned checkout.
 
 Not used for normal evals -- `sampler_native.py` is the vendored equivalent, and
@@ -241,16 +225,8 @@ Not used for normal evals -- `sampler_native.py` is the vendored equivalent, and
 checkable on demand, and so a touched-up path can be bracketed against real upstream
 when it has no parity counterpart.
 
-Requires `third_party/fetch.sh`.
+Requires the pinned LLaDA checkout under third_party/ (models.UPSTREAM_PINS has the commit).
 """
-
-
-import torch
-
-from dqeval.models import on_path
-from dqeval.models import ModelAdapter
-from dqeval.samplers import GenOutput
-from dqeval.samplers import DecodeConfig
 
 
 @torch.no_grad()

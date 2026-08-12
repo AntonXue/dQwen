@@ -2,14 +2,16 @@
 
 The claim this file encodes is that LLaDA, Dream and dQwen do not need
 different decode APIs -- their published samplers are points in the space
-below. Each family's official recipe therefore appears as a PRESET, not as a
-separate code path. `tests/parity/` is what keeps that claim honest.
+below, and `tests/parity/` holds our engine token-identical to theirs at
+the matching configuration.
 """
 
-from __future__ import annotations
+from dataclasses import dataclass
+from typing import Callable, Literal, Optional
 
-from dataclasses import dataclass, replace
-from typing import Literal, Optional
+import torch
+import torch.nn.functional as F
+
 
 Order = Literal["low_confidence", "entropy", "topk_margin", "random", "sequential"]
 Commit = Literal["static", "dynamic"]
@@ -25,26 +27,26 @@ class DecodeConfig:
     branch instead, and record it as a touchup wherever it diverges from upstream.
     """
 
-    # --- canvas -----------------------------------------------------------
+    # canvas
     # Decoding is always full-canvas: the whole answer canvas is visible from
     # the start and blocks are revealed left-to-right (LLaDA/Dream native).
     gen_length: int = 1024   # LLaDA-style default answer canvas
     block_length: int = 32          # semi-AR granularity within the canvas
-    # --- schedule ---------------------------------------------------------
+    # schedule
     steps_per_block: int = 32
-    # --- token sampling ---------------------------------------------------
+    # token sampling
     temperature: float = 0.0        # 0.0 => argmax
     top_k: int = 0                  # 0 => disabled
     top_p: float = 1.0              # 1.0 => disabled
-    # --- unmasking order --------------------------------------------------
+    # unmasking order
     order: Order = "low_confidence"
-    # --- commit policy ----------------------------------------------------
+    # commit policy
     commit: Commit = "static"
     confidence_threshold: float = 0.9   # only read when commit == "dynamic"
-    # --- correction / guidance -------------------------------------------
+    # correction / guidance
     sigma_scale: float = 0.0        # ReMDM-style remasking (dQwen)
     cfg_scale: float = 0.0          # classifier-free guidance (LLaDA)
-    # --- reproducibility --------------------------------------------------
+    # reproducibility
     seed: Optional[int] = None
 
     def __post_init__(self) -> None:
@@ -70,64 +72,6 @@ class DecodeConfig:
     def num_blocks(self) -> int:
         return self.gen_length // self.block_length
 
-    def with_(self, **kw) -> "DecodeConfig":
-        """Return a copy with fields overridden -- handy for sweeps."""
-        return replace(self, **kw)
-
-
-@dataclass(frozen=True)
-class Preset:
-    """A named DecodeConfig plus where its numbers come from.
-
-    `provenance` is not decoration: upstream repos ship multiple disagreeing
-    sampler configs, so a preset without a citation is unusable.
-    """
-
-    config: DecodeConfig
-    provenance: str
-
-
-PRESETS: dict[str, Preset] = {
-    # ---- LLaDA -----------------------------------------------------------
-    # Their EVAL.md reports this triple explicitly, and shows results moving
-    # 45.0 -> 50.4 across gen_length/steps/block_length -- so it must be pinned.
-    "llada_official_1024": Preset(
-        DecodeConfig(
-            gen_length=1024, block_length=1024, steps_per_block=1024,
-            temperature=0.0, order="low_confidence", commit="static",
-        ),
-        "ML-GSAI/LLaDA@96441d4 EVAL.md (gen_length=steps=block_length=1024)",
-    ),
-    "llada_official_256": Preset(
-        DecodeConfig(
-            gen_length=256, block_length=256, steps_per_block=256,
-            temperature=0.0, order="low_confidence", commit="static",
-        ),
-        "ML-GSAI/LLaDA@96441d4 EVAL.md (gen_length=steps=block_length=256)",
-    ),
-    # ---- dQwen -----------------------------------------------------------
-    "dqwen_champion": Preset(
-        DecodeConfig(
-            gen_length=1024, block_length=32, steps_per_block=32,
-            temperature=0.0,
-            order="low_confidence", commit="static", sigma_scale=0.0,
-        ),
-        "gen=1024 (matches LLaDA), block=32, steps_per_block=32, "
-        "low_confidence, greedy",
-    ),
-}
-
-
-def get_preset(name: str) -> DecodeConfig:
-    if name not in PRESETS:
-        raise KeyError(f"unknown preset {name!r}; have {sorted(PRESETS)}")
-    return PRESETS[name].config
-
-
-# ==========================================================================
-# (merged from dqeval/samplers/unified.py)
-# ==========================================================================
-
 """The portable sampler: one block-diffusion engine, any family.
 
 Deliberately basic for now -- correctness first, generality later. It talks to a
@@ -144,10 +88,6 @@ Parallelism belongs above this function: map over prompts, shard over GPUs.
 """
 
 
-import torch
-import torch.nn.functional as F
-
-
 @dataclass
 class GenOutput:
     """One generation. bs=1 by construction -- see `generate` below."""
@@ -156,12 +96,6 @@ class GenOutput:
     gen_ids: torch.Tensor
     text: str
     n_forward: int = 0
-
-    @property
-    def full_ids(self) -> torch.Tensor:
-        return torch.cat([self.prompt_ids, self.gen_ids], dim=-1)
-
-
 NEG_INF = float("-inf")
 
 
@@ -319,10 +253,6 @@ def generate(adapter, prompt_ids: torch.Tensor,
     )
 
 
-# ==========================================================================
-# (merged from dqeval/nelbo.py)
-# ==========================================================================
-
 """Monte-Carlo NELBO log-likelihood for masked diffusion LMs.
 
 A masked DLM has no AR chain-rule likelihood, so "loglikelihood" is a MODELLING
@@ -349,12 +279,6 @@ before computing loglikelihood (eval/eval.py:354).
 
 Originally `ablations/paper_evals/mc_nelbo.py` in the ADLMC research repo.
 """
-
-
-from typing import Callable, Optional
-
-import torch
-import torch.nn.functional as F
 
 
 def forward_process(batch: torch.Tensor, prompt_index: torch.Tensor, mask_id: int):

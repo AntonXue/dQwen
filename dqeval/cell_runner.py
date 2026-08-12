@@ -6,7 +6,7 @@
 
 One Cell = (model, revision, decode, benchmark, shard) = one SLURM task =
 one provenance-stamped output file, keyed by that tuple everywhere. Root
-run.py is the CLI shim (and the only file a login node needs); this module
+run.py is the CLI (and the only file a login node needs); this module
 imports the full ML stack.
 
 Two halves, top to bottom:
@@ -26,8 +26,6 @@ Two halves, top to bottom:
   every cell dumps raw generations so regrades never need a GPU; a cell is
   complete iff its file ends with the summary record, which is what makes
   reruns idempotent and requeues free.
-
-SLURM form: python -m dqeval.cell_runner manifest.jsonl $SLURM_ARRAY_TASK_ID
 """
 
 from __future__ import annotations
@@ -36,30 +34,29 @@ import hashlib
 import json
 import os
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+from importlib.metadata import version
 from pathlib import Path
 
+import lm_eval
 import torch
-
+import transformers
 from lm_eval.api.model import LM
 from lm_eval.api.registry import register_model
+from lm_eval.models.huggingface import HFLM
+from lm_eval.tasks import TaskManager, get_task_dict
 
 from dqeval import samplers
+from dqeval.benchmarks import task_config
+from dqeval.benchmarks._grading import _CODE_TIMEOUT, _CODE_WORKERS
 from dqeval.models import load
 from dqeval.samplers import DecodeConfig
-
 
 # Model-end stop strings, shared by every generation driver — truncation
 # rules move scores, so there is exactly one copy. The ``` fence catches
 # models (Dream) that wrap completions in markdown, which task-level `until`
 # strings miss; python source never contains ``` so it is safe to stop on.
 EOT_BASE = ("```", "<|im_end|>", "<|endoftext|>")
-
-
-def eot_stops(adapter):
-    """EOT_BASE plus the model's own pad token, if it has one."""
-    pad = adapter.tokenizer.pad_token
-    return list(EOT_BASE) + ([pad] if pad else [])
 
 
 def truncate_at(text, stops):
@@ -92,7 +89,7 @@ class DQEvalLM(LM):
             commit=commit, confidence_threshold=float(confidence_threshold),
         )
 
-    # -- required by lm-eval for request chunking --------------------------
+    # required by lm-eval for request chunking
     @property
     def eot_token_id(self):
         return self.adapter.pad_id
@@ -116,9 +113,9 @@ class DQEvalLM(LM):
             ctx = ctx[-budget:] if budget > 0 else ctx[:1]
         return ctx, cont
 
-    # -- multiple choice: mmlu, arc, hellaswag, piqa, winogrande, ... ------
     @torch.inference_mode()
     def loglikelihood(self, requests):
+        """Multiple choice (mmlu, arc, ...)."""
         dev = self.adapter.device
         mask_id = self.adapter.mask_id
         out = [None] * len(requests)
@@ -166,9 +163,9 @@ class DQEvalLM(LM):
             "not needed for mmlu/arc/gsm8k/humaneval"
         )
 
-    # -- generative: gsm8k, minerva_math, humaneval, mbpp, bbh -------------
     @torch.inference_mode()
     def generate_until(self, requests):
+        """Generative (gsm8k, minerva_math, humaneval, mbpp, ...)."""
         return [self._generate_one(r)[0] for r in requests]
 
     def _generate_one(self, r):
@@ -177,20 +174,23 @@ class DQEvalLM(LM):
         ctx = r.args[0]
         kw = r.args[1] if len(r.args) > 1 and isinstance(r.args[1], dict) else {}
         # stops = the task's own `until` strings + the model-end set (masked
-        # DLMs don't self-terminate the way an AR model emits EOS).
-        stops = list(kw.get("until", []) or []) + eot_stops(self.adapter)
+        # DLMs don't self-terminate the way an AR model emits EOS) + the
+        # model's own pad token if it has one.
+        pad = self.adapter.tokenizer.pad_token
+        stops = (list(kw.get("until", []) or []) + list(EOT_BASE)
+                 + ([pad] if pad else []))
         ids = self.adapter.encode(ctx)
         # stop_strings early-stops the decode itself (saves the forwards that
         # would fill the rest of the canvas); truncate_at is the post-hoc
-        # backstop covering full/window mode, which decodes the whole canvas.
+        # backstop.
         gen = samplers.generate(self.adapter, ids, self.decode,
-                               stop_strings=stops)
+                                stop_strings=stops)
         return truncate_at(gen.text, stops), gen
 
 
 class RecordingLM(DQEvalLM):
     """DQEvalLM that also keeps one record per generated request:
-    (task, doc_id, raw text, truncated text, n_forward). run_cell below dumps
+    (task, doc_id, raw text, truncated text, n_forward). run_cell dumps
     these as the per-sample sidecar, which is what makes regrading
     (HumanEval+/MBPP+, format studies) a CPU re-pass instead of a GPU rerun.
     """
@@ -210,17 +210,10 @@ class RecordingLM(DQEvalLM):
         return out
 
 
-# --------------------------------------------------------------------------
 # Benchmarks are generation-defining: mbpp vs mbpp-fence are distinct rows
-# (different prompts -> different generations). The "+" rows are ordinary
-# cells since the 2026-08-12 lm-eval-only ruling: humaneval-plus shares
-# humaneval's prompts (denser tests; regenerating 164 docs is cheaper than
-# a second grading framework -- grader A/B: 9/1640 verdicts differed,
-# family cells exact), and mbpp-plus runs EvalPlus's sanitized problems
-# under OUR scaffold via the local mbpp_plus_full task (stock mbpp_plus
-# never executes the plus suite -- see dqeval/benchmarks/mbpp_plus.py).
-# Shot counts follow Dream's base-model table.
-# --------------------------------------------------------------------------
+# (different prompts -> different generations), and the "+" variants are
+# ordinary cells. Each benchmark file in dqeval/benchmarks/ carries its own
+# protocol + caveats. Shot counts follow Dream's base-model table.
 BENCH = {
     "humaneval":  dict(task="humaneval",    gen=512,  shots=0, shards=1, unsafe=True),
     "humaneval-plus": dict(task="humaneval_plus_sound", gen=512, shots=0, shards=1, unsafe=True),
@@ -269,20 +262,23 @@ def parse_decode(decode: str, gen_length: int) -> dict:
     raise ValueError(f"unparseable decode scheme: {decode!r}")
 
 
-# --------------------------------------------------------------------------
-# lm-eval plumbing
-# --------------------------------------------------------------------------
-
 def _build_task_dict(cell: Cell):
-    # configs come from dqeval.benchmarks (one file per benchmark, frozen
-    # from pinned lm-eval; tests/task_freeze_gate.py holds them to stock)
-    from lm_eval.tasks import TaskManager, get_task_dict
-    from dqeval.benchmarks import task_config
     bench = BENCH[cell.benchmark]
     td = get_task_dict([task_config(bench["task"])], TaskManager())
     _restore_names(td)
-    _stripe(td, *cell.shard)
-    _set_shots(td, bench["shots"])
+    k, n = cell.shard
+    for task in _leaf_tasks(td):
+        if (k, n) != (0, 1):
+            # stripe the test split; the meta record's doc fingerprint lets
+            # the merge step verify the shards' union
+            split = task.config.test_split
+            ds = task.dataset[split]
+            task.dataset[split] = ds.select(range(k, len(ds), n))
+        if bench["shots"] is not None:
+            # hand-built task_dicts skip simple_evaluate's fewshot wiring, so
+            # set it here (task defaults may be 0-shot, which produces
+            # normal-looking but incomparable numbers)
+            task.set_config(key="num_fewshot", value=bench["shots"])
     return td
 
 
@@ -307,26 +303,6 @@ def _leaf_tasks(td):
             yield v
 
 
-def _stripe(td, k, n):
-    """docs[k::n] on every leaf task's test split. The meta record carries a
-    doc-set fingerprint so the merge step can verify the shards' union."""
-    if (k, n) == (0, 1):
-        return
-    for task in _leaf_tasks(td):
-        split = task.config.test_split
-        ds = task.dataset[split]
-        task.dataset[split] = ds.select(range(k, len(ds), n))
-
-
-def _set_shots(td, shots):
-    # simple_evaluate applies num_fewshot via set_config; since we hand-build
-    # the task_dict for striping, we must do the same (task defaults may be
-    # 0-shot, which produces normal-looking but incomparable numbers).
-    for task in _leaf_tasks(td):
-        if shots is not None:
-            task.set_config(key="num_fewshot", value=shots)
-
-
 def _doc_fingerprint(td):
     h = hashlib.sha256()
     n_docs = 0
@@ -337,15 +313,9 @@ def _doc_fingerprint(td):
     return {"n_docs": n_docs, "sha256": h.hexdigest()}
 
 
-# --------------------------------------------------------------------------
-# model construction (imports deferred: manifest work on a login node must
-# not require torch/lm_eval)
-# --------------------------------------------------------------------------
-
 def _build_lm(cell: Cell):
     bench = BENCH[cell.benchmark]
     if cell.decode == "ar":
-        from lm_eval.models.huggingface import HFLM
         return HFLM(pretrained=cell.model, revision=cell.revision or "main",
                     dtype="bfloat16", batch_size=16, trust_remote_code=True)
     if cell.decode == "mc-nelbo":
@@ -358,10 +328,6 @@ def _build_lm(cell: Cell):
                        gen_length=bench["gen"],
                        **parse_decode(cell.decode, bench["gen"]))
 
-
-# --------------------------------------------------------------------------
-# the one entrypoint
-# --------------------------------------------------------------------------
 
 def out_path(cell: Cell, out_root) -> Path:
     return Path(out_root) / cell.benchmark / (cell.tag() + ".jsonl")
@@ -380,8 +346,6 @@ def is_complete(path: Path) -> bool:
 
 def run_cell(cell: Cell, out_root="_runs/grid_v1"):
     """Run one cell; idempotent (a completed cell returns in seconds)."""
-    import lm_eval
-
     out = out_path(cell, out_root)
     if is_complete(out):
         print(f"[grid] SKIP complete: {out}")
@@ -406,12 +370,14 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1"):
                            bootstrap_iters=0, confirm_run_unsafe_code=True)
     wall = time.time() - t0
 
+    decode_config = ({k: getattr(lm.decode, k) for k in vars(lm.decode)}
+                     if hasattr(lm, "decode") else {"decode": "ar"})
     tmp = out.with_suffix(".jsonl.tmp")
     with open(tmp, "w") as f:
         f.write(json.dumps(dict(
             kind="meta", launched_at=launched_at,
             cell=asdict(cell), bench=bench, docs=fingerprint,
-            decode_config=_decode_config_dict(lm),
+            decode_config=decode_config,
             provenance=_provenance(cell, lm), wall_clock_s=round(wall, 1),
         )) + "\n")
         for rec in getattr(lm, "records", []):
@@ -443,15 +409,9 @@ def _pin_math_sdpa():
     """Force the math SDPA backend: flash/mem-efficient kernels are
     nondeterministic across shapes, and publication cells must be exactly
     reproducible. Recorded in the meta record's provenance."""
-    import torch
     torch.backends.cuda.enable_flash_sdp(False)
     torch.backends.cuda.enable_mem_efficient_sdp(False)
     torch.backends.cuda.enable_math_sdp(True)
-
-
-def _decode_config_dict(lm):
-    d = getattr(lm, "decode", None)
-    return {k: getattr(d, k) for k in vars(d)} if d is not None else {"decode": "ar"}
 
 
 def _provenance(cell: Cell, lm):
@@ -464,14 +424,10 @@ def _provenance(cell: Cell, lm):
         p["hf_name_or_path"] = getattr(cfg, "_name_or_path", None)
     else:  # AR path: the HFLM holds the model directly
         p["hf_repo"] = cell.model
-    import torch, transformers
-    from importlib.metadata import version
     p["versions"] = dict(torch=torch.__version__,
                          transformers=transformers.__version__,
                          lm_eval=version("lm_eval"))
-    # code-grading knobs live in dqeval/tasks/_grading.py; recorded so any
-    # env-var override is visible from the cell's records
-    from dqeval.benchmarks._grading import _CODE_TIMEOUT, _CODE_WORKERS
+    # grading knobs recorded so any env-var override is visible from records
     p["code_eval"] = dict(timeout_s=_CODE_TIMEOUT, workers=_CODE_WORKERS)
     if cell.decode != "ar":
         p["sdpa_math_only"] = (torch.backends.cuda.math_sdp_enabled()
@@ -479,31 +435,12 @@ def _provenance(cell: Cell, lm):
     return p
 
 
-# --------------------------------------------------------------------------
-# CLI: two forms.
-#   manifest (SLURM):  python -m dqeval.cell_runner manifest.jsonl $SLURM_ARRAY_TASK_ID
-#   direct (one cell): python -m dqeval.cell_runner MODEL REVISION DECODE BENCHMARK [K/N]
-#     e.g. python -m dqeval.cell_runner dqwen3.5-2b-base-v3 step50000-swa \
-#              block32-tau0.8 gsm8k 2/8
-#     REVISION "main" or "-" means the default branch.
-# --------------------------------------------------------------------------
-
 def load_manifest(path):
+    """manifest.jsonl -> [Cell]; one line per cell, one SLURM array task per
+    line (run.py manifest.jsonl $SLURM_ARRAY_TASK_ID)."""
     cells = []
     for line in open(path):
         d = json.loads(line)
         d["shard"] = tuple(d.get("shard", (0, 1)))
         cells.append(Cell(**d))
     return cells
-
-
-if __name__ == "__main__":
-    import sys
-    if sys.argv[1].endswith(".jsonl"):
-        run_cell(load_manifest(sys.argv[1])[int(sys.argv[2])])
-    else:
-        model, rev, decode, bench = sys.argv[1:5]
-        shard = (tuple(int(x) for x in sys.argv[5].split("/"))
-                 if len(sys.argv) > 5 else (0, 1))
-        run_cell(Cell(model, None if rev in ("main", "-") else rev,
-                      decode, bench, shard))

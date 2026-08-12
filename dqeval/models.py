@@ -20,14 +20,18 @@ off-by-one, no exception. That is precisely why the two surfaces are separate
 methods rather than a config flag.
 """
 
-from __future__ import annotations
-
+import contextlib
 import importlib
+import subprocess
+import sys
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 import torch
+from transformers import AutoConfig, AutoTokenizer
+from transformers.dynamic_module_utils import get_class_from_dynamic_module
 
 
 @dataclass(frozen=True)
@@ -44,7 +48,7 @@ class ModelSpec:
 
 
 MODELS: dict[str, ModelSpec] = {
-    # ---- ours (private org) ---------------------------------------------
+    # ours (private org)
     # step checkpoints are HF revisions: load(..., revision="step30000-swa")
     "dqwen3.5-0.8b-base": ModelSpec("EER6b/dQwen3.5-0.8B-Base", "dqwen", 248061, 248044),
     "dqwen3.5-2b-base":   ModelSpec("EER6b/dQwen3.5-2B-Base",   "dqwen", 248061, 248044),
@@ -71,7 +75,7 @@ MODELS: dict[str, ModelSpec] = {
     # Qwen3 ids (151660/151643), NOT Qwen3.5's -- the publish script's own latent bug.
     "dqwen3-1.7b-base-v3": ModelSpec("EER6b/dQwen3-1.7B-Base-v3", "dqwen", 151660, 151643),
     "dqwen3-1.7b-base":   ModelSpec("EER6b/dQwen3-1.7B-Base",   "dqwen", 151660, 151643),
-    # ---- comparators -----------------------------------------------------
+    # comparators
     "llada-8b-base":     ModelSpec("GSAI-ML/LLaDA-8B-Base",     "llada", 126336),
     "llada-8b-instruct": ModelSpec("GSAI-ML/LLaDA-8B-Instruct", "llada", 126336),
     "dream-7b-instruct": ModelSpec("Dream-org/Dream-v0-Instruct-7B", "dream", 151666),
@@ -112,7 +116,7 @@ class ModelAdapter(ABC):
         self.revision = revision or "main"
         self.shims = shims or []
 
-    # -- ids ---------------------------------------------------------------
+    # ids
     @property
     def mask_id(self) -> int:
         return self.spec.mask_id
@@ -135,7 +139,7 @@ class ModelAdapter(ABC):
     def device(self) -> torch.device:
         return next(self.model.parameters()).device
 
-    # -- the two logit surfaces -------------------------------------------
+    # the two logit surfaces
     @abstractmethod
     def raw_logits(self, input_ids: torch.Tensor, **kw) -> torch.Tensor:
         """Exactly what the model returns, unmodified. For NATIVE samplers."""
@@ -148,34 +152,12 @@ class ModelAdapter(ABC):
         """Position-aligned logits. For PORTABLE samplers."""
         return self._canonicalize(self.raw_logits(input_ids, **kw))
 
-    # -- text --------------------------------------------------------------
+    # text
     def encode(self, text: str) -> torch.Tensor:
         return self.tokenizer(text, return_tensors="pt").input_ids.to(self.device)
 
     def decode(self, ids: torch.Tensor, skip_special_tokens: bool = False) -> str:
         return self.tokenizer.decode(ids, skip_special_tokens=skip_special_tokens)
-
-    def chat(self, message: str) -> str:
-        """Instruct-format a single user turn. Base models return it unchanged."""
-        tmpl = getattr(self.tokenizer, "chat_template", None)
-        if tmpl is None:
-            return message
-        return self.tokenizer.apply_chat_template(
-            [{"role": "user", "content": message}],
-            tokenize=False, add_generation_prompt=True,
-        )
-
-    def describe(self) -> dict:
-        """Provenance for the result ledger."""
-        import transformers
-        return {
-            "model": self.spec.repo,
-            "revision": self.revision,
-            "family": self.family,
-            "mask_id": self.mask_id,
-            "shims": list(self.shims),
-            "env": {"transformers": transformers.__version__, "torch": torch.__version__},
-        }
 
 
 _FAMILY_MODULES = {
@@ -197,10 +179,6 @@ def load(name: str, revision: Optional[str] = None, dtype=torch.bfloat16,
     return mod.build(spec, revision=revision, dtype=dtype, device=device)
 
 
-# ==========================================================================
-# (merged from dqeval/hf.py)
-# ==========================================================================
-
 """Thin helpers over HuggingFace dynamic-module loading.
 
 Every comparator ships its modeling code via `trust_remote_code`, so we resolve the
@@ -208,13 +186,6 @@ class through the dynamic-module machinery rather than the Auto* factories. That
 gives each family a hook to install its compat shims on the CLASS before any
 weights are materialised -- which is where several of them have to happen.
 """
-
-
-from typing import Optional
-
-import torch
-from transformers import AutoConfig, AutoTokenizer
-from transformers.dynamic_module_utils import get_class_from_dynamic_module
 
 
 def resolve(repo: str, revision: Optional[str] = None, auto_class: str = "AutoModel"):
@@ -263,10 +234,6 @@ def assert_finite_rope(model) -> None:
         )
 
 
-# ==========================================================================
-# (merged from dqeval/upstream.py)
-# ==========================================================================
-
 """Access to pinned upstream reference checkouts.
 
 Upstream repos are reference material and test fixtures -- NEVER runtime
@@ -282,29 +249,33 @@ temperature then multinomials), so our greedy can never be parity-tested. Being 
 to run their code on demand lets us at least bracket such a path instead of flying
 blind. It also costs almost nothing, since the parity fixtures need it anyway.
 
-Populate with `third_party/fetch.sh`.
+Populate by cloning each repo at its pin (UPSTREAM_PINS below;
+orgs and roles in third_party/LOCKFILE.md).
 """
 
-
-import contextlib
-import json
-import subprocess
-import sys
-from pathlib import Path
 
 _THIRD_PARTY = Path(__file__).resolve().parent.parent / "third_party"
 
 
-def pins() -> dict:
-    with open(_THIRD_PARTY / "pins.json") as f:
-        return json.load(f)["repos"]
+# Pinned upstream commits. The authoritative table -- including WHICH
+# implementation produced WHICH published number -- is third_party/LOCKFILE.md.
+UPSTREAM_PINS = {
+    "LLaDA": "96441d4",        # ML-GSAI/LLaDA
+    "Dream": "31f94a6",        # DreamLM/Dream
+    "Dream-Coder": "79d4387",  # DreamLM/Dream-Coder
+    "SDAR": "6a12cdb",         # JetAstra/SDAR
+    "JetEngine": "bf8cb31",    # Labman42/JetEngine
+}
 
 
 def path_for(name: str) -> Path:
     p = _THIRD_PARTY / name
     if not p.exists():
         raise FileNotFoundError(
-            f"upstream reference {name!r} not fetched. Run third_party/fetch.sh"
+            f"upstream reference {name!r} not present. Clone it at its pin "
+            f"(org in third_party/LOCKFILE.md), e.g.\n"
+            f"  git clone <org-url>/{name} {p} && "
+            f"git -C {p} checkout {UPSTREAM_PINS[name]}"
         )
     return p
 
@@ -322,10 +293,11 @@ def verify_pin(name: str, strict: bool = True) -> str:
     default has already drifted 0.9 -> 0.75 under opt-numbered research commits, so
     a number attributed to "their sampler" without a commit is unattributable.
     """
-    want = pins()[name]["commit"]
+    want = UPSTREAM_PINS[name]
     have = head_of(name)
     if not have.startswith(want) and not want.startswith(have):
-        msg = f"{name} is at {have}, pinned to {want}. Run third_party/fetch.sh"
+        msg = (f"{name} is at {have}, pinned to {want} "
+               "(see third_party/LOCKFILE.md)")
         if strict:
             raise RuntimeError(msg)
         print(f"WARNING: {msg}", file=sys.stderr)

@@ -19,15 +19,15 @@ a silent off-by-one with no exception. That is the whole reason the two surfaces
 separate methods.
 """
 
-from __future__ import annotations
-
 from typing import Optional
-
 import torch
-
 from dqeval import models as hf
 from dqeval.models import ModelAdapter, ModelSpec
-
+import sys
+from transformers.generation.configuration_utils import GenerationConfig
+from dqeval.models import ModelAdapter
+from dqeval.samplers import GenOutput
+from dqeval.samplers import DecodeConfig
 
 
 class DreamAdapter(ModelAdapter):
@@ -60,10 +60,7 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return DreamAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-# ==========================================================================
 # (merged from dqeval/families/dream/compat.py)
-# ==========================================================================
-
 """Dream compat shims for transformers 5.13.
 
 PRINCIPLE: a shim RESTORES a behaviour transformers 4.x had; it never invents one.
@@ -79,11 +76,6 @@ Shim 3 is the dangerous one: without it the model loads and forwards with NO
 exception and returns noise (argmax agreement 20-38% vs native). It is the reason
 golden fixtures are mandatory rather than nice to have.
 """
-
-
-import sys
-
-import torch
 
 
 def _rope_default_4x(config=None, device=None, seq_len=None, **rope_kwargs):
@@ -160,7 +152,6 @@ def apply_shims(cfg, klass) -> list[str]:
     #     custom fields (eps, steps, alg, alg_temp, ...). Sampler path only.
     if not getattr(gc, "_dqeval_from_model_config", False):
         def _from_model_config(cls, model_config):
-            from transformers.generation.configuration_utils import GenerationConfig
             d = {k: v for k, v in model_config.to_dict().items() if v is not None}
             d.pop("_from_model_config", None)
             g = cls.from_dict(d, return_unused_kwargs=False, _from_model_config=True)
@@ -184,10 +175,7 @@ def apply_shims(cfg, klass) -> list[str]:
     return log
 
 
-# ==========================================================================
 # (merged from dqeval/families/dream/sampler_native.py)
-# ==========================================================================
-
 """Dream's own sampler: `model.diffusion_generate`.
 
 UNUSUAL AMONG OUR FAMILIES: Dream's sampler ships INSIDE the HF repo, loaded with
@@ -209,12 +197,6 @@ Their unmasking strategies (`alg`) and our `DecodeConfig.order` are the same ide
 under different names; the mapping is explicit below rather than guessed.
 """
 
-
-import torch
-
-from dqeval.models import ModelAdapter
-from dqeval.samplers import GenOutput
-from dqeval.samplers import DecodeConfig
 
 # our vocabulary -> theirs. 'origin' is their default: sample per position, unmask
 # by raw confidence. 'maskgit_plus' is the low-confidence-first ordering.

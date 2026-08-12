@@ -12,12 +12,8 @@ Step checkpoints are published as HF revisions (`step30000-swa`, `step50000-swa`
 so `revision=` is a first-class argument rather than a separate repo per checkpoint.
 """
 
-from __future__ import annotations
-
 from typing import Optional
-
 import torch
-
 from dqeval import models as hf
 from dqeval.models import ModelAdapter, ModelSpec
 

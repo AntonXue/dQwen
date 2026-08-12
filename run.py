@@ -23,8 +23,11 @@ os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 
 def main(argv):
+    # deliberately deferred (the one exception to imports-at-top):
+    # cell_runner pulls torch/lm_eval, and --list/manifest inspection
+    # must work on login nodes without the ML stack
     from dqeval.cell_runner import (Cell, run_cell, load_manifest, BENCH,
-                             TAU_GRID, BLOCK_STATIC, STANDARD_STATIC)
+                                    TAU_GRID, BLOCK_STATIC, STANDARD_STATIC)
     if not argv or argv[0] in ("-h", "--help"):
         print(__doc__.strip())
         return 0
