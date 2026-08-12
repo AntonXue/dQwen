@@ -190,6 +190,8 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1", lm=None):
     bench = BENCH[cell.benchmark]
     if bench["unsafe"]:
         os.environ.setdefault("HF_ALLOW_CODE_EVAL", "1")
+    if cell.decode != "ar":
+        _pin_math_sdpa()   # deterministic attention backend, recorded in meta
 
     td = _build_task_dict(cell)
     fingerprint = _doc_fingerprint(td)
@@ -197,12 +199,9 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1", lm=None):
     if own_lm:
         lm = _build_lm(cell)
 
-    # NB low-level evaluate() has no confirm_run_unsafe_code gate (that check
-    # lives in simple_evaluate); the code-exec metric itself only needs
-    # HF_ALLOW_CODE_EVAL=1, set above.
     t0 = time.time()
     res = lm_eval.evaluate(lm=lm, task_dict=td, log_samples=True,
-                           bootstrap_iters=0)
+                           bootstrap_iters=0, confirm_run_unsafe_code=True)
     wall = time.time() - t0
 
     tmp = out.with_suffix(".jsonl.tmp")
@@ -231,6 +230,16 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1", lm=None):
     return out
 
 
+def _pin_math_sdpa():
+    """Force the math SDPA backend: flash/mem-efficient kernels are
+    nondeterministic across shapes, and publication cells must be exactly
+    reproducible. Recorded in the meta record's provenance."""
+    import torch
+    torch.backends.cuda.enable_flash_sdp(False)
+    torch.backends.cuda.enable_mem_efficient_sdp(False)
+    torch.backends.cuda.enable_math_sdp(True)
+
+
 def _decode_config_dict(lm):
     d = getattr(lm, "decode", None)
     return {k: getattr(d, k) for k in vars(d)} if d is not None else {"decode": "ar"}
@@ -246,16 +255,24 @@ def _provenance(cell: Cell, lm):
         p["hf_name_or_path"] = getattr(cfg, "_name_or_path", None)
     else:  # AR path: the HFLM holds the model directly
         p["hf_repo"] = cell.model
-    import torch, transformers, lm_eval as le
+    import torch, transformers
     from importlib.metadata import version
     p["versions"] = dict(torch=torch.__version__,
                          transformers=transformers.__version__,
                          lm_eval=version("lm_eval"))
+    if cell.decode != "ar":
+        p["sdpa_math_only"] = (torch.backends.cuda.math_sdp_enabled()
+                               and not torch.backends.cuda.flash_sdp_enabled())
     return p
 
 
 # --------------------------------------------------------------------------
-# SLURM shim: python -m dqeval.grid manifest.jsonl <index>
+# CLI: two forms.
+#   manifest (SLURM):  python -m dqeval.grid manifest.jsonl $SLURM_ARRAY_TASK_ID
+#   direct (one cell): python -m dqeval.grid MODEL REVISION DECODE BENCHMARK [K/N]
+#     e.g. python -m dqeval.grid dqwen3.5-2b-base-v3 step50000-swa \
+#              block32-tau0.8 gsm8k 2/8
+#     REVISION "main" or "-" means the default branch.
 # --------------------------------------------------------------------------
 
 def load_manifest(path):
@@ -269,6 +286,11 @@ def load_manifest(path):
 
 if __name__ == "__main__":
     import sys
-    cells = load_manifest(sys.argv[1])
-    idx = int(sys.argv[2])
-    run_cell(cells[idx])
+    if sys.argv[1].endswith(".jsonl"):
+        run_cell(load_manifest(sys.argv[1])[int(sys.argv[2])])
+    else:
+        model, rev, decode, bench = sys.argv[1:5]
+        shard = (tuple(int(x) for x in sys.argv[5].split("/"))
+                 if len(sys.argv) > 5 else (0, 1))
+        run_cell(Cell(model, None if rev in ("main", "-") else rev,
+                      decode, bench, shard))
