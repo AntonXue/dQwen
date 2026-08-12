@@ -28,22 +28,42 @@ import os
 import tempfile
 import time
 
-# stop strings for code generation -- same set the harness uses, plus __main__ guard
+# HumanEval completions are a function BODY (the prompt holds the def), so any
+# top-level construct ends them -- same set the harness uses, plus __main__ guard.
 CODE_STOPS = ["\nclass ", "\ndef ", "\n#", "\nif __name__", "\nprint(",
               "```", "<|endoftext|>", "<|im_end|>"]
+# MBPP+ completions are WHOLE functions (helpers + imports are legitimate), so
+# the stops are EvalPlus's own base-model EOS set, not the HumanEval one.
+MBPP_STOPS = ["<|endoftext|>", "<|endofmask|>", "</s>", "<|im_end|>",
+              "\nif __name__", "\ndef main(", "\nprint(", '\n"""', "```"]
 
 
-def _truncate(text: str) -> str:
-    cut = [text.find(s) for s in CODE_STOPS if s in text]
+def stops_for(dataset: str) -> list:
+    return CODE_STOPS if dataset == "humaneval" else MBPP_STOPS
+
+
+def _truncate(text: str, stops) -> str:
+    cut = [text.find(s) for s in stops if s in text]
     return text[:min(cut)] if cut else text
 
 
-def generate_completion(adapter, prompt: str, cfg) -> str:
+def generate_completion(adapter, prompt: str, cfg, stops) -> str:
     import torch  # noqa: F401
     from dqeval.samplers import unified
     ids = adapter.encode(prompt)
-    out = unified.generate(adapter, ids, cfg, stop_strings=CODE_STOPS)
-    return _truncate(out.text)
+    out = unified.generate(adapter, ids, cfg, stop_strings=stops)
+    return _truncate(out.text, stops)
+
+
+def generate_completion_ar(model, tok, prompt: str, gen_length: int, stops) -> str:
+    import torch
+    ids = tok(prompt, return_tensors="pt").input_ids.to(model.device)
+    with torch.no_grad():
+        out = model.generate(ids, max_new_tokens=gen_length, do_sample=False,
+                             stop_strings=stops, tokenizer=tok,
+                             pad_token_id=tok.pad_token_id or tok.eos_token_id)
+    text = tok.decode(out[0, ids.shape[1]:], skip_special_tokens=False)
+    return _truncate(text, stops)
 
 
 def load_problems(dataset: str):
@@ -86,6 +106,9 @@ def main() -> int:
     ap.add_argument("--from", dest="from_file", default=None,
                     help="regrade saved generations (lm-eval samples jsonl or "
                          "grid_v1 cell jsonl) instead of running a model")
+    ap.add_argument("--ar", action="store_true",
+                    help="--model is a bare HF causal-LM id (AR counterpart "
+                         "rows): greedy transformers generate, not the adapter")
     a = ap.parse_args()
 
     problems = load_problems(a.dataset)
@@ -122,14 +145,33 @@ def main() -> int:
         for tid, prob in items:
             samples.append({"task_id": tid,
                             "solution": prob["prompt"] + prob["canonical_solution"]})
+    elif a.ar:
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        from dqeval.grid import _pin_math_sdpa
+        _pin_math_sdpa()   # same deterministic backend as GATE cells
+        tok = AutoTokenizer.from_pretrained(a.model, revision=a.revision)
+        model = AutoModelForCausalLM.from_pretrained(
+            a.model, revision=a.revision, torch_dtype=torch.bfloat16,
+            device_map="cuda").eval()
+        stops = stops_for(a.dataset)
+        for i, (tid, prob) in enumerate(items):
+            comp = generate_completion_ar(model, tok, prob["prompt"],
+                                          a.gen_length, stops)
+            samples.append({"task_id": tid, "solution": prob["prompt"] + comp})
+            if (i + 1) % 20 == 0:
+                print(f"  generated {i + 1}/{len(items)}", flush=True)
     else:
         from dqeval.adapter import load
         from dqeval.config import DecodeConfig
+        from dqeval.grid import _pin_math_sdpa
+        _pin_math_sdpa()   # same deterministic backend as GATE cells
         adapter = load(a.model, revision=a.revision)
         cfg = DecodeConfig(gen_length=a.gen_length, block_length=a.block_length,
                            steps_per_block=a.steps_per_block, temperature=0.0)
+        stops = stops_for(a.dataset)
         for i, (tid, prob) in enumerate(items):
-            comp = generate_completion(adapter, prob["prompt"], cfg)
+            comp = generate_completion(adapter, prob["prompt"], cfg, stops)
             samples.append({"task_id": tid, "solution": prob["prompt"] + comp})
             if (i + 1) % 20 == 0:
                 print(f"  generated {i + 1}/{len(items)}", flush=True)
@@ -162,6 +204,11 @@ def main() -> int:
         for s in samples:
             f.write(json.dumps(s) + "\n")
     print(f"wrote {len(samples)} samples -> {spath}", flush=True)
+
+    if a.limit:
+        print("--limit set: skipping grading (EvalPlus requires the full "
+              "problem set); samples are saved above.")
+        return 0
 
     from evalplus.evaluate import evaluate
     # evalplus defaults to cpu_count()//2 workers; this box has plenty
