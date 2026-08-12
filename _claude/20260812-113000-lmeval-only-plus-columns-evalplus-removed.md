@@ -94,3 +94,28 @@ genuine upstream suite skew (e.g. /96: 190 package cases vs 180 HF).
 The /92 and /9 "flips" and their suite-skew attribution in UPDATE 1 were
 artifacts of the semantics bug. The lm-eval-only ruling only strengthens:
 correct-semantics agreement is 99.76%.
+
+## UPDATE 3: /62 and /96 are NOT different test sets — the HF comparator is unsound on empty-expected
+
+Case-by-case diff of both channels:
+
+- **/62**: inputs AND expected outputs are IDENTICAL in both channels
+  (953 cases). Our solution returns `[0]` where both expect `[]`.
+- **/96**: package has 10 extra cases (190 vs 180), but the flipping case
+  exists in BOTH channels with the same expected `[]`.
+
+The real cause of both flips is a bug in the HF-rendered script's inline
+comparator: `is_floats([])` is vacuously True (`all()` on empty), which
+routes empty-expected comparisons into `np.allclose`, and numpy
+broadcasts shape (1,) against (0,) to an empty result — so
+`np.allclose([0], []) == True`. Any WRONG non-empty output vacuously
+PASSES when the expected value is an empty list/tuple. The evalplus
+package's internal comparator handles this correctly (fails both).
+
+So the reconciled A/B floor is: 2 timeouts (grader config) + 2 cases of
+the HF script over-crediting genuinely wrong solutions via the
+empty-expected bug. UPDATE 2's "suite skew" attribution for /62–/96 was
+wrong. Not yet ruled: whether to patch the comparator via process_docs
+(a string fix on doc["test"] in a local task variant) or accept +
+disclose the over-credit (it only fires on wrong-nonempty vs
+expected-empty).
