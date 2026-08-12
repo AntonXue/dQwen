@@ -100,13 +100,15 @@ def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
              cfg: DecodeConfig, stop_strings=None) -> GenOutput:
     """Block-diffusion decode of ONE prompt. `prompt_ids` is [1, L].
 
-    `stop_strings`: in append mode, after each block the generated text is checked
-    for these; the first hit ends decoding and truncates the output there. Because
-    a masked DLM does not self-terminate the way an AR model emits EOS, this is what
+    `stop_strings`: after each block completes, the decoded prefix is checked for
+    these; the first hit ends decoding and truncates the output there. Because a
+    masked DLM does not self-terminate the way an AR model emits EOS, this is what
     keeps generative tasks (humaneval's `\\ndef`/`\\nclass`, gsm8k's `\\n\\n`) from
-    running to the full canvas and ending mid-statement. It also saves the forwards
-    that would fill the rest of the canvas -- a large speedup at block_length=1.
-    Only meaningful in append mode (full/window see the whole canvas at once).
+    running to the full canvas and ending mid-statement. Works in append AND full
+    mode -- both reveal blocks left-to-right, so the completed prefix is contiguous
+    in either -- and saves the forwards that would denoise the rest of the canvas
+    (why full-canvas HumanEval measures ~110 forwards, not gen_length). Window mode
+    has no such prefix guarantee and is not checked.
     """
     if prompt_ids.dim() != 2 or prompt_ids.size(0) != 1:
         raise ValueError(f"bs=1 only; got prompt_ids of shape {tuple(prompt_ids.shape)}")

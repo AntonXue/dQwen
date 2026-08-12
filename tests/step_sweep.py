@@ -9,7 +9,10 @@ Loads the model ONCE and sweeps steps_per_block; inline base-test grading (subse
 ok, unlike evalplus.evaluate which needs the full set). Records pass@1 and the mean
 #forwards per problem (the compute axis) at each step budget.
 
-    python tests/step_sweep.py --model dqwen3.5-9b-base --steps 32,8,4,2 --limit 80
+    python tests/step_sweep.py --model dqwen3.5-9b-base --steps 32,8,4,2 --limit 164
+
+⚠ --limit defaults to 80 for quick probes, but first-80 HumanEval is ~19pp EASIER
+than the full set — never quote a subset number. Pass --limit 164 for real cells.
 """
 
 from __future__ import annotations
@@ -51,13 +54,10 @@ def grade(prompt, completion, test, entry_point, timeout=8):
         signal.signal(signal.SIGALRM, old)
 
 
-CODE_STOPS = ["\nclass ", "\ndef ", "\n#", "\nif __name__", "\nprint(",
-              "```", "<|endoftext|>", "<|im_end|>"]
-
-
-def _truncate(t):
-    cut = [t.find(s) for s in CODE_STOPS if s in t]
-    return t[:min(cut)] if cut else t
+# HumanEval's task-level stops. The model-end set (EOT_BASE + pad) comes from
+# dqeval.harness so this probe truncates under the SAME rules as the real
+# harness — a drifted copy here would silently measure a different protocol.
+HE_UNTIL = ["\nclass ", "\ndef ", "\n#", "\nif __name__", "\nprint("]
 
 
 def main() -> int:
@@ -86,10 +86,12 @@ def main() -> int:
     logging.disable(logging.WARNING)
     from evalplus.data import get_human_eval_plus
     from dqeval.adapter import load
+    from dqeval.harness import eot_stops, truncate_at
     from dqeval.config import DecodeConfig
     from dqeval.samplers import unified
 
     adapter = load(a.model, revision=a.revision)      # loaded ONCE
+    stops = HE_UNTIL + eot_stops(adapter)
     probs = list(get_human_eval_plus().items())[:a.limit]
     step_vals = [int(s) for s in a.steps.split(",")]
     tag = f"{a.model.replace('/', '_')}_{a.revision or 'main'}_{a.commit}"
@@ -116,9 +118,9 @@ def main() -> int:
         npass, fwds = 0, 0
         for tid, prob in probs:
             ids = adapter.encode(prob["prompt"])
-            out = unified.generate(adapter, ids, cfg, stop_strings=CODE_STOPS)
+            out = unified.generate(adapter, ids, cfg, stop_strings=stops)
             fwds += out.n_forward
-            ext = _truncate(out.text)
+            ext = truncate_at(out.text, stops)
             passed = grade(prob["prompt"], ext, prob["test"], prob["entry_point"])
             npass += passed
             sf.write(json.dumps({"steps_per_block": spb, "threshold": thr, "task_id": tid,

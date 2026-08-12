@@ -34,7 +34,7 @@ import hashlib
 import json
 import os
 import time
-from dataclasses import dataclass, asdict, replace
+from dataclasses import dataclass, asdict
 from pathlib import Path
 
 # --------------------------------------------------------------------------
@@ -147,31 +147,9 @@ def _doc_fingerprint(td):
 
 
 # --------------------------------------------------------------------------
-# model construction
+# model construction (imports deferred: manifest work on a login node must
+# not require torch/lm_eval)
 # --------------------------------------------------------------------------
-
-class RecordingLM:
-    """Deferred import wrapper: dqeval.harness pulls in torch + lm_eval."""
-    def __new__(cls, *a, **kw):
-        from dqeval.harness import DQEvalLM
-
-        class _Recording(DQEvalLM):
-            def __init__(self, *aa, **kkw):
-                super().__init__(*aa, **kkw)
-                self.records = []
-
-            def generate_until(self, requests):
-                outs = []
-                for r in requests:
-                    text, gen = self._generate_one(r)
-                    self.records.append(dict(
-                        task=r.task_name, doc_id=r.doc_id,
-                        raw=gen.text, final=text, n_forward=gen.n_forward))
-                    outs.append(text)
-                return outs
-
-        return _Recording(*a, **kw)
-
 
 def _build_lm(cell: Cell):
     bench = BENCH[cell.benchmark]
@@ -179,6 +157,7 @@ def _build_lm(cell: Cell):
         from lm_eval.models.huggingface import HFLM
         return HFLM(pretrained=cell.model, revision=cell.revision or "main",
                     dtype="bfloat16", batch_size=16, trust_remote_code=True)
+    from dqeval.harness import RecordingLM
     if cell.decode == "mc-nelbo":
         if bench["gen"] is not None:
             raise ValueError("mc-nelbo decode is only for MC benchmarks (mmlu)")
@@ -186,7 +165,8 @@ def _build_lm(cell: Cell):
     if bench["gen"] is None:
         raise ValueError(f"{cell.benchmark} is MC; use decode='mc-nelbo'")
     return RecordingLM(cell.model, revision=cell.revision,
-                       gen_length=bench["gen"], **parse_decode(cell.decode, bench["gen"]))
+                       gen_length=bench["gen"],
+                       **parse_decode(cell.decode, bench["gen"]))
 
 
 # --------------------------------------------------------------------------

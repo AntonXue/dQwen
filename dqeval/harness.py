@@ -44,6 +44,29 @@ from dqeval.config import DecodeConfig
 from dqeval import nelbo
 from dqeval.samplers import unified
 
+# Model-end stop strings, shared by every generation driver (this wrapper,
+# tests/step_sweep.py). ONE copy on purpose: these truncation rules move
+# scores, so two hand-maintained lists means two silently different protocols.
+# The code fence is included because base models with instruct-flavoured
+# pretraining (Dream) wrap completions in ```...``` + prose, which task-level
+# `until` strings do not catch; python source never contains ``` so stopping
+# there is safe.
+EOT_BASE = ("```", "<|im_end|>", "<|endoftext|>")
+
+
+def eot_stops(adapter):
+    """EOT_BASE plus the model's own pad token, if it has one."""
+    pad = adapter.tokenizer.pad_token
+    return list(EOT_BASE) + ([pad] if pad else [])
+
+
+def truncate_at(text, stops):
+    """Cut `text` at the first occurrence of any stop string."""
+    for st in stops:
+        if st and st in text:
+            text = text.split(st)[0]
+    return text
+
 
 @register_model("dqeval")
 class DQEvalLM(LM):
@@ -155,27 +178,39 @@ class DQEvalLM(LM):
         return [self._generate_one(r)[0] for r in requests]
 
     def _generate_one(self, r):
-        """(final_text, GenOutput) for one request — factored out so subclasses
-        (dqeval.grid.RecordingLM) can record raw text + n_forward per request."""
+        """(final_text, GenOutput) for one request — factored out so
+        RecordingLM below can record raw text + n_forward per request."""
         ctx = r.args[0]
         kw = r.args[1] if len(r.args) > 1 and isinstance(r.args[1], dict) else {}
-        until = list(kw.get("until", []) or [])
-        # also stop on the model's own end tokens (LLaDA emits these; masked DLMs
-        # that don't self-terminate rely on `until` instead) and on a markdown
-        # code fence: base models with instruct-flavoured pretraining (Dream)
-        # wrap completions in ```...``` + prose, which HumanEval's `until` does
-        # NOT catch -- the fence then makes the graded code unparseable. Python
-        # never contains a triple backtick, so stopping at ``` is safe.
-        eot = [t for t in ("```", "<|im_end|>", "<|endoftext|>",
-                           self.adapter.tokenizer.pad_token) if t]
+        # stops = the task's own `until` strings + the model-end set (masked
+        # DLMs don't self-terminate the way an AR model emits EOS).
+        stops = list(kw.get("until", []) or []) + eot_stops(self.adapter)
         ids = self.adapter.encode(ctx)
-        # EARLY-STOP during decode -- a masked DLM does not emit EOS, so without
-        # this it fills the whole canvas and ends mid-statement (syntax error).
+        # stop_strings early-stops the decode itself (saves the forwards that
+        # would fill the rest of the canvas); truncate_at is the post-hoc
+        # backstop covering full/window mode, which decodes the whole canvas.
         gen = unified.generate(self.adapter, ids, self.decode,
-                               stop_strings=until + eot)
-        text = gen.text
-        # backstop: truncate again post-hoc (covers full/window mode too)
-        for st in eot + until:
-            if st and st in text:
-                text = text.split(st)[0]
-        return text, gen
+                               stop_strings=stops)
+        return truncate_at(gen.text, stops), gen
+
+
+class RecordingLM(DQEvalLM):
+    """DQEvalLM that also keeps one record per generated request:
+    (task, doc_id, raw text, truncated text, n_forward). dqeval.grid dumps
+    these as the per-sample sidecar, which is what makes regrading
+    (HumanEval+/MBPP+, format studies) a CPU re-pass instead of a GPU rerun.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.records = []
+
+    def generate_until(self, requests):
+        out = []
+        for r in requests:
+            text, gen = self._generate_one(r)
+            self.records.append(dict(task=r.task_name, doc_id=r.doc_id,
+                                     raw=gen.text, final=text,
+                                     n_forward=gen.n_forward))
+            out.append(text)
+        return out
