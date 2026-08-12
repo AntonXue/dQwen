@@ -5,9 +5,9 @@ family alongside **LLaDA** and **Dream / Dream-Coder**, all in one environment.
 (SDAR loads for multiple-choice scoring, but generation needs a compat shim
 that does not exist yet; see `dqeval/families/sdar/`.)
 
-**To run an eval cell, start at `run.py` and `RUNBOOK.md`** — one flat
-entrypoint, `(model, revision, decode, benchmark, shard)` in, one
-provenance-stamped JSONL out.
+One flat entrypoint: `run.py`. One cell = (model, revision, decode, benchmark,
+shard) = one provenance-stamped JSONL. Cells are independent, idempotent, and
+safe to requeue — that is the whole system.
 
 Two things it is built to answer, for any model:
 
@@ -16,6 +16,74 @@ Two things it is built to answer, for any model:
 
 Model and sampler are orthogonal, so those are cells in a cross-product rather than
 one number per model.
+
+## Running an eval cell
+
+```bash
+PY=/ssd1/ayx98/miniconda3/envs/qwen35/bin/python     # the only env that works
+CUDA_VISIBLE_DEVICES=1 $PY run.py MODEL REVISION DECODE BENCHMARK [K/N]
+```
+
+Examples:
+
+```bash
+$PY run.py dqwen3.5-2b-base-v3 step50000-swa block32-tau0.8 gsm8k 2/8
+$PY run.py dqwen3.5-9b-base-v3 main block32-static-s8 humaneval
+$PY run.py Qwen/Qwen3.5-2B - ar gsm8k          # AR counterpart cell
+$PY run.py --list                               # models, benchmarks, schemes
+```
+
+SLURM form: `$PY run.py manifest.jsonl $SLURM_ARRAY_TASK_ID`, where the
+manifest is a JSONL of cells (`{"model": ..., "revision": ..., "decode": ...,
+"benchmark": ..., "shard": [k, n]}` per line). One array task per line;
+requeue failures freely — completed cells exit in seconds.
+
+### The five cell fields
+
+| field | values |
+|---|---|
+| MODEL | dqeval registry name (`--list`); for `ar` cells, a bare HF id |
+| REVISION | HF revision (`step25000-swa`, `step50000-swa`); `main` or `-` for default |
+| DECODE | `ar` · `mc-nelbo` (mmlu only) · `block32-static-sK` · `standard-static-sK` · `block32-tauT` · `standard-tauT` |
+| BENCHMARK | `humaneval` · `mbpp` · `mbpp-fence` · `gsm8k` · `math` · `mmlu` |
+| K/N | stripe shard: docs `[k::n]`, `k` in `0..n-1`. Omit for the whole set |
+
+Notes that prevent wrong numbers:
+
+- **Shards are stripes, never chunks** — benchmark difficulty drifts with
+  position, so "first N" is a biased sample. Never quote a partial shard's
+  aggregate; merge all N first.
+- **`gsm8k` and `math` should be sharded** (8 and 16 ways respectively);
+  code benchmarks run whole.
+- `mbpp` vs `mbpp-fence` are different prompts (different generations).
+  HumanEval+ is a regrade of saved generations (same prompts, denser
+  tests) — no new cells. MBPP+ is NOT: it uses EvalPlus's edited
+  sanitized prompts, so it needs its own generation runs
+  (`dqeval/evalplus_driver.py`).
+- Few-shot counts, gen lengths, greedy decoding, bs=1, and the math-only
+  attention backend are all fixed by the cell — nothing to remember.
+
+### Outputs
+
+`_runs/grid_v1/<benchmark>/<model>@<revision>__<benchmark>__<decode>__sKofN.jsonl`
+
+One file per cell, four record kinds:
+
+- `meta` — the cell, launch time, resolved HF repo/revision, full decode
+  config, doc-set fingerprint, library versions, wall clock
+- `sample` — per generated doc: raw text, truncated text, n_forward
+- `lm_eval_sample` — per doc: the graded metrics
+- `summary` — aggregate results; **its presence is the completeness
+  sentinel** (reruns skip finished cells by checking it)
+
+`_runs/README.md` is the directory contract: `_runs` holds raw artifacts
+only (stores `grid_v1/` + `regrades/`, plus stamped launch dirs); coalescing
+is `python summarize.py [filter]`, read-only.
+
+### GPU etiquette on this box
+
+Check `nvidia-smi` first; GPUs 0/3 are usually someone's training run.
+A 2B HumanEval cell takes ~20 s/doc-shard; 9B GSM8K shards run hours.
 
 ## Design in one paragraph
 
@@ -29,15 +97,15 @@ a separate code path — a claim that `tests/parity/` is there to keep honest.
 
 ```python
 from dqeval.adapter import load
-from dqeval.config import DecodeConfig, get_preset
+from dqeval.config import DecodeConfig
 from dqeval.samplers import unified
 
 m = load("llada-8b-base")                      # compat shims applied automatically
 out = unified.generate(m, m.encode("def add(a, b):\n    "),
                        DecodeConfig(gen_length=32, block_length=32,
-                                    steps_per_block=32, mode="full"))
+                                    steps_per_block=32))
 
-ours = load("dqwen3.5-2b-base", revision="step30000-swa")   # checkpoints are HF revisions
+ours = load("dqwen3.5-2b-base-v3", revision="step50000-swa")   # checkpoints are HF revisions
 ```
 
 ## Why one environment is possible
@@ -69,5 +137,6 @@ labelled as such.
 
 ## Status
 
-Adapters and a basic portable sampler are working for all four families. The lm-eval
-harness layer is next. See `_claude/` for the running log and full evidence.
+All four families run through the grid (`run.py`); the runner passed its
+deploy gates 2026-08-12 (shard-merge lossless, template fidelity, 10/10
+spot check). See `_claude/` for the running log and full evidence.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""run.py — the one entrypoint for eval cells. Full guide: RUNBOOK.md.
+"""run.py — the one entrypoint for eval cells. Full guide: README.md.
 
   python run.py MODEL REVISION DECODE BENCHMARK [K/N]     one cell
   python run.py manifest.jsonl INDEX                      one manifest row

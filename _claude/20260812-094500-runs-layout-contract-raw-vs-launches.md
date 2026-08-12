@@ -7,7 +7,7 @@
 > second top-level tree — a briefly-created `_launches/` split was reverted
 > and everything repaired IN `_runs`.
 
-## The contract (also in RUNBOOK "Directory contract" + `_runs/README.md`)
+## The contract (also in `_runs/README.md`; operator guide in the repo README)
 
 `_runs/` contains exactly two kinds of entries:
 
@@ -50,4 +50,5 @@ went to `grid_v1/*/Qwen_*__ar__s0of1.jsonl`. That was the source of the
 - `dqeval/grid.py`: meta records now carry `launched_at` (older cells
   lack it; `summarize.py` prints `-`).
 - `RUNBOOK.md`: also fixed a wrong claim (MBPP+ is NOT a regrade — edited
-  sanitized prompts, needs its own generations).
+  sanitized prompts, needs its own generations). [RUNBOOK merged into
+  README.md later the same day; the traps live there now.]

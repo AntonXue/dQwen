@@ -40,8 +40,7 @@ models on HE. τ grid for the campaign: {0.5, 0.6, 0.7, 0.8, 0.9}.
 ## UPDATE 2026-08-12 (layout contract): lane paths in this doc have moved
 
 `_runs` now holds raw artifacts only, with every launch dir carrying a
-`yyyymmdd-hhmmss` stamp (see `_runs/README.md` + RUNBOOK "Directory
-contract"). Mapping for paths named in this doc:
+`yyyymmdd-hhmmss` stamp (see `_runs/README.md` + README "Outputs"). Mapping for paths named in this doc:
 
 - `_runs/smoke_tau/`    -> `_runs/20260811-231456-tau-smoke-humaneval/`
 - `_runs/ar_overnight/` -> `_runs/20260812-022548-ar-baselines-bare-qwen/`
