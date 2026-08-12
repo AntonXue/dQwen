@@ -7,13 +7,13 @@ inherited identity and there is no eval-side shift. Confirmed by reading their
 """
 
 from typing import Optional
+
 import torch
-from .adapter import (ModelAdapter, ModelSpec,
-                           assert_finite_rope, materialize, resolve, tokenizer)
 import torch.nn.functional as F
-from .adapter import ModelAdapter
-from .samplers import GenOutput
-from .samplers import DecodeConfig
+
+from .adapter import (ModelAdapter, ModelSpec, assert_finite_rope,
+                      materialize, resolve, tokenizer)
+from .samplers import DecodeConfig, GenOutput
 
 
 class LLaDAAdapter(ModelAdapter):
@@ -37,17 +37,11 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return LLaDAAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-"""LLaDA compat shims for transformers 5.13.
-
-PRINCIPLE: a shim RESTORES a behaviour transformers 4.x had. It never invents one.
-Each shim below records how the 4.x behaviour was established -- read out of the
-native environment, not guessed.
-
-VERIFIED: with these three shims and torch held fixed, LLaDA-8B-Base forward output
-under transformers 5.13 is BITWISE IDENTICAL to transformers 4.57 (max|d| = 0.00e+00
-over the probe prompts). The residual drift originally observed was 100% attributable
-to torch 2.5.1 -> 2.7.1, and 0% to transformers. See the port-evidence _claude doc (20260721-184634).
-"""
+# Compat shims for transformers 5.13. PRINCIPLE: a shim RESTORES verified
+# 4.x behaviour, never invents one. VERIFIED: at fixed torch, shimmed
+# forward output is BITWISE identical to tf 4.57 (max|d| = 0.00e+00); all
+# residual drift was torch 2.5->2.7, none transformers. Receipts:
+# port-evidence _claude doc (20260721-184634).
 
 
 _APPLIED = "_dqeval_llada_shims"
@@ -85,31 +79,22 @@ def apply_shims(cfg, klass) -> list[str]:
     return log
 
 
-"""LLaDA's own sampler, vendored from `generate.py` (ML-GSAI/LLaDA @ 96441d4).
-
-This is the "sampler shipped with LLaDA" path: the algorithm is reproduced exactly,
-so a number produced here is theirs, not ours. `tests/test_llada_sampler.py`
-runs this against the unmodified upstream file and requires token-identical output.
-
-TOUCHUPS -- the complete list, each one behaviour-preserving:
-
-  1. `-np.inf` -> `float("-inf")`. Identical value (np.inf is a plain Python float);
-     drops the numpy dependency so the repo stays torch-only.
-  2. Signature adapted to the dqeval sampler contract
-     `generate(adapter, prompt_ids, cfg) -> GenOutput`. The body is untouched.
-  3. Logits come from `adapter.raw_logits` rather than `model(x).logits`. For LLaDA
-     these are the same thing -- it is position-aligned and needs no shift -- but
-     native samplers use raw_logits by convention, since a family that shifts
-     internally (Dream) must not receive canonicalised logits.
-
-DELIBERATELY NOT CHANGED, though our unified engine does it differently:
-
-  * LLaDA does NOT suppress the MASK id before the argmax. Our engine does. Left
-    faithful here; if the two ever diverge on a prompt, this is the first suspect.
-  * Confidence is read from softmax of the RAW logits, before temperature. Faithful.
-  * `add_gumbel_noise` returns logits unchanged at temperature 0, so greedy works
-    without a division -- unlike SDAR's script, which cannot express greedy at all.
-"""
+# THE ORACLE: LLaDA's own sampler, vendored verbatim from generate.py
+# (ML-GSAI/LLaDA @ 96441d4; bitwise-verified against upstream in July).
+# tests/test_llada_sampler.py diffs the unified engine against this,
+# token-for-token -- it is reference code, not an eval path.
+#
+# TOUCHUPS (complete list, each behaviour-preserving):
+#   1. -np.inf -> float("-inf") (identical value; keeps the repo torch-only)
+#   2. signature adapted to generate(adapter, prompt_ids, cfg) -> GenOutput;
+#      body untouched
+#   3. logits via adapter.raw_logits (same tensor for LLaDA -- no shift)
+# DELIBERATELY NOT CHANGED, though the unified engine differs:
+#   * no MASK-id suppression before argmax (ours suppresses) -- first
+#     suspect if the gate ever fails
+#   * confidence from softmax of RAW logits, before temperature
+#   * add_gumbel_noise is a no-op at temperature 0, so greedy needs no
+#     division
 
 
 NEG_INF = float("-inf")

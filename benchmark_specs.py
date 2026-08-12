@@ -106,8 +106,7 @@ def plus_process_docs(dataset):
 # ---- humaneval
 # HumanEval (164 problems; completion-style: the prompt holds the def, the
 # model writes the body). Frozen from pinned lm-eval 0.4.8's `humaneval` task;
-# fidelity-gated byte-identical 2026-08-12. Grading via _grading (10s/problem,
-# parallel).
+# fidelity-gated byte-identical 2026-08-12. Graded by the section above.
 HUMANEVAL = {
     "task": "humaneval",
     "dataset_path": "openai/openai_humaneval",
@@ -134,8 +133,8 @@ HUMANEVAL = {
 # HumanEval+ — same 164 problems and prompts as humaneval, EvalPlus's ~78x
 # denser test suite (dataset field `test` carries the full suite). Task name
 # stays `humaneval_plus_sound` for store continuity: "sound" = the rendered
-# comparator's empty-expected bug is patched at load time (see
-# _grading.plus_process_docs).
+# comparator's empty-expected bug is patched at load time (plus_process_docs
+# above).
 HUMANEVAL_PLUS = {
     "task": "humaneval_plus_sound",
     "dataset_path": "evalplus/humanevalplus",
@@ -163,9 +162,9 @@ HUMANEVAL_PLUS = {
 # MBPP (500 problems, [BEGIN]/[DONE] scaffold, 3-shot). Frozen from pinned
 # lm-eval 0.4.8's `mbpp` task; fidelity-gated byte-identical 2026-08-12.
 #
-# FEWSHOT_SAMPLES is the protocol invariant shared by every MBPP variant
-# (mbpp_fence, mbpp_plus import it): the 3 worked examples must be identical
-# across variants or a prompt-format probe becomes a two-variable experiment.
+# MBPP_FEWSHOT_SAMPLES is the protocol invariant shared by every MBPP
+# variant below: the 3 worked examples must be identical across variants or
+# a prompt-format probe becomes a two-variable experiment.
 MBPP_FEWSHOT_SAMPLES = [{'task_id': 2,
   'text': 'Write a function to find the similar elements from the given two tuple '
           'lists.',
@@ -230,12 +229,11 @@ MBPP = {
 
 # ---- mbpp-plus
 # MBPP+ — EvalPlus's MBPP-sanitized set (378 problems, edited prompts, ~34x
-# denser tests) under OUR MBPP protocol: the same [BEGIN]/[DONE] scaffold and
-# the same frozen 3-shot examples (imported from mbpp.py — a protocol
-# invariant, not a convenience).
+# denser tests) under OUR MBPP protocol: the same [BEGIN]/[DONE] scaffold
+# and the same MBPP_FEWSHOT_SAMPLES.
 #
 # Task name stays `mbpp_plus_full` for store continuity, and as a reminder of
-# WHY this file exists: lm-eval's stock `mbpp_plus` grades against
+# WHY this spec exists: lm-eval's stock `mbpp_plus` grades against
 # test_list[0..2] — the three ORIGINAL asserts — and never executes the plus
 # suite in the dataset's `test` field. This config targets the real suite.
 #
@@ -272,8 +270,7 @@ MBPP_PLUS = {
 # (task name `mbpp_ticks`). A LABELLED format-sensitivity variant, never the
 # Table-4 MBPP column: the fence's sign tracks code-instruction exposure
 # (dQwen +4/+6pp, Dream-Coder +0.20, LLaDA -2.40) because the task->fenced-
-# solution pattern is corpus-dependent. Same frozen 3-shot examples as mbpp.py
-# (protocol invariant).
+# solution pattern is corpus-dependent.
 MBPP_FENCE = {
     "task": "mbpp_ticks",
     "dataset_path": "google-research-datasets/mbpp",
@@ -302,14 +299,12 @@ MBPP_FENCE = {
 # the fourth quadrant of the prompt-format probe:
 #
 #                  [BEGIN]/[DONE]      ```python fence
-#     MBPP-500     mbpp.py             mbpp_fence.py
-#     MBPP+-378    mbpp_plus.py        THIS FILE
+#     MBPP-500     MBPP                MBPP_FENCE
+#     MBPP+-378    MBPP_PLUS           MBPP_PLUS_FENCE
 #
-# Same sanitized problems and real plus suite as mbpp_plus.py, same frozen
-# 3-shot examples (protocol invariant), only the scaffold differs — so the
-# fence effect measured on MBPP (corpus-dependent: dQwen +4/+6pp, LLaDA
-# -2.40) can be re-read under ~34x denser tests. A LABELLED
-# format-sensitivity variant, never the Table-4 MBPP+ column.
+# Only the scaffold differs from MBPP_PLUS, so the fence effect above can be
+# re-read under ~34x denser tests. LABELLED variant, never the Table-4
+# MBPP+ column.
 MBPP_PLUS_FENCE = {
     "task": "mbpp_plus_ticks",
     "dataset_path": "evalplus/mbppplus",

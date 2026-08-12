@@ -16,21 +16,16 @@ Scripts import the same machinery: `from run import Cell, run_cell`.
 
 Two halves below the CLI plumbing:
 
-  THE LM PLUGIN — DQEvalLM registers with lm-eval as model type "dqeval":
-  loglikelihood = MC-NELBO through `adapter.logits` (canonical surface; the
-  shared-forward fast path for single-token options is bitwise-identical to
-  per-option scoring), generate_until = the bs=1 block-diffusion sampler
-  with stop strings. RecordingLM adds the per-doc sidecar (raw text,
-  n_forward) that makes regrades CPU re-passes. MASK is NOT suppressed in
-  loglikelihood (parity with LLaDA's reference); cfg_scale stays 0.
+  THE LM PLUGIN — DQEvalLM (lm-eval model type "dqeval"): loglikelihood via
+  MC-NELBO on the canonical logit surface, generate_until via the bs=1
+  block-diffusion engine. RecordingLM adds the per-doc sidecar (raw text,
+  n_forward) that makes regrades CPU re-passes.
 
-  THE GRID — benchmark configs come from benchmark_specs.py (one section
-  per benchmark, frozen from pinned lm-eval, held to stock by
-  tests/task_freeze_gate.py); shards are stripes (docs[k::n]), NEVER
-  contiguous chunks (first-80 HumanEval is ~19pp easier than the full set);
-  every cell dumps raw generations so regrades never need a GPU; a cell is
-  complete iff its file ends with the summary record, which is what makes
-  reruns idempotent and requeues free.
+  THE GRID — benchmark configs from benchmark_specs.py (frozen to pinned
+  lm-eval; tests/task_freeze_gate.py enforces); shards are STRIPES
+  docs[k::n], never chunks (first-80 HumanEval runs ~19pp easy); a cell is
+  complete iff its file ends with the summary record, which makes reruns
+  idempotent and requeues free.
 """
 
 import os
@@ -130,13 +125,11 @@ class DQEvalLM(LM):
         mask_id = self.adapter.mask_id
         out = [None] * len(requests)
 
-        # FAST PATH. Multiple-choice tasks issue one request per (question, option)
-        # with the SAME context and single-token continuations (mmlu/arc letters).
-        # The masked canvas [ctx, MASK] is then identical across a question's options,
-        # so one forward serves them all -- we just read a different vocab index per
-        # option. This is the exact mc_num=1 MASK-slot marginal, provably identical to
-        # scoring each option with its own forward, and still bs=1 (no batch-invariance
-        # exposure). It removes the ~4x redundant forwards multiple-choice would spend.
+        # FAST PATH: single-token options (mmlu/arc letters) share one
+        # forward per question -- the canvas [ctx, MASK] is identical across
+        # options, so we read a different vocab index each. Exactly the
+        # mc_num=1 MASK-slot marginal (bitwise-equal to per-option scoring,
+        # see below), still bs=1; saves the ~4x redundant forwards.
         groups: dict[tuple, list[tuple[int, int]]] = {}
         for i, r in enumerate(requests):
             ctx, cont = self._prep(r)
@@ -156,9 +149,8 @@ class DQEvalLM(LM):
             canvas = torch.tensor([*ctx, mask_id], device=dev)[None, :]
             # position-aligned logit at the single masked (answer) slot
             logits = self.adapter.logits(canvas)[0, len(ctx)]
-            # Use the SAME op nelbo uses (F.cross_entropy on the native-dtype logits),
-            # not log_softmax(logits.float()), so the shared-forward result is BITWISE
-            # identical to scoring each option through mc_nelbo. ll = -CE.
+            # SAME op as mc_nelbo (F.cross_entropy, native dtype) so the
+            # shared forward is BITWISE identical to per-option scoring.
             toks = torch.tensor([t for _, t in items], device=dev)
             ce = torch.nn.functional.cross_entropy(
                 logits.unsqueeze(0).expand(len(items), -1), toks, reduction="none")
@@ -293,10 +285,9 @@ def _build_task_dict(cell: Cell):
 
 
 def _restore_names(td):
-    # lm-eval's loader pops "task" out of a dict config and never writes it
-    # back onto the task object (its python-class branch does the same repair
-    # itself, self-described as "very scuffed"). Without this, unregistered
-    # tasks run as [Task: None] and result aliasing crashes.
+    # lm-eval's loader pops "task" from dict configs and never writes the
+    # name back; unregistered tasks then run as [Task: None] and result
+    # aliasing crashes. (Their python-class branch does this same repair.)
     for key, v in td.items():
         if isinstance(v, dict):
             _restore_names(v)

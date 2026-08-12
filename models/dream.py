@@ -1,39 +1,28 @@
-"""Dream / Dream-Coder adapter -- the one family that needs an eval-side logit shift.
+"""Dream / Dream-Coder adapter -- AR-aligned raw output (the shift family).
 
-Dream's raw output is AR-aligned: `logits[:, i]` predicts position i+1. Every
-consumer in their own codebase corrects for this immediately after each forward,
-with the identical expression, in two independent places:
+Dream's raw logits[:, i] predict position i+1; their own code corrects this
+after every forward with one expression, in two independent places
+(generation_utils.py:421, eval/eval.py:354):
 
-    generation_utils.py:421-422   (their sampler)
-    eval/eval.py:354              (their lm-eval wrapper)
-        logits = torch.cat([logits[:, :1], logits[:, :-1]], dim=1)
+    logits = torch.cat([logits[:, :1], logits[:, :-1]], dim=1)
 
-So the shift belongs to the CONSUMER, and we put it in `_canonicalize`. The
-consequence to keep in mind:
-
-    portable samplers -> adapter.logits()      shift applied here, once
-    Dream's native sampler -> adapter.raw_logits()   it shifts internally, itself
-
-Feeding canonicalised logits to Dream's native sampler would apply the shift twice:
-a silent off-by-one with no exception. That is the whole reason the two surfaces are
-separate methods.
+`_canonicalize` applies exactly that (double-shift hazard: see the adapter
+contract docstring).
 
 NATIVE SAMPLER: ships INSIDE their HF repo at the pinned revision --
-`model.diffusion_generate` works on the loaded model (the generation-
-config shim keeps it functional). We deliberately do not wrap it: the
-paper re-measures Dream under the house protocol, and the published-
-number caveat is handled by citation (the Table-4 tripwire).
+`model.diffusion_generate` works on the loaded model (shim 4 keeps it
+functional). Deliberately not wrapped: the paper re-measures Dream under
+the house protocol; the published-number caveat is the Table-4 tripwire.
 """
 
-from typing import Optional
-import torch
-from .adapter import (ModelAdapter, ModelSpec,
-                           assert_finite_rope, materialize, resolve, tokenizer)
 import sys
+from typing import Optional
+
+import torch
 from transformers.generation.configuration_utils import GenerationConfig
-from .adapter import ModelAdapter
-from .samplers import GenOutput
-from .samplers import DecodeConfig
+
+from .adapter import (ModelAdapter, ModelSpec, assert_finite_rope,
+                      materialize, resolve, tokenizer)
 
 
 class DreamAdapter(ModelAdapter):
@@ -66,21 +55,12 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return DreamAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-"""Dream compat shims for transformers 5.13.
-
-PRINCIPLE: a shim RESTORES a behaviour transformers 4.x had; it never invents one.
-All four below were verified against transformers 4.57.1 source or measured in the
-native environment. None is invented.
-
-VERIFIED: with these shims and torch held fixed, Dream's forward output under
-transformers 5.13 is BITWISE IDENTICAL to transformers 4.57, and 6 of 7 sampler
-configurations reproduce native token-for-token (the 7th differs only at
-temperature > 0, where torch's RNG stream changed between 2.5.1 and 2.7.1).
-
-Shim 3 is the dangerous one: without it the model loads and forwards with NO
-exception and returns noise (argmax agreement 20-38% vs native). It is the reason
-golden fixtures are mandatory rather than nice to have.
-"""
+# Compat shims for transformers 5.13. PRINCIPLE: a shim RESTORES verified
+# 4.x behaviour, never invents one. VERIFIED: at fixed torch, shimmed
+# forward output is BITWISE identical to tf 4.57, and 6/7 native sampler
+# configs reproduce token-for-token (the 7th differs only at temperature>0,
+# a torch 2.5->2.7 RNG change). Shim 3 is the silent one -- without it the
+# model returns noise with no exception (argmax agreement 20-38%).
 
 
 def _rope_default_4x(config=None, device=None, seq_len=None, **rope_kwargs):

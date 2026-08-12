@@ -1,26 +1,21 @@
-"""The model contract.
+"""The model contract: everything a decode engine needs from a model.
 
-A portable sampler needs exactly one thing from a model: logits for a canvas.
-Everything else -- mask ids, whether the family needs an eval-side logit shift,
-which transformers-5 compat shims to install, chat formatting -- is the adapter's
-problem. That is what keeps one decode engine model-agnostic.
+A sampler needs one thing -- logits for a canvas. Mask ids, compat shims,
+logit alignment: all the adapter's problem, which is what keeps one engine
+model-agnostic.
 
 TWO logit surfaces, and the distinction is load-bearing:
 
-  raw_logits(ids)  exactly what the model returns.
-                   NATIVE samplers use this -- they carry their own shift.
-  logits(ids)      canonical: logits[:, i] is the distribution FOR position i.
-                   PORTABLE samplers use this, so one engine runs on any family.
+  raw_logits(ids)  exactly what the model returns (reference code uses this).
+  logits(ids)      canonical: logits[:, i] is the distribution FOR position i
+                   (everything we build reads this one).
 
-TWO families have AR-aligned raw output -- Dream and CoDA -- and both override
-`_canonicalize` with `cat([l[:, :1], l[:, :-1]])`, the same expression each of
-their own samplers applies once after every forward. Running either family's
-native sampler on canonicalised logits would double-shift it: silent,
-off-by-one, no exception. That is precisely why the two surfaces are separate
-methods rather than a config flag.
+Dream and CoDA emit AR-aligned raw output; their `_canonicalize` applies the
+same one-line shift (`cat([l[:, :1], l[:, :-1]])`) their own samplers apply.
+Shifting twice -- or not at all -- is a silent off-by-one, which is why
+alignment is a method pair, not a config flag.
 """
 
-import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,7 +35,6 @@ class ModelSpec:
     family: str
     mask_id: int
     pad_id: Optional[int] = None
-    auto_class: str = "AutoModel"
     notes: str = ""
 
 
@@ -97,13 +91,9 @@ class ModelAdapter(ABC):
         return self.tokenizer.decode(ids, skip_special_tokens=skip_special_tokens)
 
 
-"""Thin helpers over HuggingFace dynamic-module loading.
-
-Every comparator ships its modeling code via `trust_remote_code`, so we resolve the
-class through the dynamic-module machinery rather than the Auto* factories. That
-gives each family a hook to install its compat shims on the CLASS before any
-weights are materialised -- which is where several of them have to happen.
-"""
+# HF dynamic-module loading. Comparators ship modeling code via
+# trust_remote_code; resolving the CLASS before weights materialise is the
+# hook each family uses to install compat shims at the moment they must land.
 
 
 def resolve(repo: str, revision: Optional[str] = None, auto_class: str = "AutoModel"):
@@ -130,17 +120,14 @@ def materialize(klass, repo: str, cfg, revision: Optional[str] = None,
 
 
 def assert_finite_rope(model) -> None:
-    """Guard against the tf5 meta-device buffer trap.
+    """Guard against the tf5 meta-device buffer trap (the canonical writeup).
 
-    transformers>=5 builds models under a bare `torch.device("meta")`. Rotary
-    `inv_freq` is a non-persistent buffer, so it is absent from the checkpoint and
-    materialises as uninitialised memory. tf5 repairs this inside the BASE
-    `PreTrainedModel._init_weights`, but any remote-code model that OVERRIDES
-    `_init_weights` (Dream and SDAR both do) never reaches that branch.
-
-    The failure is silent: the model loads, forwards, and returns correctly-shaped
-    logits that are noise. Measured cost when unrepaired: argmax agreement 20-40%
-    against the native environment. Cheap to assert, so we always assert.
+    transformers>=5 builds models on device("meta"); non-persistent buffers
+    (rotary `inv_freq`) are absent from checkpoints and can materialise as
+    garbage. tf5's repair lives in the base `_init_weights` -- remote-code
+    models that override it never reach the repair. The failure is SILENT:
+    correct shapes, noise logits (measured argmax agreement 20-40% vs
+    native). Cheap to assert, so always asserted, every family.
     """
     bad = [n for n, b in model.named_buffers()
            if n.endswith("inv_freq") and not torch.isfinite(b).all()]
@@ -152,30 +139,15 @@ def assert_finite_rope(model) -> None:
         )
 
 
-"""Upstream provenance ledger.
-
-The pins below are DATA, not plumbing: they record which upstream commit
-each reference implementation was vendored/verified from, and which
-implementation produced which published table. The clone-and-run escape
-hatch that used to live here was pruned 2026-08-12 along with SDAR (its
-only real use case); to re-run anything upstream, clone the repo at its
-pin and put it on sys.path by hand.
-"""
-
-
-# Pinned upstream commits, with each repo's role and -- critically -- WHICH
-# implementation produced WHICH published table. Unpinned upstream is worse
-# than no upstream: JetEngine's dynamic_threshold default has already
-# drifted 0.9 -> 0.75 under research-numbered commits.
-#   LLaDA published via lm-eval (their own register_model): reproducible.
-#   Dream published via a VENDORED, modified lm-eval 0.4.8
-#     (eval_instruct/lm_eval) -- same version we pin, but their
-#     modifications have never been diffed; treat their harness numbers
-#     accordingly.
-#   SDAR's published table came from NEITHER shipped sampler but from
-#     LMDeploy (block=4, steps=4, low_confidence_dynamic, tau=0.9, greedy)
-#     -- family pruned 2026-08-12; story preserved in the port-evidence
-#     _claude docs. Pins kept for the manuscript's adjacent-decode prose.
+# Upstream provenance ledger -- DATA, not plumbing: which commit each
+# reference was vendored/verified from, and WHICH implementation produced
+# WHICH published table. Unpinned upstream is worse than none (JetEngine's
+# dynamic_threshold default drifted 0.9 -> 0.75 under research commits).
+#   LLaDA published via their own lm-eval model: reproducible.
+#   Dream published via a VENDORED modified lm-eval 0.4.8, never diffed.
+#   SDAR published via LMDeploy (block=4, steps=4, tau=0.9 greedy), which
+#     neither of their shipped samplers can express; family pruned
+#     2026-08-12, pins kept for the manuscript's adjacent-decode prose.
 UPSTREAM_PINS = {
     "LLaDA": "96441d4",        # ML-GSAI/LLaDA: generate.py (native sampler),
                                #   EVAL.md (published decode + task configs),

@@ -1,9 +1,9 @@
-"""Decode configuration: the one knob space every sampler is parameterised by.
+"""Decoding and scoring: DecodeConfig, the block-diffusion engine, MC-NELBO.
 
-The claim this file encodes is that LLaDA, Dream and dQwen do not need
-different decode APIs -- their published samplers are points in the space
-below, and the parity tests (`tests/test_llada_sampler.py`, `tests/test_nelbo_vs_llada.py`) holds our engine token-identical to theirs at
-the matching configuration.
+One knob space for every decode: published recipes are points in
+DecodeConfig, and tests/test_llada_sampler.py holds the engine
+token-identical to LLaDA's published sampler at the matching point
+(tests/test_nelbo_vs_llada.py does the same for the likelihood estimator).
 """
 
 from dataclasses import dataclass
@@ -21,10 +21,8 @@ Commit = Literal["static", "dynamic"]
 class DecodeConfig:
     """All decode knobs. Samplers read what they need and ignore the rest.
 
-    Note `temperature == 0.0` means ARGMAX, never `logits / 0`. Several upstream
-    reference scripts divide unconditionally and so cannot express greedy at all
-    (SDAR's `generate.py` is the clearest case) -- we treat greedy as a first-class
-    branch instead, and record it as a touchup wherever it diverges from upstream.
+    `temperature == 0.0` means ARGMAX, never `logits / 0` (some upstream
+    reference scripts divide unconditionally and cannot express greedy).
     """
 
     # canvas
@@ -71,29 +69,15 @@ class DecodeConfig:
     def num_blocks(self) -> int:
         return self.gen_length // self.block_length
 
-"""The portable sampler: one block-diffusion engine, any family.
-
-Deliberately basic for now -- correctness first, generality later. It talks to a
-model only through `adapter.logits(ids)`, so it runs unchanged on every
-registered family. That is the whole point of the adapter contract.
-
-BATCH SIZE 1, by construction. Not a limitation we impose but the regime the
-reference implementations live in: LLaDA's `generate.py` hardcodes
-`torch.full((1, ...))` (as did SDAR's, before that family was pruned). Batching
-would itself be a divergence from upstream with no counterpart to parity-test
-against. It also sidesteps our own champion decode's batch non-invariance, where
-a problem's canvas position depends on its batchmates (measured 2-5pp swings).
-Parallelism belongs above this function: map over prompts, shard over GPUs.
-"""
-
-
 @dataclass
 class GenOutput:
-    """One generation. bs=1 by construction -- see `generate` below."""
+    """One generation (bs=1 -- see `generate`)."""
 
     gen_ids: torch.Tensor
     text: str
     n_forward: int = 0
+
+
 NEG_INF = float("-inf")
 
 
@@ -246,32 +230,17 @@ def generate(adapter, prompt_ids: torch.Tensor,
     return GenOutput(gen_ids=gen_ids, text=text, n_forward=n_forward)
 
 
-"""Monte-Carlo NELBO log-likelihood for masked diffusion LMs.
-
-A masked DLM has no AR chain-rule likelihood, so "loglikelihood" is a MODELLING
-CHOICE, not a well-defined quantity. LLaDA, Dream and Dream-Coder all use the
-MC-NELBO estimator below, so we use it too -- that is what makes our multiple-choice
-numbers comparable to theirs rather than merely adjacent to them.
-
-    log p(answer | prompt)  ~=  - E_t [ (1/p_mask) * sum_{i masked} CE_i ]
-
-over `mc_num` Monte-Carlo mask draws. `mc_num=1` is EXACT for single-token targets
-(MMLU/ARC letters, per LLaDA App. B.5); ~128 for multi-token.
-
-`forward_process` is a BYTE-FAITHFUL copy of LLaDA's reference implementation --
-same RNG operations in the same order -- so a seeded run reproduces their number
-exactly. That is not stylistic fidelity, it is the correctness gate: verified to
-reproduce LLaDA-8B-Base at -40.403095 vs -40.403095, diff 0.00e+00.
-See tests/test_nelbo_vs_llada.py.
-
-NO eval-side logit shift is applied here. The estimator reads the masked-position
-logit directly, which requires POSITION-ALIGNED logits -- so callers must pass
-`adapter.logits` (canonical), never `adapter.raw_logits`. For Dream that means the
-shift is applied exactly once, which is precisely what their own eval wrapper does
-before computing loglikelihood (eval/eval.py:354).
-
-Originally `ablations/paper_evals/mc_nelbo.py` in the ADLMC research repo.
-"""
+# MC-NELBO log-likelihood. A masked DLM has no AR chain-rule likelihood, so
+# "loglikelihood" is a MODELLING CHOICE; LLaDA/Dream/Dream-Coder all use this
+# estimator, which is what makes our multiple-choice numbers comparable:
+#
+#     log p(answer | prompt) ~= -E_t[(1/p_mask) * sum_{i masked} CE_i]
+#
+# over mc_num mask draws (mc_num=1 is EXACT for single-token targets, LLaDA
+# App. B.5). Callers MUST pass `adapter.logits` (position-aligned), never
+# raw_logits -- for Dream that applies the shift exactly once, matching their
+# own eval wrapper (eval/eval.py:354). Gate: tests/test_nelbo_vs_llada.py
+# (reproduced LLaDA-8B-Base at -40.403095 exactly, diff 0.00e+00).
 
 
 def forward_process(batch: torch.Tensor, prompt_index: torch.Tensor, mask_id: int):
@@ -310,7 +279,7 @@ def forward_process(batch: torch.Tensor, prompt_index: torch.Tensor, mask_id: in
 def mc_nelbo_loglikelihood(logits_fn: Callable[[torch.Tensor], torch.Tensor],
                            prompt: torch.Tensor, answer: torch.Tensor, *,
                            mc_num: int = 128, batch_size: int = 16,
-                           mask_id: int = 248061) -> float:
+                           mask_id: int) -> float:
     """log p(answer | prompt). `prompt` and `answer` are 1-D LongTensors.
 
     `logits_fn(input_ids[B, L]) -> logits[B, L, V]`, position-aligned.

@@ -1,41 +1,29 @@
 """CoDA adapter -- Salesforce's masked DLM adapted from Qwen3-1.7B.
 
-WHY THIS FAMILY MATTERS: CoDA-v0-Base starts from the SAME backbone as our
-dQwen3-1.7B control (`Qwen/Qwen3-1.7B`, hidden 2048 / 28 layers / vocab 151936,
-all confirmed against its config). Every other comparator differs from us in
-backbone AND data AND budget; CoDA differs in data and budget only, so it is the
-closest thing available to a recipe-isolating comparison.
+WHY IT MATTERS: same backbone as our dQwen3-1.7B control (confirmed against
+its config), so CoDA is the closest available recipe-isolating comparison --
+it differs in data and budget only.
 
-CoDA is the SECOND family whose raw output is AR-aligned (Dream is the other):
-`modeling_coda.py` returns `lm_head(hidden)` with the comment "we shift logits at
-inference time", and their own sampler does exactly
+Second AR-aligned family (Dream is the other): their code shifts with the
+same one-line cat after every forward (generation_utils.py), and
+`_canonicalize` applies it (double-shift hazard: see the adapter contract).
 
-    logits = torch.cat([logits[:, :1], logits[:, :-1]], dim=1)   # generation_utils.py
-
-immediately after every forward -- byte-identical to Dream's expression. So
-`_canonicalize` applies that shift and NATIVE samplers must use `raw_logits`;
-routing a native CoDA sampler through `logits()` would double-shift silently.
-
-Two further facts worth recording, both read out of their source rather than
-assumed:
-  * CoDA is genuinely BIDIRECTIONAL. `CoDAModel.forward` builds a
-    `torch.triu(-inf)` causal mask and threads it down, but `AttentionModule`
-    never passes it to `scaled_dot_product_attention` and hardcodes
-    `is_causal=False` on both backends -- the mask is dead code.
-  * Consequently CoDA IGNORES padding masks entirely, so batching would silently
-    attend across padding. bs=1 is required for correctness here; dqeval is bs=1
-    by construction, so this costs us nothing.
-
-`forward` returns a plain `(logits, loss)` tuple, not a ModelOutput, and only
-takes the inference branch when the module is in eval mode (`models.materialize`
-calls `.eval()`); in train mode it expects labels and does its own masking.
+Facts read out of their source, not assumed:
+  * genuinely BIDIRECTIONAL -- forward builds a causal mask but the attention
+    module never passes it and hardcodes is_causal=False; the mask is dead code
+  * consequently padding masks are IGNORED: batching would silently attend
+    across padding; bs=1 (which we are by construction) is required here
+  * forward returns a plain (logits, loss) tuple and only takes the inference
+    branch in eval mode (materialize calls .eval())
 """
 
-from typing import Optional
-import torch
-from .adapter import (ModelAdapter, ModelSpec,
-                           assert_finite_rope, materialize, resolve, tokenizer)
 import sys
+from typing import Optional
+
+import torch
+
+from .adapter import (ModelAdapter, ModelSpec, assert_finite_rope,
+                      materialize, resolve, tokenizer)
 
 
 class CoDAAdapter(ModelAdapter):
@@ -65,11 +53,10 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
         raise ValueError(
             f"{spec.repo}: config mask_token_id={declared} != registry {spec.mask_id}")
 
-    # UNTIED-HEAD GATE. CoDA ships a trained `lm_head.weight`, but its config omits
-    # `tie_word_embeddings` and tf5 defaults that to True (see compat shim 3). If the
-    # restoration ever regresses, the head becomes a view of the embedding table and
-    # every logit is wrong while nothing raises. Same storage OR equal values both
-    # indicate tying, so we reject both.
+    # UNTIED-HEAD GATE: CoDA ships a trained lm_head, but its config omits
+    # tie_word_embeddings and tf5 defaults it True (shim 3 restores False).
+    # A regression makes every logit wrong with nothing raised -- reject
+    # shared storage AND bitwise-equal values.
     head, emb = model.lm_head.weight, model.model.embed_tokens.weight
     if head.data_ptr() == emb.data_ptr():
         raise RuntimeError(f"{spec.repo}: lm_head is TIED to embed_tokens (shares storage); "
@@ -80,26 +67,14 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return CoDAAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-"""CoDA compat shims for transformers 5.13.
-
-PRINCIPLE (inherited from the Dream/SDAR ports): a shim RESTORES a behaviour
-transformers 4.x had; it never invents one.
-
-Shim 1 is not a discovery -- it is documented prior art from this program's own
-`ADLMC/coda/old/environment.md` (verified there on transformers 4.57.1, CPU load
-+ forward, 2026-04-19, for both `Salesforce/CoDA-v0-{Base,Instruct}`).
-
-Shim 2 is the silent-failure guard. CoDA has BOTH preconditions of the trap that
-bit Dream and SDAR: `inv_freq` is registered non-persistent (`modeling_coda.py`
-CoDARotaryEmbedding.__init__) and the class OVERRIDES `_init_weights`, so tf5's
-repair branch in the base `PreTrainedModel` never runs. Unlike Dream, CoDA's
-rotary exposes no `reset_parameters()`, so the repair recomputes `inv_freq`
-directly with CoDA's own `default_rope_frequencies` -- their function, not ours.
-
-NOT needed for CoDA (recorded so nobody re-adds it): the tf5 `rope_theta` ->
-`rope_parameters` migration is irrelevant here, because CoDA ships its own
-`CoDARotaryEmbedding` instead of using HF's shared `ROPE_INIT_FUNCTIONS`.
-"""
+# Compat shims for transformers 5.13. PRINCIPLE: restore verified 4.x
+# behaviour, never invent. Shim 1 is documented prior art (ADLMC
+# coda/old/environment.md, verified on tf 4.57.1). Shim 2 is the
+# meta-buffer trap (see adapter.assert_finite_rope): CoDA has both
+# preconditions, and its rotary has no reset_parameters(), so the repair
+# recomputes inv_freq with CoDA's OWN default_rope_frequencies.
+# NOT needed here (recorded so nobody re-adds it): the tf5 rope_theta ->
+# rope_parameters migration -- CoDA ships its own rotary class.
 
 
 def apply_shims(cfg, klass) -> list[str]:
