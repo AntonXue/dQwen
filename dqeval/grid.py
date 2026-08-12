@@ -274,6 +274,14 @@ def _provenance(cell: Cell, lm):
     p["versions"] = dict(torch=torch.__version__,
                          transformers=transformers.__version__,
                          lm_eval=version("lm_eval"))
+    # code-grading config comes from the setup_lmeval.sh env patches; record
+    # it so a cell run in an UNPATCHED env (flat 3s timeouts) is detectable
+    # from its records rather than silently different
+    try:
+        from lm_eval.tasks.humaneval.utils import _CODE_TIMEOUT, _CODE_WORKERS
+        p["code_eval"] = dict(timeout_s=_CODE_TIMEOUT, workers=_CODE_WORKERS)
+    except ImportError:
+        p["code_eval"] = "UNPATCHED-ENV (stock 3s timeout)"
     if cell.decode != "ar":
         p["sdpa_math_only"] = (torch.backends.cuda.math_sdp_enabled()
                                and not torch.backends.cuda.flash_sdp_enabled())
