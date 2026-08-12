@@ -1,7 +1,7 @@
-"""Gate: the vendored task configs (benchmarks/*.py) are byte-faithful to
+"""Gate: the vendored task configs (benchmark_specs.py) are byte-faithful to
 pinned lm-eval for every benchmark that derives from a stock task.
 
-Run whenever benchmarks/ changes or the lm_eval pin is bumped:
+Run whenever benchmark_specs.py changes or the lm_eval pin is bumped:
 
     PYTHONPATH=. HF_ALLOW_CODE_EVAL=1 <env>/python tests/task_freeze_gate.py
 
@@ -62,7 +62,7 @@ def renders(task, shots, k=5):
 
 def main():
     from lm_eval.tasks import TaskManager, get_task_dict
-    from benchmarks import task_config
+    from benchmark_specs import task_config
     tm = TaskManager()
     fails = 0
 

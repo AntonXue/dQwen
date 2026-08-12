@@ -148,3 +148,21 @@ line, writable without Python.
 Repo root: run.py, summarize.py, models/, benchmarks/, tests/, envs/,
 third_party/, _runs/, _claude/. Both gates PASS; three-path cell smoke
 clean.
+
+## UPDATE 5: benchmarks/ collapsed into benchmark_specs.py (same day)
+
+Anton's read was right: the package was ~85% config literals, and data
+does not need file isolation the way code does. One file, one section per
+benchmark (HUMANEVAL, MBPP_PLUS, GSM8K, MMLU, ...; constants prefixed --
+MBPP_FEWSHOT_SAMPLES etc.), grading section at the top, TASKS registry +
+task_config() at the bottom; every per-file docstring became its section
+comment, nothing lost. This consciously reverses the morning's
+one-file-per-benchmark ruling FOR DATA; models/ stays a package because
+families are code. Name "benchmark_specs.py" chosen for the ModelSpec
+symmetry (specs for models, specs for benchmarks). Bonus: the generic
+top-level name `benchmarks` is gone, so the shadowing guard now only
+needs to police `models`. Both gates PASS (freeze gate = configs still
+byte-identical to pinned stock); three-path smoke clean.
+
+Final repo shape: run.py + summarize.py + benchmark_specs.py + models/
++ tests/ (+ envs, third_party, _runs, _claude).

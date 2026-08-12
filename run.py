@@ -24,7 +24,7 @@ Two halves below the CLI plumbing:
   n_forward) that makes regrades CPU re-passes. MASK is NOT suppressed in
   loglikelihood (parity with LLaDA's reference); cfg_scale stays 0.
 
-  THE GRID — benchmark configs come from benchmarks/*.py (one python file
+  THE GRID — benchmark configs come from benchmark_specs.py (one section
   per benchmark, frozen from pinned lm-eval, held to stock by
   tests/task_freeze_gate.py); shards are stripes (docs[k::n]), NEVER
   contiguous chunks (first-80 HumanEval is ~19pp easier than the full set);
@@ -57,8 +57,8 @@ from lm_eval.models.huggingface import HFLM
 from lm_eval.tasks import TaskManager, get_task_dict
 
 from models import samplers
-from benchmarks import task_config
-from benchmarks._grading import _CODE_TIMEOUT, _CODE_WORKERS
+from benchmark_specs import task_config
+from benchmark_specs import _CODE_TIMEOUT, _CODE_WORKERS
 from models import load
 from models.samplers import DecodeConfig
 
@@ -222,7 +222,7 @@ class RecordingLM(DQEvalLM):
 
 # Benchmarks are generation-defining: mbpp vs mbpp-fence are distinct rows
 # (different prompts -> different generations), and the "+" variants are
-# ordinary cells. Each benchmark file in benchmarks/ carries its own
+# ordinary cells. Each section of benchmark_specs.py carries its own
 # protocol + caveats. Shot counts follow Dream's base-model table.
 BENCH = {
     "humaneval":  dict(task="humaneval",    gen=512,  shots=0, shards=1, unsafe=True),

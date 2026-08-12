@@ -3,15 +3,15 @@
     <env>/python tests/structure_gate.py
 
 RULES
-  1. Inside models/ and benchmarks/, imports of repo code are RELATIVE
-     (from .sibling import ...); an absolute `models.`/`benchmarks.`
-     import inside a package member is a violation by spelling alone.
-  2. adapter.py, samplers.py and _grading.py are leaves: they import no
-     repo code at all.
-  3. No `..` climbing anywhere.
-  4. Only run.py assembles the stack; nothing imports `run` except tests.
-  5. The names `models` and `benchmarks` resolve to THIS repo (a future
-     dependency claiming either would shadow silently otherwise).
+  1. Inside models/, imports of repo code are RELATIVE (from .sibling
+     import ...); an absolute repo import inside the package is a
+     violation by spelling alone. No `..` climbing anywhere.
+  2. Leaves import no repo code: models/adapter.py, models/samplers.py,
+     and benchmark_specs.py (it may import from the pinned lm-eval, which
+     is a dependency, not repo code).
+  3. Only run.py assembles the stack; nothing imports `run` except tests.
+  4. `import models` resolves to THIS repo (a dependency claiming the
+     generic name would shadow silently otherwise).
 """
 
 import ast
@@ -22,8 +22,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-PACKAGES = ("models", "benchmarks")
-LEAVES = {"models/adapter.py", "models/samplers.py", "benchmarks/_grading.py"}
+REPO_TOP = ("models", "benchmark_specs", "run", "summarize")
+LEAVES = {"models/adapter.py", "models/samplers.py", "benchmark_specs.py"}
 
 
 def repo_imports(path):
@@ -31,20 +31,21 @@ def repo_imports(path):
         if isinstance(node, ast.ImportFrom):
             if node.level > 0:
                 yield node.module or ".", f"relative(level={node.level})"
-            elif node.module and node.module.split(".")[0] in (*PACKAGES, "run"):
+            elif node.module and node.module.split(".")[0] in REPO_TOP:
                 yield node.module, "absolute"
         elif isinstance(node, ast.Import):
             for a in node.names:
-                if a.name.split(".")[0] in (*PACKAGES, "run"):
+                if a.name.split(".")[0] in REPO_TOP:
                     yield a.name, "absolute"
 
 
 def main():
     fails = 0
-    files = [p for pkg in PACKAGES for p in sorted(ROOT.glob(f"{pkg}/*.py"))]
-    for path in files + [ROOT / "run.py", ROOT / "summarize.py"]:
+    files = sorted(ROOT.glob("models/*.py")) + [
+        ROOT / "benchmark_specs.py", ROOT / "run.py", ROOT / "summarize.py"]
+    for path in files:
         rel = str(path.relative_to(ROOT))
-        in_package = path.parent.name in PACKAGES
+        in_package = path.parent.name == "models"
         for mod, kind in repo_imports(path):
             ok = True
             if rel in LEAVES:
@@ -52,20 +53,19 @@ def main():
             elif in_package and kind == "absolute":
                 ok = False                     # rule 1
             elif kind.startswith("relative") and "level=1" not in kind:
-                ok = False                     # rule 3
+                ok = False                     # rule 1 (no `..`)
             elif (mod or "").split(".")[0] == "run":
-                ok = False                     # rule 4
+                ok = False                     # rule 3
             if not ok:
                 print(f"FAIL {rel}: {kind} import of {mod!r}")
                 fails += 1
-    for name in PACKAGES:                      # rule 5
-        spec = importlib.util.find_spec(name)
-        origin = Path(spec.origin).resolve() if spec and spec.origin else None
-        if origin is None or ROOT not in origin.parents:
-            print(f"FAIL: `import {name}` resolves to {origin}, not this repo")
-            fails += 1
+    spec = importlib.util.find_spec("models")  # rule 4
+    origin = Path(spec.origin).resolve() if spec and spec.origin else None
+    if origin is None or ROOT not in origin.parents:
+        print(f"FAIL: `import models` resolves to {origin}, not this repo")
+        fails += 1
     print("GATE " + ("FAILED" if fails else
-                     "PASSED: packages closed, leaves are leaves, names are ours"))
+                     "PASSED: package closed, leaves are leaves, names are ours"))
     return 1 if fails else 0
 
 
