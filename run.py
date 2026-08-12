@@ -357,12 +357,15 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1"):
     bench = BENCH[cell.benchmark]
     if bench["unsafe"]:
         os.environ.setdefault("HF_ALLOW_CODE_EVAL", "1")
-    if cell.decode != "ar":
-        _pin_math_sdpa()   # deterministic attention backend, recorded in meta
 
     td = _build_task_dict(cell)
     fingerprint = _doc_fingerprint(td)
     lm = _build_lm(cell)
+    if cell.decode != "ar":
+        # pinned AFTER model construction on purpose: LLaDA's remote code
+        # re-enables flash sdp inside its __init__ (modeling_llada.py:1056),
+        # silently undoing an earlier pin. Provenance records the outcome.
+        _pin_math_sdpa()
 
     # cell filenames are deterministic (identity = the tag, for idempotent
     # resume), so the launch time is recorded here instead
@@ -398,7 +401,8 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1"):
                     # for AR cells too, which have no sidecar
                     resp=resp,
                     metrics={k: v for k, v in s.items()
-                             if isinstance(v, (int, float, bool))},
+                             if isinstance(v, (int, float, bool))
+                             and k != "doc_id"},
                 ), default=str) + "\n")
         f.write(json.dumps(dict(
             kind="summary", cell=asdict(cell),

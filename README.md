@@ -50,8 +50,11 @@ Notes that prevent wrong numbers:
 - **Shards are stripes, never chunks** — benchmark difficulty drifts with
   position, so "first N" is a biased sample. Never quote a partial shard's
   aggregate; merge all N first.
-- **`gsm8k` and `math` should be sharded** (8 and 16 ways respectively);
-  code benchmarks run whole.
+- **`gsm8k` and `math` should be sharded** (8 and 16 ways respectively)
+  for DLM cells; code benchmarks run whole. **AR cells run UNSHARDED**:
+  they are fast (HFLM bs=16), and batch composition differs between
+  striped and whole runs (measured 0.23pp on gsm8k) -- unsharded keeps
+  AR numbers composition-independent.
 - `mbpp` vs `mbpp-fence` are different prompts (different generations).
   The "+" columns are ordinary cells: `humaneval-plus` shares humaneval's
   prompts (denser tests), `mbpp-plus` runs EvalPlus's 378 sanitized

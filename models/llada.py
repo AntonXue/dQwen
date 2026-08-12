@@ -4,6 +4,10 @@ LLaDA is a pure masked diffusion LM: its raw output is already position-aligned
 (`logits[:, i]` is the distribution for position i), so `_canonicalize` is the
 inherited identity and there is no eval-side shift. Confirmed by reading their
 `generate.py`, which consumes `model(x).logits` directly with no reindexing.
+
+TRAP: their model __init__ calls torch.backends.cuda.enable_flash_sdp(True)
+(modeling_llada.py:1056), clobbering any earlier determinism pin -- run.py
+re-pins AFTER model construction because of exactly this.
 """
 
 from typing import Optional

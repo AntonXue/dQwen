@@ -139,7 +139,8 @@ def merge_groups():
                     continue
                 gid = (d["task"], k + d["doc_id"] * n)
                 for m, v in d["metrics"].items():
-                    per_doc[gid].setdefault(m, []).append(float(v))
+                    if m != "doc_id":   # old records carried it in metrics
+                        per_doc[gid].setdefault(m, []).append(float(v))
             if not summary_seen:
                 print(f"INCOMPLETE {model} {bench} {decode} n={n}: "
                       f"stripe {k} has no summary sentinel")
