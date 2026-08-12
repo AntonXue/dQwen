@@ -166,3 +166,20 @@ byte-identical to pinned stock); three-path smoke clean.
 
 Final repo shape: run.py + summarize.py + benchmark_specs.py + models/
 + tests/ (+ envs, third_party, _runs, _claude).
+
+## UPDATE 6: env story simplified — pyproject deleted, envs/ flattened
+
+pyproject.toml's sole purpose was `pip install -e .` for `import dqeval`
+— a package that no longer exists — and it declared itself NOT a
+dependency list. Deleted. envs/ collapsed to root requirements.txt (now
+COMPLETE: adds lm_eval, evaluate, math_verify pins the old setup script
+installed on the side; stale docs/ + dqeval/families/ paths fixed) +
+setup_env.sh (pip install -r + the TWO irreducible source patches to
+pinned lm-eval: the tf5 hf_vlms rename fix, and the gsm8k dataset-id fix
+that keeps the STOCK side loadable for the freeze gate). The dead
+hellaswag/winogrande dataset-id patch went with the deleted benchmarks;
+the piqa provenance note went with it. Verified: setup_env.sh runs
+idempotent on the live env, lm_eval imports clean.
+
+Env story now: hand-built CUDA conda env + `pip install -r
+requirements.txt` + `bash setup_env.sh`. One env, two files, both at root.

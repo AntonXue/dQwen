@@ -129,7 +129,8 @@ Those shims are **archaeology, not invention**: each restores a behaviour transf
 guessed. With torch held fixed, the ported models are **bitwise identical** to their
 native environment (max|d| = 0.00e+00). All observed numerical drift is attributable
 to torch 2.5.1 → 2.7.1, none to transformers — which is why `torch` is pinned exactly
-in `envs/requirements-eval.txt` as part of the reproducibility contract.
+in `requirements.txt` as part of the reproducibility contract
+(`setup_env.sh` finishes the install with two lm-eval source patches).
 
 Two of the three comparators had a **silent** failure mode where the model loads,
 forwards, raises nothing, and returns noise. `models/adapter.py::assert_finite_rope()`
