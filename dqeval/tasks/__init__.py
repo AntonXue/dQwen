@@ -16,7 +16,6 @@ from copy import deepcopy
 
 from dqeval.tasks import (
     gsm8k,
-    hellaswag_sub,
     humaneval,
     humaneval_plus,
     mbpp,
@@ -25,7 +24,6 @@ from dqeval.tasks import (
     mbpp_plus_fence,
     minerva_math,
     mmlu,
-    race_sub,
 )
 
 _REGISTRY = {
@@ -38,8 +36,6 @@ _REGISTRY = {
     "gsm8k_cot": gsm8k.TASK,
     "minerva_math": minerva_math.GROUP,
     "mmlu": mmlu.GROUP,
-    "hellaswag_sub": hellaswag_sub.TASK,
-    "race_sub": race_sub.TASK,
 }
 
 
