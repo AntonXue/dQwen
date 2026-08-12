@@ -45,7 +45,7 @@ requeue failures freely — completed cells exit in seconds.
 | MODEL | dqeval registry name (`--list`); for `ar` cells, a bare HF id |
 | REVISION | HF revision (`step25000-swa`, `step50000-swa`); `main` or `-` for default |
 | DECODE | `ar` · `mc-nelbo` (mmlu only) · `block32-static-sK` · `standard-static-sK` · `block32-tauT` · `standard-tauT` |
-| BENCHMARK | `humaneval` · `humaneval-plus` · `mbpp` · `mbpp-plus` · `mbpp-fence` · `gsm8k` · `math` · `mmlu` |
+| BENCHMARK | `humaneval` · `humaneval-plus` · `mbpp` · `mbpp-plus` · `mbpp-fence` · `mbpp-plus-fence` · `gsm8k` · `math` · `mmlu` |
 | K/N | stripe shard: docs `[k::n]`, `k` in `0..n-1`. Omit for the whole set |
 
 Notes that prevent wrong numbers:

@@ -26,8 +26,9 @@ STOCK_PAIRS = {  # vendored registry name -> stock lm-eval task name
 }
 SHOTS = {"humaneval": 0, "mbpp": 3, "gsm8k_cot": 8, "minerva_math": 4,
          "mmlu": 5, "humaneval_plus_sound": 0, "mbpp_plus_full": 3,
-         "mbpp_ticks": 3}
-VARIANTS = ["humaneval_plus_sound", "mbpp_plus_full", "mbpp_ticks"]
+         "mbpp_ticks": 3, "mbpp_plus_ticks": 3}
+VARIANTS = ["humaneval_plus_sound", "mbpp_plus_full", "mbpp_ticks",
+            "mbpp_plus_ticks"]
 
 
 def leaves(td):

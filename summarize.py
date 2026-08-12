@@ -17,7 +17,7 @@ RUNS = Path(__file__).parent / "_runs"
 # lm-eval results are keyed by task)
 HEAD_TASK = {"humaneval": "humaneval", "humaneval-plus": "humaneval_plus",
              "mbpp": "mbpp", "mbpp-plus": "mbpp_plus_full",
-             "mbpp-fence": "mbpp_ticks",
+             "mbpp-fence": "mbpp_ticks", "mbpp-plus-fence": "mbpp_plus_ticks",
              "gsm8k": "gsm8k_cot", "math": "minerva_math", "mmlu": "mmlu"}
 # metric preference within the headline task's results dict
 METRICS = ("math_verify,none", "exact_match,strict-match", "pass@1,create_test",
