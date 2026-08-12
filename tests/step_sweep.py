@@ -9,10 +9,10 @@ Loads the model ONCE and sweeps steps_per_block; inline base-test grading (subse
 ok, unlike evalplus.evaluate which needs the full set). Records pass@1 and the mean
 #forwards per problem (the compute axis) at each step budget.
 
-    python tests/step_sweep.py --model dqwen3.5-9b-base --steps 32,8,4,2 --limit 164
+    python tests/step_sweep.py --model dqwen3.5-9b-base --steps 32,8,4,2
 
-⚠ --limit defaults to 80 for quick probes, but first-80 HumanEval is ~19pp EASIER
-than the full set — never quote a subset number. Pass --limit 164 for real cells.
+--limit defaults to the full set (164). If you probe on a subset, never quote
+its numbers: first-80 HumanEval is ~19pp easier than the full set.
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ def main() -> int:
     ap.add_argument("--gen-length", type=int, default=512)
     ap.add_argument("--block-length", type=int, default=32)
     ap.add_argument("--order", default="low_confidence")
-    ap.add_argument("--limit", type=int, default=80)
+    ap.add_argument("--limit", type=int, default=164)
     # Parallelism mechanism. "static" = LLaDA's even split: commit exactly
     # gen_length/steps_per_block tokens per step (FIXED k, k = block/steps_per_block).
     # "dynamic" = commit every position whose confidence clears --thresholds, so k

@@ -176,9 +176,8 @@ def is_complete(path: Path) -> bool:
         return False
 
 
-def run_cell(cell: Cell, out_root="_runs/grid_v1", lm=None):
-    """Run one cell; idempotent. Pass a pre-built `lm` to amortize one model
-    load over many cells (sweeps) — caller must ensure it matches the cell."""
+def run_cell(cell: Cell, out_root="_runs/grid_v1"):
+    """Run one cell; idempotent (a completed cell returns in seconds)."""
     import lm_eval
 
     out = out_path(cell, out_root)
@@ -195,9 +194,7 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1", lm=None):
 
     td = _build_task_dict(cell)
     fingerprint = _doc_fingerprint(td)
-    own_lm = lm is None
-    if own_lm:
-        lm = _build_lm(cell)
+    lm = _build_lm(cell)
 
     t0 = time.time()
     res = lm_eval.evaluate(lm=lm, task_dict=td, log_samples=True,

@@ -43,8 +43,13 @@ def main(argv):
         print(f"  block32-tauT | standard-tauT   T in {TAU_GRID}")
         return 0
     if argv[0].endswith(".jsonl"):
+        if len(argv) != 2:
+            print("usage: run.py manifest.jsonl INDEX"); return 2
         run_cell(load_manifest(argv[0])[int(argv[1])])
         return 0
+    if len(argv) not in (4, 5):
+        print("usage: run.py MODEL REVISION DECODE BENCHMARK [K/N]  "
+              "(run.py --help for examples)"); return 2
     model, rev, decode, bench = argv[:4]
     shard = (tuple(int(x) for x in argv[4].split("/"))
              if len(argv) > 4 else (0, 1))

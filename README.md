@@ -1,8 +1,13 @@
 # dQwen
 
 Reproducible evaluation for diffusion language models — the **dQwen3.5 / dQwen3**
-family alongside **LLaDA**, **Dream / Dream-Coder**, and **SDAR**, all in one
-environment.
+family alongside **LLaDA** and **Dream / Dream-Coder**, all in one environment.
+(SDAR loads for multiple-choice scoring, but generation needs a compat shim
+that does not exist yet; see `dqeval/families/sdar/`.)
+
+**To run an eval cell, start at `run.py` and `RUNBOOK.md`** — one flat
+entrypoint, `(model, revision, decode, benchmark, shard)` in, one
+provenance-stamped JSONL out.
 
 Two things it is built to answer, for any model:
 
