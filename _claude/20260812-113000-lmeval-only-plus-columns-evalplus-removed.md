@@ -73,3 +73,24 @@ version skew between `evalplus==0.3.1`'s internal data and the
 `evalplus/humanevalplus` HF dataset. Protocol = the HF channel (what
 lm-eval loads), pinnable by dataset revision. Bound unchanged: <=1.22pp,
 family cells unaffected.
+
+## UPDATE 2: the flip hunt found a REAL BUG — four manuscript cells corrected
+
+Chasing Anton's timeout question to ground exposed that the A/B (and the
+morning's Table-4 fill) read EvalPlus's per-task `plus_status` ALONE.
+Official EvalPlus "+" = **base AND plus**. `plus_status` overcounts
+solutions that fail a base input but pass the 1000 extra tests —
+HumanEval/92 exactly: `any_int(1.5, 5, 3.5)` is a BASE input, our AR
+solutions fail it under both graders, but plus_status said "pass".
+
+Corrections (manuscript 9c655e8): Qwen3.5 AR HEval+ 21.95→21.34,
+34.76→34.15, 52.44→51.22, 64.02→63.41. Family + Qwen3 cells verified
+unaffected. `summarize.py` and the regrades README now compute base∧plus.
+
+Consequently the A/B numbers above OVERSTATE disagreement: under official
+semantics the graders disagree on **4/1640 (0.24%)** — HE/139 + HE/100
+are pure timeouts (each side's limit too tight once), HE/62 + HE/96 are
+genuine upstream suite skew (e.g. /96: 190 package cases vs 180 HF).
+The /92 and /9 "flips" and their suite-skew attribution in UPDATE 1 were
+artifacts of the semantics bug. The lm-eval-only ruling only strengthens:
+correct-semantics agreement is 99.76%.

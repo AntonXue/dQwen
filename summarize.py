@@ -68,7 +68,10 @@ def _passk(rj):
     ev = json.loads(rj.read_text())["eval"]
     n = len(ev)
     base = sum(r[0]["base_status"] == "pass" for r in ev.values())
-    plus = sum(r[0]["plus_status"] == "pass" for r in ev.values())
+    # official "+" semantics: base AND plus (plus_status alone overcounts
+    # solutions that fail a base input but pass the extra tests)
+    plus = sum(r[0]["base_status"] == "pass" and r[0]["plus_status"] == "pass"
+               for r in ev.values())
     return n, f"{100 * base / n:.2f}/{100 * plus / n:.2f}"
 
 
