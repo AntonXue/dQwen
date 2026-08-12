@@ -79,6 +79,9 @@ def main() -> int:
     ap.add_argument("--samples", default=None, help="where to write samples.jsonl")
     ap.add_argument("--parallel", type=int, default=os.cpu_count(),
                     help="grading worker processes (default: all cores)")
+    # Regrades are CPU-only and independent: for a batch of files, launch
+    # one process per file concurrently (e.g. `... --from A & ... --from B &`
+    # or xargs -P) — each run is ~25s; sequential batching is the slow way.
     ap.add_argument("--from", dest="from_file", default=None,
                     help="regrade saved generations (lm-eval samples jsonl or "
                          "grid_v1 cell jsonl) instead of running a model")
