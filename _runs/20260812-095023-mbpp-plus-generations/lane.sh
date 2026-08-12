@@ -12,7 +12,7 @@ export PYTHONPATH=/home/ayx98/foo/dQwen
 D="$(dirname "$0")"
 
 dlm() {  # dlm <registry-name> <revision> <label>
-  CUDA_VISIBLE_DEVICES=$GPU $PY -m dqeval.evalplus_driver --dataset mbpp \
+  CUDA_VISIBLE_DEVICES=$GPU $PY evalplus_driver.py --dataset mbpp \
     --model "$1" --revision "$2" --gen-length 512 --block-length 512 \
     --steps-per-block 512 \
     --samples "$D/$3@$2__mbpp-plus__standard-static-s512.jsonl" \
@@ -20,7 +20,7 @@ dlm() {  # dlm <registry-name> <revision> <label>
 }
 ar() {   # ar <hf-id>
   local tag="${1//\//_}"
-  CUDA_VISIBLE_DEVICES=$GPU $PY -m dqeval.evalplus_driver --dataset mbpp \
+  CUDA_VISIBLE_DEVICES=$GPU $PY evalplus_driver.py --dataset mbpp \
     --model "$1" --ar --gen-length 512 \
     --samples "$D/$tag@main__mbpp-plus__ar.jsonl" \
     > "$D/$tag@main__mbpp-plus__ar.log" 2>&1

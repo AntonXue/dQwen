@@ -1,6 +1,6 @@
 # regrades — CPU regrades of saved generations (no GPU involved)
 
-Produced by `dqeval/evalplus_driver.py --from <file>`: same completions,
+Produced by `evalplus_driver.py --from <file>`: same completions,
 denser tests. Names: `<launch-stamp>__<model>@<revision>__<benchmark>-plus__from-<source>.jsonl`
 with EvalPlus's `_eval_results.json` alongside. The `from-` suffix names the
 generation store the completions came out of (`battery`/`battery4b` = the 2026-08-05 battery launch dirs holding the family
