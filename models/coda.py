@@ -53,7 +53,7 @@ class CoDAAdapter(ModelAdapter):
 
 def build(spec: ModelSpec, revision: Optional[str] = None,
           dtype=torch.bfloat16, device: str = "cuda") -> CoDAAdapter:
-    cfg, klass = resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
+    cfg, klass = resolve(spec.repo, revision=revision)
     shims = apply_shims(cfg, klass)          # MUST precede materialisation
     tok = tokenizer(spec.repo, revision=revision)
     model = materialize(klass, spec.repo, cfg, revision=revision,

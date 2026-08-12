@@ -74,12 +74,12 @@ class DecodeConfig:
 """The portable sampler: one block-diffusion engine, any family.
 
 Deliberately basic for now -- correctness first, generality later. It talks to a
-model only through `adapter.logits(ids)`, so it runs unchanged on LLaDA, Dream,
-SDAR and dQwen weights. That is the whole point of the adapter contract.
+model only through `adapter.logits(ids)`, so it runs unchanged on every
+registered family. That is the whole point of the adapter contract.
 
 BATCH SIZE 1, by construction. Not a limitation we impose but the regime the
-reference implementations live in: LLaDA's `generate.py` and SDAR's
-`block_diffusion_generate` both hardcode `torch.full((1, ...))`. Batching them
+reference implementations live in: LLaDA's `generate.py` hardcodes
+`torch.full((1, ...))` (as did SDAR's, before that family was pruned). Batching
 would itself be a divergence from upstream with no counterpart to parity-test
 against. It also sidesteps our own champion decode's batch non-invariance, where
 a problem's canvas position depends on its batchmates (measured 2-5pp swings).
@@ -91,7 +91,6 @@ Parallelism belongs above this function: map over prompts, shard over GPUs.
 class GenOutput:
     """One generation. bs=1 by construction -- see `generate` below."""
 
-    prompt_ids: torch.Tensor
     gen_ids: torch.Tensor
     text: str
     n_forward: int = 0
@@ -244,12 +243,7 @@ def generate(adapter, prompt_ids: torch.Tensor,
 
     gen_ids = canvas[0, p_len:]
     text = adapter.decode(gen_ids) if stop_text is None else stop_text
-    return GenOutput(
-        prompt_ids=prompt_ids[0],
-        gen_ids=gen_ids,
-        text=text,
-        n_forward=n_forward,
-    )
+    return GenOutput(gen_ids=gen_ids, text=text, n_forward=n_forward)
 
 
 """Monte-Carlo NELBO log-likelihood for masked diffusion LMs.

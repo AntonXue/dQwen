@@ -16,8 +16,8 @@ Both run greedy (temperature=0) so they are deterministic and any mismatch is re
 rather than an RNG artifact.
 
 Usage:
-    python tests/parity/test_llada_sampler.py
-    python tests/parity/test_llada_sampler.py --gen-length 64 --block-length 32
+    python tests/test_llada_sampler.py
+    python tests/test_llada_sampler.py --gen-length 64 --block-length 32
 """
 
 from __future__ import annotations

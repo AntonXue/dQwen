@@ -9,13 +9,10 @@ One flat entrypoint: `run.py`. One cell = (model, revision, decode, benchmark,
 shard) = one provenance-stamped JSONL. Cells are independent, idempotent, and
 safe to requeue — that is the whole system.
 
-Two things it is built to answer, for any model:
-
-- *"What does it score with the sampler its authors shipped?"*
-- *"What does it score with ours?"*
-
-Model and sampler are orthogonal, so those are cells in a cross-product rather than
-one number per model.
+One question, answered the same way for every model: *what does it score
+under the house protocol?* One decode engine (validated token-for-token
+against LLaDA's published sampler), one benchmark spec file, every family
+measured identically -- published numbers are cited as context, not mixed in.
 
 ## Running an eval cell
 

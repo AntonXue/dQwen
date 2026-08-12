@@ -15,8 +15,8 @@ to the last digit. A mismatch means the copy has drifted -- most likely someone
 "cleaned up" the RNG call order.
 
 Usage:
-    python tests/parity/test_nelbo_vs_llada.py
-    python tests/parity/test_nelbo_vs_llada.py --llada-path ~/foo/LLaDA --mc-num 16
+    python tests/test_nelbo_vs_llada.py
+    python tests/test_nelbo_vs_llada.py --llada-path ~/foo/LLaDA --mc-num 16
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ def main() -> int:
     ref = os.path.join(a.llada_path, "get_log_likelihood.py")
     if not os.path.exists(ref):
         print(f"SKIP: LLaDA reference not found at {ref}")
-        print("      clone github.com/ML-GSAI/LLaDA (pinned 96441d4, see third_party/LOCKFILE.md)")
+        print("      clone github.com/ML-GSAI/LLaDA (pinned 96441d4; pin ledger: models/adapter.py UPSTREAM_PINS)")
         return 0
 
     adapter = load("llada-8b-base")

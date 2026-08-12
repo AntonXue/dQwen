@@ -28,7 +28,7 @@ class LLaDAAdapter(ModelAdapter):
 
 def build(spec: ModelSpec, revision: Optional[str] = None,
           dtype=torch.bfloat16, device: str = "cuda") -> LLaDAAdapter:
-    cfg, klass = resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
+    cfg, klass = resolve(spec.repo, revision=revision)
     shims = apply_shims(cfg, klass)
     tok = tokenizer(spec.repo, revision=revision)
     model = materialize(klass, spec.repo, cfg, revision=revision,
@@ -210,5 +210,5 @@ def generate_native(adapter: ModelAdapter, prompt_ids: torch.Tensor,
             x[transfer_index] = x0[transfer_index]
 
     gen_ids = x[0, prompt.shape[1]:]
-    return GenOutput(prompt_ids=prompt_ids[0], gen_ids=gen_ids,
-                     text=adapter.decode(gen_ids), n_forward=n_forward)
+    return GenOutput(gen_ids=gen_ids, text=adapter.decode(gen_ids),
+                     n_forward=n_forward)

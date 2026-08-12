@@ -30,7 +30,7 @@ class DQwenAdapter(ModelAdapter):
 
 def build(spec: ModelSpec, revision: Optional[str] = None,
           dtype=torch.bfloat16, device: str = "cuda") -> DQwenAdapter:
-    cfg, klass = resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
+    cfg, klass = resolve(spec.repo, revision=revision)
     tok = tokenizer(spec.repo, revision=revision)
     model = materialize(klass, spec.repo, cfg, revision=revision,
                            dtype=dtype, device=device)

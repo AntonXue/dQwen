@@ -3,7 +3,7 @@
 A portable sampler needs exactly one thing from a model: logits for a canvas.
 Everything else -- mask ids, whether the family needs an eval-side logit shift,
 which transformers-5 compat shims to install, chat formatting -- is the adapter's
-problem. That is what makes the model x sampler cross-product cheap.
+problem. That is what keeps one decode engine model-agnostic.
 
 TWO logit surfaces, and the distinction is load-bearing:
 
@@ -174,7 +174,8 @@ pin and put it on sys.path by hand.
 #     accordingly.
 #   SDAR's published table came from NEITHER shipped sampler but from
 #     LMDeploy (block=4, steps=4, low_confidence_dynamic, tau=0.9, greedy)
-#     -- full story in models/sdar.py; our SDAR numbers are re-measurements.
+#     -- family pruned 2026-08-12; story preserved in the port-evidence
+#     _claude docs. Pins kept for the manuscript's adjacent-decode prose.
 UPSTREAM_PINS = {
     "LLaDA": "96441d4",        # ML-GSAI/LLaDA: generate.py (native sampler),
                                #   EVAL.md (published decode + task configs),
