@@ -212,9 +212,15 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1"):
             f.write(json.dumps(dict(kind="sample", **rec)) + "\n")
         for task_name, samples in (res.get("samples") or {}).items():
             for s in samples:
+                resp = s.get("filtered_resps") or s.get("resps")
+                while isinstance(resp, list):
+                    resp = resp[0] if resp else None
                 f.write(json.dumps(dict(
                     kind="lm_eval_sample", task=task_name,
                     doc_id=s.get("doc_id"),
+                    # response text kept so regrades (HumanEval+/MBPP+) work
+                    # for AR cells too, which have no sidecar
+                    resp=resp,
                     metrics={k: v for k, v in s.items()
                              if isinstance(v, (int, float, bool))},
                 ), default=str) + "\n")
