@@ -1,6 +1,6 @@
 # v1-vs-v3 mixture A/B, an MBPP format effect, and the foot-guns that caused/hid both
 
-> 2026-08-05, eval box. Numbers live in `docs/results/mixture_v1_vs_v3_08b.md`; this file is
+> 2026-08-05, eval box. Numbers live in `docs/results/mixture_v1_vs_v3_08b.md` (docs/ deleted 2026-08-12 as superseded; recover via `git show 7b0c773:docs/results/mixture_v1_vs_v3_08b.md`); this file is
 > the progression — what was run, what was refuted, and what changed in the harness as a result.
 
 ## What was asked
