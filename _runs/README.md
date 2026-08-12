@@ -18,8 +18,7 @@ Two kinds of entries:
 | dir | what | naming |
 |---|---|---|
 | `grid_v1/` | generation cells from `run.py` (the canonical store) | `<benchmark>/<model>@<revision>__<benchmark>__<decode>__s<K>of<N>.jsonl` |
-| `regrades/` | CPU regrades of saved generations (EvalPlus HE+) | `<yyyymmdd-hhmmss>__<model>@<revision>__<benchmark>-plus__from-<source>.jsonl` (+ `_eval_results.json`) |
-| `evalplus/` | generations under EvalPlus's own prompts (MBPP+; `evalplus_driver.py`) | `<model>@<revision>__<benchmark>-plus__<decode>.jsonl` — deterministic (resume + grade-when-complete); launch times in the `.launches.jsonl` sidecar |
+| `regrades/` | **frozen** 2026-08-12 EvalPlus-graded HE+ record (predates the lm-eval-only ruling; new "+" numbers are grid cells) | `<yyyymmdd-hhmmss>__<model>@<revision>__<benchmark>-plus__from-<source>.jsonl` (+ `_eval_results.json`) |
 
 `grid_v1` cell filenames are deliberately **not** timestamped: the filename
 is the cell's identity, which is what makes reruns idempotent and lets

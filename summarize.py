@@ -15,7 +15,9 @@ RUNS = Path(__file__).parent / "_runs"
 
 # headline task per benchmark (grid cell meta names the benchmark;
 # lm-eval results are keyed by task)
-HEAD_TASK = {"humaneval": "humaneval", "mbpp": "mbpp", "mbpp-fence": "mbpp_ticks",
+HEAD_TASK = {"humaneval": "humaneval", "humaneval-plus": "humaneval_plus",
+             "mbpp": "mbpp", "mbpp-plus": "mbpp_plus_full",
+             "mbpp-fence": "mbpp_ticks",
              "gsm8k": "gsm8k_cot", "math": "minerva_math", "mmlu": "mmlu"}
 # metric preference within the headline task's results dict
 METRICS = ("math_verify,none", "exact_match,strict-match", "pass@1,create_test",
@@ -70,30 +72,20 @@ def _passk(rj):
     return n, f"{100 * base / n:.2f}/{100 * plus / n:.2f}"
 
 
-def evalplus_rows():
-    # regrades/: <stamp>__<model>__<bench>__from-<src>; evalplus/ (generated
-    # under EvalPlus prompts): <model>__<bench>__<decode>, launch time in the
-    # .launches.jsonl sidecar
+def regrade_rows():
+    # regrades/ is the FROZEN 2026-08-12 EvalPlus-graded record:
+    # <stamp>__<model>__<bench>__from-<src>. Since the lm-eval-only ruling,
+    # new "+" numbers come from grid cells, not regrades.
     for rj in sorted(RUNS.glob("regrades/*_eval_results.json")):
         n, v = _passk(rj)
         parts = rj.name.removesuffix("_eval_results.json").split("__")
         yield (parts[0], parts[1], parts[2], "regrade", f"n={n}",
                "pass@1 base/plus", v, str(rj.relative_to(RUNS)))
-    for rj in sorted(RUNS.glob("evalplus/*_eval_results.json")):
-        n, v = _passk(rj)
-        parts = rj.name.removesuffix("_eval_results.json").split("__")
-        stamp = "-"
-        side = rj.with_name(rj.name.replace("_eval_results.json",
-                                            ".jsonl.launches.jsonl"))
-        if side.exists():
-            stamp = json.loads(side.read_text().splitlines()[0])["launched_at"]
-        yield (stamp, parts[0], parts[1], parts[2], f"n={n}",
-               "pass@1 base/plus", v, str(rj.relative_to(RUNS)))
 
 
 def main():
     needle = sys.argv[1] if len(sys.argv) > 1 else ""
-    rows = [r for r in list(grid_rows()) + list(evalplus_rows())
+    rows = [r for r in list(grid_rows()) + list(regrade_rows())
             if needle in "\t".join(r)]
     rows.sort(key=lambda r: (r[2], r[1], r[3], r[0]))
     if not rows:

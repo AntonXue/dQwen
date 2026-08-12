@@ -1,0 +1,37 @@
+# MBPP+ (EvalPlus's MBPP-sanitized: 378 problems, denser tests) under OUR
+# MBPP protocol -- the [BEGIN]/[DONE] scaffold and the stock 3-shot examples
+# -- so the MBPP and MBPP+ columns differ only in problem set + test suite.
+#
+# WHY NOT stock `mbpp_plus`: its doc_to_target renders test_list[0..2], the
+# THREE ORIGINAL asserts -- the ~9.5KB plus suite in the dataset's `test`
+# field is never executed, so the stock task is MBPP+ in name only.
+# Verified 2026-08-12 on evalplus/mbppplus: `test` is directly executable
+# after the solution (it carries its own imports + assertion helpers).
+#
+# COMPARABILITY: published MBPP+ numbers (EvalPlus's own pipeline) use a
+# 0-shot docstring prompt, not this scaffold -- this column is a
+# re-measurement under the house protocol, not a reproduction. Same
+# disclosure pattern as the Dream HumanEval tripwire.
+task: mbpp_plus_full
+dataset_path: evalplus/mbppplus
+dataset_name: null
+unsafe_code: true
+output_type: generate_until
+test_split: test
+doc_to_text: "You are an expert Python programmer, and here is your task: {{prompt if prompt is defined else text}} Your code should pass these tests:\n\n{{test_list[0]}}\n{{test_list[1]}}\n{{test_list[2]}}\n[BEGIN]\n"
+doc_to_target: "{% if is_fewshot is defined %}{{code}}\n[DONE]{% else %}{{test}}{% endif %}"
+target_delimiter: ""
+metric_list:
+  - metric: !function utils.pass_at_1
+    aggregation: mean
+    higher_is_better: true
+generation_kwargs:
+  until:
+    - "[DONE]"
+  do_sample: false
+num_fewshot: 3
+fewshot_config:
+  sampler: first_n
+  samples: !function utils.list_fewshot_samples
+metadata:
+  version: 1.0

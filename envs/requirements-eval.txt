@@ -16,7 +16,10 @@ flash-linear-attention==0.5.1   # GatedDeltaNet kernels (dQwen3.5 hybrid)
 tilelang==0.1.12                # required on Hopper with triton >= 3.4
 flash_attn==2.8.3               # SDAR imports this unguarded at module top level
 einops==0.8.1                   # SDAR
-evalplus==0.3.1                 # HumanEval / MBPP execution
+# evalplus was removed 2026-08-12: the '+' columns run as ordinary grid
+# cells (humaneval_plus stock task; mbpp_plus_full local task -- stock
+# mbpp_plus never executes the plus suite). Grader A/B vs EvalPlus on
+# 1640 saved HE+ gradings: 9 verdict flips, family cells exact.
 datasets==4.4.1
 
 # Phase 3 (lm-eval harness) -- not required for adapters/samplers:

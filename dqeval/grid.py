@@ -29,13 +29,20 @@ from pathlib import Path
 
 # --------------------------------------------------------------------------
 # Benchmarks are generation-defining: mbpp vs mbpp-fence are distinct rows
-# (different prompts -> different generations), while HumanEval+/MBPP+ are
-# graders over saved generations and deliberately absent here. Shot counts
-# follow Dream's base-model table.
+# (different prompts -> different generations). The "+" rows are ordinary
+# cells since the 2026-08-12 lm-eval-only ruling: humaneval-plus shares
+# humaneval's prompts (denser tests; regenerating 164 docs is cheaper than
+# a second grading framework -- grader A/B: 9/1640 verdicts differed,
+# family cells exact), and mbpp-plus runs EvalPlus's sanitized problems
+# under OUR scaffold via the local mbpp_plus_full task (stock mbpp_plus
+# never executes the plus suite -- see dqeval/tasks/mbpp_plus_full.yaml).
+# Shot counts follow Dream's base-model table.
 # --------------------------------------------------------------------------
 BENCH = {
     "humaneval":  dict(task="humaneval",    gen=512,  shots=0, shards=1, unsafe=True),
+    "humaneval-plus": dict(task="humaneval_plus", gen=512, shots=0, shards=1, unsafe=True),
     "mbpp":       dict(task="mbpp",         gen=512,  shots=3, shards=1, unsafe=True),
+    "mbpp-plus":  dict(task="mbpp_plus_full", gen=512, shots=3, shards=1, unsafe=True),
     "mbpp-fence": dict(task="mbpp_ticks",   gen=512,  shots=3, shards=1, unsafe=True),
     "gsm8k":      dict(task="gsm8k_cot",    gen=1024, shots=8, shards=8, unsafe=False),
     "math":       dict(task="minerva_math", gen=1024, shots=4, shards=16, unsafe=False),

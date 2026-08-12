@@ -45,7 +45,7 @@ requeue failures freely — completed cells exit in seconds.
 | MODEL | dqeval registry name (`--list`); for `ar` cells, a bare HF id |
 | REVISION | HF revision (`step25000-swa`, `step50000-swa`); `main` or `-` for default |
 | DECODE | `ar` · `mc-nelbo` (mmlu only) · `block32-static-sK` · `standard-static-sK` · `block32-tauT` · `standard-tauT` |
-| BENCHMARK | `humaneval` · `mbpp` · `mbpp-fence` · `gsm8k` · `math` · `mmlu` |
+| BENCHMARK | `humaneval` · `humaneval-plus` · `mbpp` · `mbpp-plus` · `mbpp-fence` · `gsm8k` · `math` · `mmlu` |
 | K/N | stripe shard: docs `[k::n]`, `k` in `0..n-1`. Omit for the whole set |
 
 Notes that prevent wrong numbers:
@@ -56,10 +56,12 @@ Notes that prevent wrong numbers:
 - **`gsm8k` and `math` should be sharded** (8 and 16 ways respectively);
   code benchmarks run whole.
 - `mbpp` vs `mbpp-fence` are different prompts (different generations).
-  HumanEval+ is a regrade of saved generations (same prompts, denser
-  tests) — no new cells. MBPP+ is NOT: it uses EvalPlus's edited
-  sanitized prompts, so it needs its own generation runs
-  (`evalplus_driver.py`).
+  The "+" columns are ordinary cells: `humaneval-plus` shares humaneval's
+  prompts (denser tests), `mbpp-plus` runs EvalPlus's 378 sanitized
+  problems under our scaffold via the local `mbpp_plus_full` task (stock
+  lm-eval `mbpp_plus` never executes the plus suite — see
+  `dqeval/tasks/mbpp_plus_full.yaml`, which also carries the
+  published-number comparability caveat).
 - Few-shot counts, gen lengths, greedy decoding, bs=1, and the math-only
   attention backend are all fixed by the cell — nothing to remember.
 
