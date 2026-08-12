@@ -26,6 +26,7 @@ import argparse
 import json
 import os
 import tempfile
+import time
 
 # stop strings for code generation -- same set the harness uses, plus __main__ guard
 CODE_STOPS = ["\nclass ", "\ndef ", "\n#", "\nif __name__", "\nprint(",
@@ -133,9 +134,30 @@ def main() -> int:
             if (i + 1) % 20 == 0:
                 print(f"  generated {i + 1}/{len(items)}", flush=True)
 
-    tag = (os.path.basename(a.from_file).split(".")[0] if a.from_file
-           else a.model.replace('/', '_'))
-    spath = a.samples or os.path.join(tempfile.mkdtemp(), f"{tag}_{a.dataset}.jsonl")
+    if a.from_file:
+        # identity from the source: grid cells carry it in their meta record
+        with open(a.from_file) as f:
+            first = json.loads(f.readline())
+        if first.get("kind") == "meta":
+            c = first["cell"]
+            tag = f"{c['model'].replace('/', '_')}@{c['revision'] or 'main'}"
+            src = "grid_v1-" + c["decode"]
+        else:
+            tag = os.path.basename(a.from_file)
+            for suf in (".samples.jsonl", ".jsonl", "." + a.dataset):
+                tag = tag.removesuffix(suf)
+            src = os.path.basename(os.path.dirname(a.from_file)) or "file"
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        default = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "_runs", "regrades",
+            f"{stamp}__{tag}__{a.dataset}-plus__from-{src}.jsonl")
+    else:
+        tag = a.model.replace('/', '_')
+        default = os.path.join(tempfile.mkdtemp(), f"{tag}_{a.dataset}.jsonl")
+    spath = a.samples or default
+    if os.path.dirname(spath):
+        os.makedirs(os.path.dirname(spath), exist_ok=True)
     with open(spath, "w") as f:
         for s in samples:
             f.write(json.dumps(s) + "\n")

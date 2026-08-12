@@ -43,7 +43,9 @@ Notes that prevent wrong numbers:
 - **`gsm8k` and `math` should be sharded** (8 and 16 ways respectively);
   code benchmarks run whole.
 - `mbpp` vs `mbpp-fence` are different prompts (different generations).
-  HumanEval+/MBPP+ are regrades of saved generations — no new cells needed.
+  HumanEval+ is a regrade of saved generations (same prompts, denser
+  tests) — no new cells. MBPP+ is NOT: it uses EvalPlus's edited
+  sanitized prompts, so it needs its own generation runs.
 - Few-shot counts, gen lengths, greedy decoding, bs=1, and the math-only
   attention backend are all fixed by the cell — nothing to remember.
 
@@ -59,6 +61,22 @@ One file per cell, four record kinds:
 - `lm_eval_sample` — per doc: the graded metrics
 - `summary` — aggregate results; **its presence is the completeness
   sentinel** (reruns skip finished cells by checking it)
+
+## Directory contract
+
+Everything in `_runs/` is **raw** (see `_runs/README.md` for the full map):
+
+- Stores: `grid_v1/` (generation cells) and `regrades/` (CPU regrades,
+  `<yyyymmdd-hhmmss>__<model>@<revision>__<benchmark>-plus__from-<source>.jsonl`,
+  written there by `dqeval/evalplus_driver.py --from` automatically).
+- Everything else is a launch dir, `<yyyymmdd-hhmmss>-<description>/`:
+  lane scripts, console logs, smoke scratch of one launch, frozen after.
+- Coalescing is read-only and lives outside `_runs`:
+  `python summarize.py [filter]` prints one line per cell (grid + regrades).
+- Cell filenames carry no timestamp on purpose — the filename is the cell's
+  identity, which is what makes reruns idempotent and lets shards land from
+  different nodes into one tree. The launch time is `launched_at` in each
+  cell's `meta` record, and `summarize.py` prints it.
 
 ## GPU etiquette on this box
 

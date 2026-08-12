@@ -36,3 +36,14 @@ models on HE. τ grid for the campaign: {0.5, 0.6, 0.7, 0.8, 0.9}.
 - gsm8k/math log TWO lm_eval_sample records per doc (one per extraction
   filter) under the same `exact_match` key; strict = per-doc min.
 - Global doc id from a k/n stripe: `global = k + doc_id * n`.
+
+## UPDATE 2026-08-12 (layout contract): lane paths in this doc have moved
+
+`_runs` now holds raw artifacts only, with every launch dir carrying a
+`yyyymmdd-hhmmss` stamp (see `_runs/README.md` + RUNBOOK "Directory
+contract"). Mapping for paths named in this doc:
+
+- `_runs/smoke_tau/`    -> `_runs/20260811-231456-tau-smoke-humaneval/`
+- `_runs/ar_overnight/` -> `_runs/20260812-022548-ar-baselines-bare-qwen/`
+
+Data cells were never in those dirs — they were always `_runs/grid_v1/`.

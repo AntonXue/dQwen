@@ -196,6 +196,9 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1"):
     fingerprint = _doc_fingerprint(td)
     lm = _build_lm(cell)
 
+    # cell filenames are deterministic (identity = the tag, for idempotent
+    # resume), so the launch time is recorded here instead
+    launched_at = time.strftime("%Y%m%d-%H%M%S")
     t0 = time.time()
     res = lm_eval.evaluate(lm=lm, task_dict=td, log_samples=True,
                            bootstrap_iters=0, confirm_run_unsafe_code=True)
@@ -204,7 +207,8 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1"):
     tmp = out.with_suffix(".jsonl.tmp")
     with open(tmp, "w") as f:
         f.write(json.dumps(dict(
-            kind="meta", cell=asdict(cell), bench=bench, docs=fingerprint,
+            kind="meta", launched_at=launched_at,
+            cell=asdict(cell), bench=bench, docs=fingerprint,
             decode_config=_decode_config_dict(lm),
             provenance=_provenance(cell, lm), wall_clock_s=round(wall, 1),
         )) + "\n")

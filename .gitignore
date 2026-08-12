@@ -17,4 +17,9 @@ third_party/
 !third_party/*.md
 !third_party/*.json
 !third_party/*.sh
-_runs/
+_runs/*
+!_runs/README.md
+!_runs/*/
+_runs/*/*
+!_runs/*/README.md
+!_runs/*/lane.sh

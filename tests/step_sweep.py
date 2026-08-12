@@ -93,7 +93,7 @@ def main() -> int:
     probs = list(get_human_eval_plus().items())[:a.limit]
     step_vals = [int(s) for s in a.steps.split(",")]
     tag = f"{a.model.replace('/', '_')}_{a.revision or 'main'}_{a.commit}"
-    save_path = a.out or f"/home/ayx98/foo/dQwen/_runs/stepsweep/he_stepsweep_{tag}.jsonl"
+    save_path = a.out or f"/home/ayx98/foo/dQwen/_runs/20260809-040642-stepsweep-steps-per-block/he_stepsweep_{tag}.jsonl"
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     sf = open(save_path, "w")
 
