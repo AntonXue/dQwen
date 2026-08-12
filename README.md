@@ -104,7 +104,7 @@ shift, chat formatting — is the **adapter's** problem. Adapters expose **two**
 surfaces: `raw_logits()` (what the model returns; native samplers use it, since they
 carry their own shift) and `logits()` (position-aligned; portable samplers use it).
 Each family's published decode recipe is a **preset** in one `DecodeConfig` space, not
-a separate code path — a claim that `tests/parity/` is there to keep honest.
+a separate code path — a claim that the parity tests (`tests/test_llada_sampler.py`, `tests/test_nelbo_vs_llada.py`) is there to keep honest.
 
 ```python
 from models import load
@@ -138,8 +138,9 @@ exists so it can never be silent again.
 
 ## Reproducibility notes
 
-`third_party/LOCKFILE.md` pins upstream commits and — importantly — records **which
-implementation produced which published table**. This is not bookkeeping pedantry:
+`UPSTREAM_PINS` in `models/adapter.py` pins upstream commits and — importantly —
+records **which implementation produced which published table**. This is not
+bookkeeping pedantry:
 SDAR ships four disagreeing sampler implementations with three different confidence
 thresholds, their published numbers come from a fifth path (LMDeploy), and their own
 reference script cannot express the greedy decoding their paper reports. Numbers we

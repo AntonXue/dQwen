@@ -163,7 +163,7 @@ def assert_finite_rope(model) -> None:
 Upstream repos are reference material and test fixtures -- NEVER runtime
 dependencies. Nothing here is on the import path during a normal eval. Two callers:
 
-  * tests/parity/           mints goldens by running their code unmodified
+  * the parity tests        mint goldens by running their code unmodified
   * model_families/<fam>.py generate_upstream()   the upstream escape hatch
 
 Why the escape hatch exists at all, given we re-implement everything: a touchup
@@ -173,22 +173,37 @@ temperature then multinomials), so our greedy can never be parity-tested. Being 
 to run their code on demand lets us at least bracket such a path instead of flying
 blind. It also costs almost nothing, since the parity fixtures need it anyway.
 
-Populate by cloning each repo at its pin (UPSTREAM_PINS below;
-orgs and roles in third_party/LOCKFILE.md).
+Populate by cloning each repo at its pin (UPSTREAM_PINS below
+carries org, role, and provenance per repo).
 """
 
 
 _THIRD_PARTY = Path(__file__).resolve().parent.parent / "third_party"
 
 
-# Pinned upstream commits. The authoritative table -- including WHICH
-# implementation produced WHICH published number -- is third_party/LOCKFILE.md.
+# Pinned upstream commits, with each repo's role and -- critically -- WHICH
+# implementation produced WHICH published table. Unpinned upstream is worse
+# than no upstream: JetEngine's dynamic_threshold default has already
+# drifted 0.9 -> 0.75 under research-numbered commits.
+#   LLaDA published via lm-eval (their own register_model): reproducible.
+#   Dream published via a VENDORED, modified lm-eval 0.4.8
+#     (eval_instruct/lm_eval) -- same version we pin, but their
+#     modifications have never been diffed; treat their harness numbers
+#     accordingly.
+#   SDAR's published table came from NEITHER shipped sampler but from
+#     LMDeploy (block=4, steps=4, low_confidence_dynamic, tau=0.9, greedy)
+#     -- full story in models/sdar.py; our SDAR numbers are re-measurements.
 UPSTREAM_PINS = {
-    "LLaDA": "96441d4",        # ML-GSAI/LLaDA
-    "Dream": "31f94a6",        # DreamLM/Dream
-    "Dream-Coder": "79d4387",  # DreamLM/Dream-Coder
-    "SDAR": "6a12cdb",         # JetAstra/SDAR
-    "JetEngine": "bf8cb31",    # Labman42/JetEngine
+    "LLaDA": "96441d4",        # ML-GSAI/LLaDA: generate.py (native sampler),
+                               #   EVAL.md (published decode + task configs),
+                               #   get_log_likelihood.py (MC-NELBO reference)
+    "Dream": "31f94a6",        # DreamLM/Dream: eval/eval.py lm-eval wrapper
+                               #   (the logit shift at :354)
+    "Dream-Coder": "79d4387",  # DreamLM/Dream-Coder: variant of the above
+    "SDAR": "6a12cdb",         # JetAstra/SDAR: generate.py
+                               #   (block_diffusion_generate), OpenCompass configs
+    "JetEngine": "bf8cb31",    # Labman42/JetEngine: SDAR inference engine,
+                               #   ~15 remasking strategies, has a greedy path
 }
 
 
@@ -197,7 +212,7 @@ def path_for(name: str) -> Path:
     if not p.exists():
         raise FileNotFoundError(
             f"upstream reference {name!r} not present. Clone it at its pin "
-            f"(org in third_party/LOCKFILE.md), e.g.\n"
+            f"(org in the UPSTREAM_PINS comments), e.g.\n"
             f"  git clone <org-url>/{name} {p} && "
             f"git -C {p} checkout {UPSTREAM_PINS[name]}"
         )
@@ -221,7 +236,7 @@ def verify_pin(name: str, strict: bool = True) -> str:
     have = head_of(name)
     if not have.startswith(want) and not want.startswith(have):
         msg = (f"{name} is at {have}, pinned to {want} "
-               "(see third_party/LOCKFILE.md)")
+               "(see UPSTREAM_PINS in models/adapter.py)")
         if strict:
             raise RuntimeError(msg)
         print(f"WARNING: {msg}", file=sys.stderr)

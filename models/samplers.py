@@ -2,7 +2,7 @@
 
 The claim this file encodes is that LLaDA, Dream and dQwen do not need
 different decode APIs -- their published samplers are points in the space
-below, and `tests/parity/` holds our engine token-identical to theirs at
+below, and the parity tests (`tests/test_llada_sampler.py`, `tests/test_nelbo_vs_llada.py`) holds our engine token-identical to theirs at
 the matching configuration.
 """
 
@@ -269,7 +269,7 @@ over `mc_num` Monte-Carlo mask draws. `mc_num=1` is EXACT for single-token targe
 same RNG operations in the same order -- so a seeded run reproduces their number
 exactly. That is not stylistic fidelity, it is the correctness gate: verified to
 reproduce LLaDA-8B-Base at -40.403095 vs -40.403095, diff 0.00e+00.
-See tests/parity/test_nelbo_vs_llada.py.
+See tests/test_nelbo_vs_llada.py.
 
 NO eval-side logit shift is applied here. The estimator reads the masked-position
 logit directly, which requires POSITION-ALIGNED logits -- so callers must pass

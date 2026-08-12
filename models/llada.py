@@ -47,7 +47,7 @@ native environment, not guessed.
 VERIFIED: with these three shims and torch held fixed, LLaDA-8B-Base forward output
 under transformers 5.13 is BITWISE IDENTICAL to transformers 4.57 (max|d| = 0.00e+00
 over the probe prompts). The residual drift originally observed was 100% attributable
-to torch 2.5.1 -> 2.7.1, and 0% to transformers. See tests/parity/test_llada_port.py.
+to torch 2.5.1 -> 2.7.1, and 0% to transformers. See the port-evidence _claude doc (20260721-184634).
 """
 
 
@@ -89,7 +89,7 @@ def apply_shims(cfg, klass) -> list[str]:
 """LLaDA's own sampler, vendored from `generate.py` (ML-GSAI/LLaDA @ 96441d4).
 
 This is the "sampler shipped with LLaDA" path: the algorithm is reproduced exactly,
-so a number produced here is theirs, not ours. `tests/parity/test_llada_sampler.py`
+so a number produced here is theirs, not ours. `tests/test_llada_sampler.py`
 runs this against the unmodified upstream file and requires token-identical output.
 
 TOUCHUPS -- the complete list, each one behaviour-preserving:
@@ -218,7 +218,7 @@ def generate_native(adapter: ModelAdapter, prompt_ids: torch.Tensor,
 """Escape hatch: run LLaDA's `generate.py` verbatim from the pinned checkout.
 
 Not used for normal evals -- `sampler_native.py` is the vendored equivalent, and
-`tests/parity/` asserts the two agree token-for-token. This exists so that claim is
+the parity tests (`tests/test_llada_sampler.py`, `tests/test_nelbo_vs_llada.py`) asserts the two agree token-for-token. This exists so that claim is
 checkable on demand, and so a touched-up path can be bracketed against real upstream
 when it has no parity counterpart.
 

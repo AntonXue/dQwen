@@ -249,7 +249,7 @@ TOUCHUPS -- the complete list:
 WHICH THRESHOLD: `confidence_threshold` defaults to 0.85 in their generate.py, 0.75
 in JetEngine, and 0.9 in the LMDeploy path that produced their published table. We
 take it from DecodeConfig (the published LMDeploy value is 0.9). See
-third_party/LOCKFILE.md.
+UPSTREAM_PINS in models/adapter.py.
 
 This sampler calls `adapter.model` directly rather than `adapter.raw_logits`, because
 it needs SDAR's extended forward signature (attention_mask as a block-causal 3-D

@@ -183,3 +183,22 @@ idempotent on the live env, lm_eval imports clean.
 
 Env story now: hand-built CUDA conda env + `pip install -r
 requirements.txt` + `bash setup_env.sh`. One env, two files, both at root.
+
+## UPDATE 7: tests/ flattened, third_party/ dissolved into adapter.py
+
+tests/parity/ (a wrapper dir holding two files) flattened into tests/;
+empty __init__.py files deleted (script-style tests, no pytest); parity
+tests got the sys.path bootstrap they lost when dqeval/ dissolved. RUN
+LIVE post-refactor: GATE 2 PASS — the unified sampler is still
+token-identical to LLaDA's vendored native sampler after the entire
+simplification day. tests/ = two gates + two parity fixtures +
+load_matrix preflight, all current.
+
+third_party/ deleted from git: LOCKFILE.md's pin table was already
+duplicated by UPSTREAM_PINS, and its which-implementation-produced-which-
+published-table analysis now lives IN the UPSTREAM_PINS comment block
+(roles per repo, LLaDA reproducible-via-lm-eval, Dream's vendored
+modified lm-eval never diffed, SDAR published via LMDeploy) — provenance
+next to the code that consumes it. The path stays gitignored as the
+designated clone target for parity checkouts (error messages print the
+exact clone command).
