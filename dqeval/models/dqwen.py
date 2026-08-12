@@ -14,8 +14,8 @@ so `revision=` is a first-class argument rather than a separate repo per checkpo
 
 from typing import Optional
 import torch
-from dqeval import models as hf
-from dqeval.models import ModelAdapter, ModelSpec
+from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+                           assert_finite_rope, materialize, resolve, tokenizer)
 
 
 class DQwenAdapter(ModelAdapter):
@@ -30,11 +30,11 @@ class DQwenAdapter(ModelAdapter):
 
 def build(spec: ModelSpec, revision: Optional[str] = None,
           dtype=torch.bfloat16, device: str = "cuda") -> DQwenAdapter:
-    cfg, klass = hf.resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
-    tok = hf.tokenizer(spec.repo, revision=revision)
-    model = hf.materialize(klass, spec.repo, cfg, revision=revision,
+    cfg, klass = resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
+    tok = tokenizer(spec.repo, revision=revision)
+    model = materialize(klass, spec.repo, cfg, revision=revision,
                            dtype=dtype, device=device)
-    hf.assert_finite_rope(model)
+    assert_finite_rope(model)
 
     # Our own ids are pinned in the registry; assert rather than trust.
     vocab = model.config.vocab_size

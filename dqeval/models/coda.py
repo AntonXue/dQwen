@@ -27,14 +27,14 @@ assumed:
     by construction, so this costs us nothing.
 
 `forward` returns a plain `(logits, loss)` tuple, not a ModelOutput, and only
-takes the inference branch when the module is in eval mode (`hf.materialize`
+takes the inference branch when the module is in eval mode (`models.materialize`
 calls `.eval()`); in train mode it expects labels and does its own masking.
 """
 
 from typing import Optional
 import torch
-from dqeval import models as hf
-from dqeval.models import ModelAdapter, ModelSpec
+from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+                           assert_finite_rope, materialize, resolve, tokenizer)
 import sys
 
 
@@ -53,12 +53,12 @@ class CoDAAdapter(ModelAdapter):
 
 def build(spec: ModelSpec, revision: Optional[str] = None,
           dtype=torch.bfloat16, device: str = "cuda") -> CoDAAdapter:
-    cfg, klass = hf.resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
+    cfg, klass = resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
     shims = apply_shims(cfg, klass)          # MUST precede materialisation
-    tok = hf.tokenizer(spec.repo, revision=revision)
-    model = hf.materialize(klass, spec.repo, cfg, revision=revision,
+    tok = tokenizer(spec.repo, revision=revision)
+    model = materialize(klass, spec.repo, cfg, revision=revision,
                            dtype=dtype, device=device)
-    hf.assert_finite_rope(model)
+    assert_finite_rope(model)
 
     declared = getattr(cfg, "mask_token_id", None)
     if declared is not None and declared != spec.mask_id:

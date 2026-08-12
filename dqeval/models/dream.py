@@ -21,13 +21,13 @@ separate methods.
 
 from typing import Optional
 import torch
-from dqeval import models as hf
-from dqeval.models import ModelAdapter, ModelSpec
+from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+                           assert_finite_rope, materialize, resolve, tokenizer)
 import sys
 from transformers.generation.configuration_utils import GenerationConfig
-from dqeval.models import ModelAdapter
-from dqeval.samplers import GenOutput
-from dqeval.samplers import DecodeConfig
+from dqeval.models.adapter import ModelAdapter
+from dqeval.models.samplers import GenOutput
+from dqeval.models.samplers import DecodeConfig
 
 
 class DreamAdapter(ModelAdapter):
@@ -45,12 +45,12 @@ class DreamAdapter(ModelAdapter):
 
 def build(spec: ModelSpec, revision: Optional[str] = None,
           dtype=torch.bfloat16, device: str = "cuda") -> DreamAdapter:
-    cfg, klass = hf.resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
+    cfg, klass = resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
     shims = apply_shims(cfg, klass)
-    tok = hf.tokenizer(spec.repo, revision=revision)
-    model = hf.materialize(klass, spec.repo, cfg, revision=revision,
+    tok = tokenizer(spec.repo, revision=revision)
+    model = materialize(klass, spec.repo, cfg, revision=revision,
                            dtype=dtype, device=device)
-    hf.assert_finite_rope(model)          # shim (3) is silent if it regresses
+    assert_finite_rope(model)          # shim (3) is silent if it regresses
 
     cfg_mask = getattr(cfg, "mask_token_id", None)
     if cfg_mask is not None and cfg_mask != spec.mask_id:

@@ -29,9 +29,9 @@ import sys
 import torch
 
 from dqeval.models import load
-from dqeval.samplers import DecodeConfig
-from dqeval.model_families import llada
-from dqeval import samplers as unified
+from dqeval.models.samplers import DecodeConfig
+from dqeval.models import llada
+from dqeval.models import samplers as unified
 
 PROMPTS = [
     "def add(a, b):\n    ",

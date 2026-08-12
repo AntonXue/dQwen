@@ -15,8 +15,8 @@ Two SDAR-specific wrinkles handled in compat.py:
 
 from typing import Optional
 import torch
-from dqeval import models as hf
-from dqeval.models import ModelAdapter, ModelSpec
+from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+                           assert_finite_rope, materialize, tokenizer)
 import sys
 import types
 import transformers.dynamic_module_utils as dmu
@@ -24,9 +24,9 @@ from transformers import AutoConfig
 from transformers.dynamic_module_utils import get_class_from_dynamic_module
 import torch.nn.functional as F
 from transformers.cache_utils import DynamicCache
-from dqeval.models import ModelAdapter
-from dqeval.samplers import GenOutput
-from dqeval.samplers import DecodeConfig
+from dqeval.models.adapter import ModelAdapter
+from dqeval.models.samplers import GenOutput
+from dqeval.models.samplers import DecodeConfig
 from torch.nn.attention.flex_attention import create_block_mask
 
 
@@ -44,11 +44,11 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
           dtype=torch.bfloat16, device: str = "cuda") -> SDARAdapter:
     cfg, klass = resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
     shims = apply_shims(cfg, klass)
-    tok = hf.tokenizer(spec.repo, revision=revision)
-    model = hf.materialize(klass, spec.repo, cfg, revision=revision,
+    tok = tokenizer(spec.repo, revision=revision)
+    model = materialize(klass, spec.repo, cfg, revision=revision,
                            dtype=dtype, device=device)
     shims.append(repair_rope(model))
-    hf.assert_finite_rope(model)
+    assert_finite_rope(model)
 
     if not hasattr(model, "lm_head"):
         raise RuntimeError(

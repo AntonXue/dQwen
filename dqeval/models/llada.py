@@ -8,13 +8,13 @@ inherited identity and there is no eval-side shift. Confirmed by reading their
 
 from typing import Optional
 import torch
-from dqeval import models as hf
-from dqeval.models import ModelAdapter, ModelSpec
+from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+                           assert_finite_rope, materialize, resolve, tokenizer)
 import torch.nn.functional as F
-from dqeval.models import ModelAdapter
-from dqeval.samplers import GenOutput
-from dqeval.samplers import DecodeConfig
-from dqeval.models import on_path
+from dqeval.models.adapter import ModelAdapter
+from dqeval.models.samplers import GenOutput
+from dqeval.models.samplers import DecodeConfig
+from dqeval.models.adapter import on_path
 
 
 class LLaDAAdapter(ModelAdapter):
@@ -29,12 +29,12 @@ class LLaDAAdapter(ModelAdapter):
 
 def build(spec: ModelSpec, revision: Optional[str] = None,
           dtype=torch.bfloat16, device: str = "cuda") -> LLaDAAdapter:
-    cfg, klass = hf.resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
+    cfg, klass = resolve(spec.repo, revision=revision, auto_class=spec.auto_class)
     shims = apply_shims(cfg, klass)
-    tok = hf.tokenizer(spec.repo, revision=revision)
-    model = hf.materialize(klass, spec.repo, cfg, revision=revision,
+    tok = tokenizer(spec.repo, revision=revision)
+    model = materialize(klass, spec.repo, cfg, revision=revision,
                            dtype=dtype, device=device)
-    hf.assert_finite_rope(model)
+    assert_finite_rope(model)
     return LLaDAAdapter(model, tok, spec, revision=revision, shims=shims)
 
 

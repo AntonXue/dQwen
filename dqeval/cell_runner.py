@@ -46,11 +46,11 @@ from lm_eval.api.registry import register_model
 from lm_eval.models.huggingface import HFLM
 from lm_eval.tasks import TaskManager, get_task_dict
 
-from dqeval import samplers
+from dqeval.models import samplers
 from dqeval.benchmarks import task_config
 from dqeval.benchmarks._grading import _CODE_TIMEOUT, _CODE_WORKERS
 from dqeval.models import load
-from dqeval.samplers import DecodeConfig
+from dqeval.models.samplers import DecodeConfig
 
 # Model-end stop strings, shared by every generation driver — truncation
 # rules move scores, so there is exactly one copy. The ``` fence catches

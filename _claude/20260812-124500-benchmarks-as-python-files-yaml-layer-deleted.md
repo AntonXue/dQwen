@@ -105,3 +105,25 @@ _FAMILY_MODULES onto the ModelAdapter class body as a class attribute --
 py_compile AND import smoke both passed (valid class attr!); only the
 functional smoke cell caught the NameError in load(). Cell-level smokes
 after every structural edit are not optional.
+
+## UPDATE 3: dependency inversion + the closed models/ package (same day)
+
+Two-step fix for "the dependency organization is really confusing":
+
+1. INVERSION — models.py's hidden string-dispatch into the families
+   (importlib + _FAMILY_MODULES, a disguised cycle broken only by
+   laziness) was replaced by explicit dispatch: load() + BUILDERS live
+   with the families, every family module imported by name.
+2. CLOSURE — model_families/ became dqeval/models/, absorbing adapter.py
+   (contract + HF loading + pins) and samplers.py (decode + MC-NELBO +
+   GenOutput). The package is CLOSED: family files import only siblings;
+   nothing imports upward; adapter ⊥ samplers stays AST-enforced.
+   models/__init__.py = the MODELS catalog + BUILDERS + load() — ONE
+   place to register a model. The `as hf` aliases died for direct named
+   imports.
+
+Final tree: dqeval/ = cell_runner.py + models/ + benchmarks/. Outsiders
+touch exactly two surfaces: `from dqeval.models import load, MODELS` and
+`from dqeval.models.samplers import DecodeConfig, generate`.
+Verified: AST closure check, import smoke, three-path cell smoke
+(DLM generate / DLM MC-NELBO / AR).
