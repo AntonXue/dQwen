@@ -57,3 +57,27 @@ the grid_v1 store and summarize.py needed no migration. Smoked end-to-end
 via run.py: all 8 BENCH benchmarks ran stripe cells on the vendored
 configs (gsm8k/math/mmlu/humaneval-plus/mbpp-plus/mbpp-fence today;
 humaneval/mbpp are byte-identical registered-merge no-ops).
+
+## UPDATE: the single-entry reshape (same day)
+
+Anton's target: "call a single file and say run this model, this sampler
+config, this dataset, this shard" + descriptive names everywhere. Final:
+
+| was | is |
+|---|---|
+| grid.py + harness.py | **cell_runner.py** — THE entry: `run_cell(Cell(...))`; imports the full stack (root run.py is the login-node-safe CLI) |
+| adapter.py | **models.py** (registry + contract + loading + pins) |
+| sampler.py | **samplers.py** (decode + MC-NELBO; now owns GenOutput) |
+| families/ | **model_families/** |
+| tasks/ | **benchmarks/** ("benchmark" = our file, "task" = lm-eval's name string — vocabulary collision gone) |
+
+Orthogonality rule enforced and AST-checked: models.py and samplers.py do
+not import each other (GenOutput moved to samplers — it is the sampler's
+return type; generate() duck-types the adapter). model_families/* import
+both; cell_runner sits on top; benchmarks/ touch only _grading.
+
+Gates: freeze gate PASSED post-rename; smoke matrix covered all four
+execution paths (AR generate, AR gsm8k, DLM block-decode via RecordingLM,
+DLM MC-NELBO via DQEvalLM.loglikelihood). hellaswag_sub/race_sub deleted
+earlier the same day (retention-probe orphans; striping obsoleted the
+subsample trick).

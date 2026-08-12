@@ -11,7 +11,7 @@ Examples:
   python run.py Qwen/Qwen3.5-2B - ar gsm8k
 
 Everything else (env flags, sys.path, idempotent skip, output layout) is
-handled here or in dqeval.grid — there is nothing to set up first.
+handled here or in dqeval.cell_runner — there is nothing to set up first.
 """
 
 import os
@@ -23,13 +23,13 @@ os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 
 def main(argv):
-    from dqeval.grid import (Cell, run_cell, load_manifest, BENCH,
+    from dqeval.cell_runner import (Cell, run_cell, load_manifest, BENCH,
                              TAU_GRID, BLOCK_STATIC, STANDARD_STATIC)
     if not argv or argv[0] in ("-h", "--help"):
         print(__doc__.strip())
         return 0
     if argv[0] == "--list":
-        from dqeval.adapter import MODELS
+        from dqeval.models import MODELS
         print("models (dqeval registry; AR cells take a bare HF id instead):")
         for name in MODELS:
             print(f"  {name}")

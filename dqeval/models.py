@@ -30,20 +30,6 @@ from typing import Optional
 import torch
 
 
-@dataclass
-class GenOutput:
-    """One generation. bs=1 by construction -- see `dqeval.sampler`."""
-
-    prompt_ids: torch.Tensor
-    gen_ids: torch.Tensor
-    text: str
-    n_forward: int = 0
-
-    @property
-    def full_ids(self) -> torch.Tensor:
-        return torch.cat([self.prompt_ids, self.gen_ids], dim=-1)
-
-
 @dataclass(frozen=True)
 class ModelSpec:
     """Static facts about a model repo. `mask_id` is asserted against the config
@@ -193,11 +179,11 @@ class ModelAdapter(ABC):
 
 
 _FAMILY_MODULES = {
-    "llada": "dqeval.families.llada",
-    "dream": "dqeval.families.dream",
-    "sdar": "dqeval.families.sdar",
-    "coda": "dqeval.families.coda",
-    "dqwen": "dqeval.families.dqwen",
+    "llada": "dqeval.model_families.llada",
+    "dream": "dqeval.model_families.dream",
+    "sdar": "dqeval.model_families.sdar",
+    "coda": "dqeval.model_families.coda",
+    "dqwen": "dqeval.model_families.dqwen",
 }
 
 
@@ -287,7 +273,7 @@ Upstream repos are reference material and test fixtures -- NEVER runtime
 dependencies. Nothing here is on the import path during a normal eval. Two callers:
 
   * tests/parity/           mints goldens by running their code unmodified
-  * families/<fam>.py generate_upstream()   the upstream escape hatch
+  * model_families/<fam>.py generate_upstream()   the upstream escape hatch
 
 Why the escape hatch exists at all, given we re-implement everything: a touchup
 creates a code path with NO upstream counterpart to compare against. SDAR greedy is

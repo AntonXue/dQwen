@@ -4,7 +4,7 @@ stays `humaneval_plus_sound` for store continuity: "sound" = the rendered
 comparator's empty-expected bug is patched at load time (see
 _grading.plus_process_docs)."""
 
-from dqeval.tasks._grading import (build_predictions, pass_at_k,
+from dqeval.benchmarks._grading import (build_predictions, pass_at_k,
                                    plus_process_docs)
 
 TASK = {

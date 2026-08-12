@@ -147,7 +147,20 @@ Parallelism belongs above this function: map over prompts, shard over GPUs.
 import torch
 import torch.nn.functional as F
 
-from dqeval.adapter import GenOutput, ModelAdapter
+
+@dataclass
+class GenOutput:
+    """One generation. bs=1 by construction -- see `generate` below."""
+
+    prompt_ids: torch.Tensor
+    gen_ids: torch.Tensor
+    text: str
+    n_forward: int = 0
+
+    @property
+    def full_ids(self) -> torch.Tensor:
+        return torch.cat([self.prompt_ids, self.gen_ids], dim=-1)
+
 
 NEG_INF = float("-inf")
 
@@ -224,7 +237,7 @@ def _stop_cut(text: str, stop_strings) -> "int | None":
 
 
 @torch.no_grad()
-def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
+def generate(adapter, prompt_ids: torch.Tensor,
              cfg: DecodeConfig, stop_strings=None) -> GenOutput:
     """Block-diffusion decode of ONE prompt. `prompt_ids` is [1, L].
 

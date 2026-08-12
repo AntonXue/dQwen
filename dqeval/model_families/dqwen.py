@@ -18,8 +18,8 @@ from typing import Optional
 
 import torch
 
-from dqeval import adapter as hf
-from dqeval.adapter import ModelAdapter, ModelSpec
+from dqeval import models as hf
+from dqeval.models import ModelAdapter, ModelSpec
 
 
 class DQwenAdapter(ModelAdapter):

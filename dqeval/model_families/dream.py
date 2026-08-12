@@ -25,8 +25,8 @@ from typing import Optional
 
 import torch
 
-from dqeval import adapter as hf
-from dqeval.adapter import ModelAdapter, ModelSpec
+from dqeval import models as hf
+from dqeval.models import ModelAdapter, ModelSpec
 
 
 
@@ -212,8 +212,9 @@ under different names; the mapping is explicit below rather than guessed.
 
 import torch
 
-from dqeval.adapter import GenOutput, ModelAdapter
-from dqeval.sampler import DecodeConfig
+from dqeval.models import ModelAdapter
+from dqeval.samplers import GenOutput
+from dqeval.samplers import DecodeConfig
 
 # our vocabulary -> theirs. 'origin' is their default: sample per position, unmask
 # by raw confidence. 'maskgit_plus' is the low-confidence-first ordering.

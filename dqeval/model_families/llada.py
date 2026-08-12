@@ -12,8 +12,8 @@ from typing import Optional
 
 import torch
 
-from dqeval import adapter as hf
-from dqeval.adapter import ModelAdapter, ModelSpec
+from dqeval import models as hf
+from dqeval.models import ModelAdapter, ModelSpec
 
 
 
@@ -124,8 +124,9 @@ DELIBERATELY NOT CHANGED, though our unified engine does it differently:
 import torch
 import torch.nn.functional as F
 
-from dqeval.adapter import GenOutput, ModelAdapter
-from dqeval.sampler import DecodeConfig
+from dqeval.models import ModelAdapter
+from dqeval.samplers import GenOutput
+from dqeval.samplers import DecodeConfig
 
 NEG_INF = float("-inf")
 
@@ -246,9 +247,10 @@ Requires `third_party/fetch.sh`.
 
 import torch
 
-from dqeval.adapter import on_path
-from dqeval.adapter import GenOutput, ModelAdapter
-from dqeval.sampler import DecodeConfig
+from dqeval.models import on_path
+from dqeval.models import ModelAdapter
+from dqeval.samplers import GenOutput
+from dqeval.samplers import DecodeConfig
 
 
 @torch.no_grad()

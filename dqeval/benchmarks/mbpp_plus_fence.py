@@ -11,8 +11,8 @@ fence effect measured on MBPP (corpus-dependent: dQwen +4/+6pp, LLaDA
 -2.40) can be re-read under ~34x denser tests. A LABELLED
 format-sensitivity variant, never the Table-4 MBPP+ column."""
 
-from dqeval.tasks._grading import pass_at_1, plus_process_docs
-from dqeval.tasks.mbpp import FEWSHOT_SAMPLES
+from dqeval.benchmarks._grading import pass_at_1, plus_process_docs
+from dqeval.benchmarks.mbpp import FEWSHOT_SAMPLES
 
 TASK = {
     "task": "mbpp_plus_ticks",

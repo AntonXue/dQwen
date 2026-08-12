@@ -14,7 +14,7 @@ originals.
 
 from copy import deepcopy
 
-from dqeval.tasks import (
+from dqeval.benchmarks import (
     gsm8k,
     humaneval,
     humaneval_plus,

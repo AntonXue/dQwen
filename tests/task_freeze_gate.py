@@ -62,7 +62,7 @@ def renders(task, shots, k=5):
 
 def main():
     from lm_eval.tasks import TaskManager, get_task_dict
-    from dqeval.tasks import task_config
+    from dqeval.benchmarks import task_config
     tm = TaskManager()
     fails = 0
 

@@ -19,8 +19,8 @@ from typing import Optional
 
 import torch
 
-from dqeval import adapter as hf
-from dqeval.adapter import ModelAdapter, ModelSpec
+from dqeval import models as hf
+from dqeval.models import ModelAdapter, ModelSpec
 
 
 
@@ -277,8 +277,9 @@ import torch
 import torch.nn.functional as F
 from transformers.cache_utils import DynamicCache
 
-from dqeval.adapter import GenOutput, ModelAdapter
-from dqeval.sampler import DecodeConfig
+from dqeval.models import ModelAdapter
+from dqeval.samplers import GenOutput
+from dqeval.samplers import DecodeConfig
 
 NEG_INF = float("-inf")
 

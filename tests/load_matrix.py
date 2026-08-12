@@ -25,7 +25,7 @@ import traceback
 
 import torch
 
-from dqeval.adapter import MODELS, load
+from dqeval.models import MODELS, load
 
 PROMPT = "def add(a, b):\n    return"
 

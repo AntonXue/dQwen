@@ -3,7 +3,7 @@ model writes the body). Frozen from pinned lm-eval 0.4.8's `humaneval` task;
 fidelity-gated byte-identical 2026-08-12. Grading via _grading (10s/problem,
 parallel)."""
 
-from dqeval.tasks._grading import build_predictions, pass_at_k
+from dqeval.benchmarks._grading import build_predictions, pass_at_k
 
 TASK = {
     "task": "humaneval",
