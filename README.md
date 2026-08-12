@@ -3,7 +3,7 @@
 Reproducible evaluation for diffusion language models — the **dQwen3.5 / dQwen3**
 family alongside **LLaDA** and **Dream / Dream-Coder**, all in one environment.
 (SDAR loads for multiple-choice scoring, but generation needs a compat shim
-that does not exist yet; see `dqeval/models/sdar.py`.)
+that does not exist yet; see `models/sdar.py`.)
 
 One flat entrypoint: `run.py`. One cell = (model, revision, decode, benchmark,
 shard) = one provenance-stamped JSONL. Cells are independent, idempotent, and
@@ -58,7 +58,7 @@ Notes that prevent wrong numbers:
 - `mbpp` vs `mbpp-fence` are different prompts (different generations).
   The "+" columns are ordinary cells: `humaneval-plus` shares humaneval's
   prompts (denser tests), `mbpp-plus` runs EvalPlus's 378 sanitized
-  problems under our scaffold via `dqeval/benchmarks/mbpp_plus.py` (stock
+  problems under our scaffold via `benchmarks/mbpp_plus.py` (stock
   lm-eval `mbpp_plus` never executes the plus suite; the file carries the
   published-number comparability caveat).
 - Few-shot counts, gen lengths, greedy decoding, bs=1, and the math-only
@@ -88,7 +88,7 @@ A 2B HumanEval cell takes ~20 s/doc-shard; 9B GSM8K shards run hours.
 
 ## One file per benchmark
 
-`dqeval/benchmarks/` holds every benchmark as one skimmable Python file
+`benchmarks/` holds every benchmark as one skimmable Python file
 (`humaneval.py`, `mbpp_plus.py`, `gsm8k.py`, `mmlu.py`, ...): the complete
 task config — prompt template, frozen few-shot examples, stops, metrics,
 grading knobs — with lm-eval as the execution engine underneath.
@@ -107,8 +107,8 @@ Each family's published decode recipe is a **preset** in one `DecodeConfig` spac
 a separate code path — a claim that `tests/parity/` is there to keep honest.
 
 ```python
-from dqeval.models import load
-from dqeval.models.samplers import DecodeConfig, generate
+from models import load
+from models.samplers import DecodeConfig, generate
 
 m = load("llada-8b-base")                      # compat shims applied automatically
 out = generate(m, m.encode("def add(a, b):\n    "),
@@ -122,7 +122,7 @@ ours = load("dqwen3.5-2b-base-v3", revision="step50000-swa")   # checkpoints are
 
 dQwen3.5 requires transformers >= 5.x; every comparator pins 4.4x–4.5x, and neither
 side loads on the other's version. So the comparators are **ported** — ~90 lines of
-compat shims total (the compat sections of `dqeval/models/*.py`).
+compat shims total (the compat sections of `models/*.py`).
 
 Those shims are **archaeology, not invention**: each restores a behaviour transformers
 4.x actually had, verified by reading it out of the native environment rather than
@@ -132,7 +132,7 @@ to torch 2.5.1 → 2.7.1, none to transformers — which is why `torch` is pinne
 in `envs/requirements-eval.txt` as part of the reproducibility contract.
 
 Two of the three comparators had a **silent** failure mode where the model loads,
-forwards, raises nothing, and returns noise. `dqeval/models/adapter.py::assert_finite_rope()`
+forwards, raises nothing, and returns noise. `models/adapter.py::assert_finite_rope()`
 exists so it can never be silent again.
 
 ## Reproducibility notes

@@ -60,7 +60,6 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return DreamAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-# (merged from dqeval/families/dream/compat.py)
 """Dream compat shims for transformers 5.13.
 
 PRINCIPLE: a shim RESTORES a behaviour transformers 4.x had; it never invents one.
@@ -175,7 +174,6 @@ def apply_shims(cfg, klass) -> list[str]:
     return log
 
 
-# (merged from dqeval/families/dream/sampler_native.py)
 """Dream's own sampler: `model.diffusion_generate`.
 
 UNUSUAL AMONG OUR FAMILIES: Dream's sampler ships INSIDE the HF repo, loaded with

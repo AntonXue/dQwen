@@ -44,6 +44,3 @@ dependencies = []   # intentional -- see the header. Use envs/requirements-eval.
 # When the CLI lands (Phase 3), its entry point goes here, e.g.
 #   [project.scripts]
 #   dqeval = "dqeval.cli:main"
-
-[tool.setuptools.packages.find]
-include = ["dqeval*"]

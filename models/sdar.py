@@ -58,7 +58,6 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return SDARAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-# (merged from dqeval/families/sdar/compat.py)
 """SDAR compat for transformers 5.13, plus one upstream repo defect.
 
 Two DIFFERENT kinds of patch live here, and the distinction matters for how we
@@ -206,7 +205,6 @@ def repair_rope(model) -> str:
     return f"post-load inv_freq recompute via rope_init_fn ({n} modules)"
 
 
-# (merged from dqeval/families/sdar/sampler_native.py)
 """SDAR's own sampler, vendored from `generate.py` (JetAstra/SDAR @ 6a12cdb).
 
 Their sampler lives in their GitHub repo, not the HF repo -- but it runs against the

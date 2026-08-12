@@ -127,3 +127,24 @@ touch exactly two surfaces: `from dqeval.models import load, MODELS` and
 `from dqeval.models.samplers import DecodeConfig, generate`.
 Verified: AST closure check, import smoke, three-path cell smoke
 (DLM generate / DLM MC-NELBO / AR).
+
+## UPDATE 4: dqeval/ dissolved — the repo IS the tool (same day)
+
+Anton: not enough content at dqeval/'s top level to justify the wrapper.
+Final flattening: models/ and benchmarks/ move to the repo root;
+cell_runner.py merges into run.py (CLI up front, machinery below;
+`from run import Cell, run_cell` for scripts). dqeval survives as the
+PROJECT name only.
+
+Riders that made it safe: (1) pyproject packaging stanza DELETED — the
+generic top-level names models/benchmarks must never reach site-packages;
+(2) structure_gate rule 5 asserts `import models`/`import benchmarks`
+resolve to THIS repo, so a future dependency claiming either name fails
+the gate instead of shadowing silently (both names verified unclaimed in
+the pinned env); (3) login-node lightness consciously retired — run.py
+--list now imports torch (~10s); a manifest is five string fields per
+line, writable without Python.
+
+Repo root: run.py, summarize.py, models/, benchmarks/, tests/, envs/,
+third_party/, _runs/, _claude/. Both gates PASS; three-path cell smoke
+clean.

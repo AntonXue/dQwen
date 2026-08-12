@@ -80,7 +80,6 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return CoDAAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-# (merged from dqeval/families/coda/compat.py)
 """CoDA compat shims for transformers 5.13.
 
 PRINCIPLE (inherited from the Dream/SDAR ports): a shim RESTORES a behaviour

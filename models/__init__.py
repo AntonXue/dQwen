@@ -1,6 +1,6 @@
 """The model package: catalog, contract, decode, and the five families.
 
-    from dqeval.models import load, MODELS
+    from models import load, MODELS
     adapter = load("dqwen3.5-2b-base-v3", revision="step50000-swa")
 
 Everything model-shaped lives here and the package is CLOSED: family files

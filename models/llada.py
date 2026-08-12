@@ -38,7 +38,6 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     return LLaDAAdapter(model, tok, spec, revision=revision, shims=shims)
 
 
-# (merged from dqeval/families/llada/compat.py)
 """LLaDA compat shims for transformers 5.13.
 
 PRINCIPLE: a shim RESTORES a behaviour transformers 4.x had. It never invents one.
@@ -87,7 +86,6 @@ def apply_shims(cfg, klass) -> list[str]:
     return log
 
 
-# (merged from dqeval/families/llada/sampler_native.py)
 """LLaDA's own sampler, vendored from `generate.py` (ML-GSAI/LLaDA @ 96441d4).
 
 This is the "sampler shipped with LLaDA" path: the algorithm is reproduced exactly,
@@ -97,7 +95,7 @@ runs this against the unmodified upstream file and requires token-identical outp
 TOUCHUPS -- the complete list, each one behaviour-preserving:
 
   1. `-np.inf` -> `float("-inf")`. Identical value (np.inf is a plain Python float);
-     drops the numpy dependency so dqeval/ stays torch-only.
+     drops the numpy dependency so the repo stays torch-only.
   2. Signature adapted to the dqeval sampler contract
      `generate(adapter, prompt_ids, cfg) -> GenOutput`. The body is untouched.
   3. Logits come from `adapter.raw_logits` rather than `model(x).logits`. For LLaDA
@@ -217,7 +215,6 @@ def generate_native(adapter: ModelAdapter, prompt_ids: torch.Tensor,
                      text=adapter.decode(gen_ids), n_forward=n_forward)
 
 
-# (merged from dqeval/families/llada/sampler_upstream.py)
 """Escape hatch: run LLaDA's `generate.py` verbatim from the pinned checkout.
 
 Not used for normal evals -- `sampler_native.py` is the vendored equivalent, and
