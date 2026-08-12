@@ -24,3 +24,4 @@ _runs/*/*
 !_runs/*/README.md
 !_runs/*/lane.sh
 third_party/
+_slurm_out/

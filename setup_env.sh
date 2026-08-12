@@ -10,8 +10,18 @@ set -euo pipefail
 PY=${PYTHON:-/ssd1/ayx98/miniconda3/envs/qwen35/bin/python}
 PIP="$PY -m pip"
 
-echo ">> installing requirements.txt"
-$PIP install -q -r "$(dirname "$0")/requirements.txt"
+# Default installs ONLY the harness layer on top of an existing model env --
+# safe on the cluster, whose aarch64 (GH200) conda env carries its own
+# hand-built torch/flash-linear-attention that pip must never touch.
+# --full additionally installs requirements.txt (x86 workstation bring-up).
+if [ "${1:-}" = "--full" ]; then
+  echo ">> installing requirements.txt (full workstation set)"
+  $PIP install -q -r "$(dirname "$0")/requirements.txt"
+else
+  echo ">> installing the harness layer (lm_eval, evaluate, math deps)"
+  $PIP install -q "lm_eval==0.4.8" "evaluate==0.4.6" \
+      "antlr4-python3-runtime==4.11" "math_verify==0.9.0" sympy
+fi
 
 SP=$($PY -c "import lm_eval, os; print(os.path.dirname(os.path.dirname(lm_eval.__file__)))" 2>/dev/null \
      || $PY -c "import site; print(site.getsitepackages()[0])")

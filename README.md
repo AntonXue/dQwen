@@ -93,6 +93,28 @@ the code-grading knobs, with lm-eval as the execution engine underneath.
 to the pinned lm-eval (doc fingerprints + rendered prompts); run it
 whenever the specs change or the pin is bumped.
 
+## Cluster deployment (TACC Vista, GH200 -- one GPU per node)
+
+One array task = one cell. On a login node (the only place with network):
+
+```bash
+bash setup_env.sh                        # harness layer into the cluster qwen35 env
+                                         #   (default never touches the hand-built torch)
+python prewarm_caches.py manifest.jsonl  # models + datasets + code_eval -> $HF_HOME
+python run.py --pending manifest.jsonl   # validates every line, prints remaining indices
+sbatch --array=<indices>%32 sbatch_cells.sh manifest.jsonl
+```
+
+Compute nodes run fully offline (`sbatch_cells.sh` sets `HF_*_OFFLINE=1`).
+Requeue freely -- completed cells exit in seconds, `--pending` regenerates
+the index list, and concurrent requeues of one cell cannot corrupt output
+(unique tmp + atomic rename). Coalesce stripes afterwards with
+`python summarize.py --merge` (verifies each union is complete and disjoint
+before printing a merged number).
+
+NOTE on hardware: publication cells should all come from ONE hardware
+generation. Local-workstation cells are PROBE; restamp on the cluster.
+
 ## Design in one paragraph
 
 A portable sampler needs exactly one thing from a model: logits for a canvas.

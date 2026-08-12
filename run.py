@@ -4,6 +4,7 @@
   python run.py MODEL REVISION DECODE BENCHMARK [K/N]     one cell
   python run.py manifest.jsonl INDEX                      one manifest row
   python run.py --list                                    what can I ask for?
+  python run.py --pending manifest.jsonl                  array indices still to run
 
 Examples:
   python run.py dqwen3.5-2b-base-v3 step50000-swa block32-tau0.8 gsm8k 2/8
@@ -373,7 +374,9 @@ def run_cell(cell: Cell, out_root="_runs/grid_v1"):
 
     decode_config = ({k: getattr(lm.decode, k) for k in vars(lm.decode)}
                      if hasattr(lm, "decode") else {"decode": "ar"})
-    tmp = out.with_suffix(".jsonl.tmp")
+    # unique per-writer tmp: concurrent SLURM requeues of the same cell must
+    # not interleave into one file; the atomic rename makes last-writer-wins
+    tmp = out.with_suffix(f".jsonl.{os.getpid()}.tmp")
     with open(tmp, "w") as f:
         f.write(json.dumps(dict(
             kind="meta", launched_at=launched_at,
@@ -465,6 +468,20 @@ def main(argv):
         print(f"  block32-static-sK    K in {BLOCK_STATIC}")
         print(f"  standard-static-sK   K in {STANDARD_STATIC}")
         print(f"  block32-tauT | standard-tauT   T in {TAU_GRID}")
+        return 0
+    if argv[0] == "--pending":
+        # validates every line (bad cells raise here, on the login node, not
+        # at hour 3 of an array) and prints the indices whose output cells
+        # are not complete -- paste into sbatch --array=...%THROTTLE
+        cells = load_manifest(argv[1])
+        for c in cells:
+            if c.benchmark not in BENCH:
+                raise SystemExit(f"bad benchmark in manifest: {c}")
+            if c.decode not in ("ar", "mc-nelbo"):
+                parse_decode(c.decode, BENCH[c.benchmark]["gen"] or 0)
+        todo = [i for i, c in enumerate(cells) if not is_complete(out_path(c, "_runs/grid_v1"))]
+        print(f"# {len(todo)}/{len(cells)} cells pending", file=sys.stderr)
+        print(",".join(map(str, todo)) if todo else "")
         return 0
     if argv[0].endswith(".jsonl"):
         run_cell(load_manifest(argv[0])[int(argv[1])])

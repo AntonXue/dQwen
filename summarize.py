@@ -101,5 +101,67 @@ def main():
         print("  ".join(str(x).ljust(w) for x, w in zip(r, widths)))
 
 
+# ---- stripe merging (the coalesce step for sharded benchmarks) ----------
+# A stripe group = same (model@rev, benchmark, decode) and same n with all
+# k in 0..n-1 present and complete. Per-doc metrics are recombined from the
+# lm_eval_sample records; global doc id = k + doc_id * n proves the stripes
+# are disjoint and complete. gsm8k logs two records per doc (one per
+# extraction filter, same key); strict = per-doc min, per the Gate-B note.
+def merge_groups():
+    import collections
+    groups = collections.defaultdict(dict)   # (model, bench, decode, n) -> {k: file}
+    for jl in sorted(RUNS.glob("grid_v1/*/*.jsonl")):
+        meta = json.loads(open(jl).readline())
+        if meta.get("kind") != "meta":
+            continue
+        c = meta["cell"]
+        k, n = c["shard"]
+        if n > 1:
+            key = (f"{c['model'].replace('/', '_')}@{c['revision'] or 'main'}",
+                   c["benchmark"], c["decode"], n)
+            groups[key][k] = jl
+    for (model, bench, decode, n), shards in sorted(groups.items()):
+        missing = [k for k in range(n) if k not in shards]
+        if missing:
+            print(f"INCOMPLETE {model} {bench} {decode} n={n}: "
+                  f"{len(shards)}/{n} stripes (missing {missing[:6]}"
+                  f"{'...' if len(missing) > 6 else ''})")
+            continue
+        per_doc = collections.defaultdict(dict)   # gid -> {key: [vals]}
+        complete = True
+        for k, jl in shards.items():
+            summary_seen = False
+            for line in open(jl):
+                d = json.loads(line)
+                if d.get("kind") == "summary":
+                    summary_seen = True
+                if d.get("kind") != "lm_eval_sample":
+                    continue
+                gid = (d["task"], k + d["doc_id"] * n)
+                for m, v in d["metrics"].items():
+                    per_doc[gid].setdefault(m, []).append(float(v))
+            if not summary_seen:
+                print(f"INCOMPLETE {model} {bench} {decode} n={n}: "
+                      f"stripe {k} has no summary sentinel")
+                complete = False
+        if not complete:
+            continue
+        agg = collections.defaultdict(list)
+        for gid, md in per_doc.items():
+            for m, vals in md.items():
+                agg[m].append(min(vals))   # multi-record docs: strict = min
+        cells = ", ".join(
+            f"{m}={100 * sum(v) / len(v):.2f}" for m, v in sorted(agg.items())
+            if not m.endswith("_stderr"))
+        print(f"MERGED {model} {bench} {decode}: n_docs={len(per_doc)} "
+              f"[{n} stripes]  {cells}")
+
+
+
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "--merge":
+        merge_groups()
+    else:
+        main()
