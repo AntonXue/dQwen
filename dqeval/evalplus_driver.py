@@ -11,6 +11,13 @@ code-fence stop) so the base numbers stay consistent -- only the GRADING is dens
 
 `--model canonical` writes EvalPlus's own reference solutions as the samples, which
 must score ~100% -- a way to validate the grading integration with no model/GPU.
+
+`--from FILE` regrades SAVED generations instead of running a model (CPU only):
+accepts an lm-eval samples jsonl (doc_id + filtered_resps) or a grid_v1 cell
+jsonl (kind-tagged records). HumanEval only: HE+ keeps the original prompts, so
+saved completions regrade cleanly. MBPP+ does NOT regrade -- it is built on
+MBPP-sanitized (378 problems, partially edited prompts) under EvalPlus's own
+format, so it needs its own generation runs.
 """
 
 from __future__ import annotations
@@ -61,7 +68,8 @@ def read_passk(results_path: str) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True, help="dqeval registry name, or 'canonical' for the grade self-test")
+    ap.add_argument("--model", default="from-file",
+                    help="dqeval registry name, or 'canonical' for the grade self-test; unused with --from")
     ap.add_argument("--revision", default=None)
     ap.add_argument("--dataset", choices=["humaneval", "mbpp"], required=True)
     ap.add_argument("--gen-length", type=int, default=1024)
@@ -69,6 +77,11 @@ def main() -> int:
     ap.add_argument("--steps-per-block", type=int, default=32)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--samples", default=None, help="where to write samples.jsonl")
+    ap.add_argument("--parallel", type=int, default=os.cpu_count(),
+                    help="grading worker processes (default: all cores)")
+    ap.add_argument("--from", dest="from_file", default=None,
+                    help="regrade saved generations (lm-eval samples jsonl or "
+                         "grid_v1 cell jsonl) instead of running a model")
     a = ap.parse_args()
 
     problems = load_problems(a.dataset)
@@ -77,7 +90,30 @@ def main() -> int:
         items = items[:a.limit]
 
     samples = []
-    if a.model == "canonical":
+    if a.from_file:
+        if a.dataset != "humaneval":
+            raise SystemExit("--from is HumanEval-only: MBPP+ uses edited "
+                             "sanitized prompts and needs its own generations.")
+        comps = {}
+        for line in open(a.from_file):
+            d = json.loads(line)
+            if "kind" in d:                      # grid_v1 cell file
+                if d["kind"] == "sample":        # DLM sidecar (truncated text)
+                    comps[d["doc_id"]] = d["final"]
+                elif d["kind"] == "lm_eval_sample" and d.get("resp") is not None:
+                    comps.setdefault(d["doc_id"], d["resp"])
+            elif "filtered_resps" in d:          # lm-eval samples file
+                r = d["filtered_resps"]
+                while isinstance(r, list):
+                    r = r[0] if r else ""
+                comps[d["doc_id"]] = r
+        for i, (tid, prob) in enumerate(items):
+            if i in comps:
+                samples.append({"task_id": tid,
+                                "solution": prob["prompt"] + comps[i]})
+        print(f"regrading {len(samples)}/{len(items)} saved completions "
+              f"from {a.from_file}")
+    elif a.model == "canonical":
         # grade-path self-test: EvalPlus's own reference solutions (no model/GPU)
         for tid, prob in items:
             samples.append({"task_id": tid,
@@ -94,20 +130,24 @@ def main() -> int:
             if (i + 1) % 20 == 0:
                 print(f"  generated {i + 1}/{len(items)}", flush=True)
 
-    spath = a.samples or os.path.join(tempfile.mkdtemp(), f"{a.model.replace('/', '_')}_{a.dataset}.jsonl")
+    tag = (os.path.basename(a.from_file).split(".")[0] if a.from_file
+           else a.model.replace('/', '_'))
+    spath = a.samples or os.path.join(tempfile.mkdtemp(), f"{tag}_{a.dataset}.jsonl")
     with open(spath, "w") as f:
         for s in samples:
             f.write(json.dumps(s) + "\n")
     print(f"wrote {len(samples)} samples -> {spath}", flush=True)
 
     from evalplus.evaluate import evaluate
-    evaluate(dataset=a.dataset, samples=spath, i_just_wanna_run=True)
+    # evalplus defaults to cpu_count()//2 workers; this box has plenty
+    evaluate(dataset=a.dataset, samples=spath, i_just_wanna_run=True,
+             parallel=a.parallel)
 
     rpath = spath.replace(".jsonl", "_eval_results.json")
     if os.path.exists(rpath):
         pk = read_passk(rpath)
         print("\n===== EVALPLUS RESULTS =====")
-        print(f"  {a.model} {a.dataset}: base pass@1 = {pk['base']*100:.2f}%  "
+        print(f"  {tag} {a.dataset}: base pass@1 = {pk['base']*100:.2f}%  "
               f"plus pass@1 = {pk['plus']*100:.2f}%  (n={pk['n']})")
     else:
         print(f"NOTE: eval results not at {rpath}; check EvalPlus stdout above.")
