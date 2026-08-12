@@ -14,7 +14,7 @@ family, a <family>.py with a build() plus one BUILDERS line).
 
 import torch
 
-from . import coda, dqwen, dream, llada, sdar
+from . import coda, dqwen, dream, llada
 from .adapter import ModelAdapter, ModelSpec
 
 MODELS: dict[str, ModelSpec] = {
@@ -32,12 +32,6 @@ MODELS: dict[str, ModelSpec] = {
     "dqwen3.5-2b-base-v3":   ModelSpec("EER6b/dQwen3.5-2B-Base-v3",   "dqwen", 248061, 248044),
     "dqwen3.5-4b-base-v3":   ModelSpec("EER6b/dQwen3.5-4B-Base-v3",   "dqwen", 248061, 248044),
     "dqwen3.5-9b-base-v3":   ModelSpec("EER6b/dQwen3.5-9B-Base-v3",   "dqwen", 248061, 248044),
-    # ⚠ DEAD REPOS (404 as of 2026-08-05) -- the LR-sweep a0/a1 diagnostic pair and the
-    # 4B arm-b2 test were deleted when the v2* ablation repos were consolidated. Kept so
-    # the `ov_*` runs in _runs/ remain traceable; do not use without re-pointing them.
-    "dqwen3.5-0.8b-base-v1": ModelSpec("EER6b/dQwen3.5-0.8B-Base-test-v1", "dqwen", 248061, 248044),
-    "dqwen3.5-0.8b-base-v2": ModelSpec("EER6b/dQwen3.5-0.8B-Base-test-v2", "dqwen", 248061, 248044),
-    "dqwen3.5-4b-base-v2":   ModelSpec("EER6b/dQwen3.5-4B-Base-test",       "dqwen", 248061, 248044),
     "dqwen3-0.6b-base":   ModelSpec("EER6b/dQwen3-0.6B-Base",   "dqwen", 151660, 151643),
     # v3-recipe backbone ablation: Qwen3-1.7B (FULL-attention) under the same recipe as the
     # hybrid 2B -- argparse.json differs in 2 of 22 keys. Also the same backbone as
@@ -47,16 +41,9 @@ MODELS: dict[str, ModelSpec] = {
     "dqwen3-1.7b-base":   ModelSpec("EER6b/dQwen3-1.7B-Base",   "dqwen", 151660, 151643),
     # comparators
     "llada-8b-base":     ModelSpec("GSAI-ML/LLaDA-8B-Base",     "llada", 126336),
-    "llada-8b-instruct": ModelSpec("GSAI-ML/LLaDA-8B-Instruct", "llada", 126336),
-    "dream-7b-instruct": ModelSpec("Dream-org/Dream-v0-Instruct-7B", "dream", 151666),
     "dream-7b-base":     ModelSpec("Dream-org/Dream-v0-Base-7B",     "dream", 151666),
     "dream-coder-7b-base": ModelSpec(
         "Dream-org/Dream-Coder-v0-Base-7B", "dream", 151666),
-    "dream-coder-7b-instruct": ModelSpec(
-        "Dream-org/Dream-Coder-v0-Instruct-7B", "dream", 151666),
-    "sdar-1.7b-chat": ModelSpec(
-        "JetLM/SDAR-1.7B-Chat", "sdar", 151669, auto_class="AutoModelForCausalLM",
-        notes="repo is missing fused_linear_diffusion_cross_entropy.py; see families/sdar/compat.py"),
     # CoDA: Salesforce's masked DLM adapted from Qwen3-1.7B -- the SAME backbone as
     # our dQwen3-1.7B control, so this is the closest available recipe-isolating
     # comparison (differs in data + budget, not in starting weights).
@@ -64,18 +51,11 @@ MODELS: dict[str, ModelSpec] = {
         "Salesforce/CoDA-v0-Base", "coda", 151669, 151643,
         notes="AR-aligned raw logits (shift in _canonicalize); needs the "
               "CoDAModel._supports_sdpa shim on transformers>=4.54"),
-    "coda-1.7b-instruct": ModelSpec(
-        "Salesforce/CoDA-v0-Instruct", "coda", 151669, 151643,
-        notes="same shims as coda-1.7b-base"),
-    "sdar-4b-chat": ModelSpec(
-        "JetLM/SDAR-4B-Chat", "sdar", 151669, auto_class="AutoModelForCausalLM",
-        notes="same missing-module defect as SDAR-1.7B"),
 }
 
 BUILDERS = {
     "llada": llada.build,
     "dream": dream.build,
-    "sdar": sdar.build,
     "coda": coda.build,
     "dqwen": dqwen.build,
 }

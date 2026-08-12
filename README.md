@@ -1,9 +1,9 @@
 # dQwen
 
 Reproducible evaluation for diffusion language models — the **dQwen3.5 / dQwen3**
-family alongside **LLaDA** and **Dream / Dream-Coder**, all in one environment.
-(SDAR loads for multiple-choice scoring, but generation needs a compat shim
-that does not exist yet; see `models/sdar.py`.)
+family alongside **LLaDA**, **Dream / Dream-Coder** and **CoDA**, all in one
+environment. (SDAR was ported too, then pruned 2026-08-12 -- the paper treats
+it as a boundary family, prose-only; port evidence lives in `_claude/`.)
 
 One flat entrypoint: `run.py`. One cell = (model, revision, decode, benchmark,
 shard) = one provenance-stamped JSONL. Cells are independent, idempotent, and
@@ -140,12 +140,12 @@ exists so it can never be silent again.
 
 `UPSTREAM_PINS` in `models/adapter.py` pins upstream commits and — importantly —
 records **which implementation produced which published table**. This is not
-bookkeeping pedantry:
-SDAR ships four disagreeing sampler implementations with three different confidence
-thresholds, their published numbers come from a fifth path (LMDeploy), and their own
-reference script cannot express the greedy decoding their paper reports. Numbers we
-produce for SDAR are therefore **re-measurements, not reproductions**, and are
-labelled as such.
+bookkeeping pedantry: SDAR (an adjacent decode family the paper discusses in
+prose) ships four disagreeing sampler implementations with three different
+confidence thresholds, and its published numbers come from a fifth path
+(LMDeploy) whose greedy setting their own reference script cannot express.
+When published numbers have that kind of provenance, the pins ledger is what
+keeps our citations attributable.
 
 ## Status
 

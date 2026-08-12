@@ -12,7 +12,7 @@ regresses -- a model that loads and forwards is not evidence that it is correct:
 
 Usage:
     python tests/load_matrix.py                    # everything cached
-    python tests/load_matrix.py --only llada-8b-base,sdar-4b-chat
+    python tests/load_matrix.py --only llada-8b-base,dream-7b-base
     python tests/load_matrix.py --include-uncached # allow downloads
 """
 

@@ -20,8 +20,6 @@ off-by-one, no exception. That is precisely why the two surfaces are separate
 methods rather than a config flag.
 """
 
-import contextlib
-import subprocess
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -154,27 +152,15 @@ def assert_finite_rope(model) -> None:
         )
 
 
-"""Access to pinned upstream reference checkouts.
+"""Upstream provenance ledger.
 
-Upstream repos are reference material and test fixtures -- NEVER runtime
-dependencies. Nothing here is on the import path during a normal eval. Two callers:
-
-  * the parity tests        mint goldens by running their code unmodified
-  * model_families/<fam>.py generate_upstream()   the upstream escape hatch
-
-Why the escape hatch exists at all, given we re-implement everything: a touchup
-creates a code path with NO upstream counterpart to compare against. SDAR greedy is
-the clean example -- greedy does not exist upstream (their script divides by
-temperature then multinomials), so our greedy can never be parity-tested. Being able
-to run their code on demand lets us at least bracket such a path instead of flying
-blind. It also costs almost nothing, since the parity fixtures need it anyway.
-
-Populate by cloning each repo at its pin (UPSTREAM_PINS below
-carries org, role, and provenance per repo).
+The pins below are DATA, not plumbing: they record which upstream commit
+each reference implementation was vendored/verified from, and which
+implementation produced which published table. The clone-and-run escape
+hatch that used to live here was pruned 2026-08-12 along with SDAR (its
+only real use case); to re-run anything upstream, clone the repo at its
+pin and put it on sys.path by hand.
 """
-
-
-_THIRD_PARTY = Path(__file__).resolve().parent.parent / "third_party"
 
 
 # Pinned upstream commits, with each repo's role and -- critically -- WHICH
@@ -201,52 +187,3 @@ UPSTREAM_PINS = {
     "JetEngine": "bf8cb31",    # Labman42/JetEngine: SDAR inference engine,
                                #   ~15 remasking strategies, has a greedy path
 }
-
-
-def path_for(name: str) -> Path:
-    p = _THIRD_PARTY / name
-    if not p.exists():
-        raise FileNotFoundError(
-            f"upstream reference {name!r} not present. Clone it at its pin "
-            f"(org in the UPSTREAM_PINS comments), e.g.\n"
-            f"  git clone <org-url>/{name} {p} && "
-            f"git -C {p} checkout {UPSTREAM_PINS[name]}"
-        )
-    return p
-
-
-def head_of(name: str) -> str:
-    out = subprocess.run(["git", "-C", str(path_for(name)), "rev-parse", "--short", "HEAD"],
-                         capture_output=True, text=True)
-    return out.stdout.strip()
-
-
-def verify_pin(name: str, strict: bool = True) -> str:
-    """Check the checkout sits at its pinned commit.
-
-    Unpinned upstream is worse than no upstream: JetEngine's dynamic_threshold
-    default has already drifted 0.9 -> 0.75 under opt-numbered research commits, so
-    a number attributed to "their sampler" without a commit is unattributable.
-    """
-    want = UPSTREAM_PINS[name]
-    have = head_of(name)
-    if not have.startswith(want) and not want.startswith(have):
-        msg = (f"{name} is at {have}, pinned to {want} "
-               "(see UPSTREAM_PINS in models/adapter.py)")
-        if strict:
-            raise RuntimeError(msg)
-        print(f"WARNING: {msg}", file=sys.stderr)
-    return have
-
-
-@contextlib.contextmanager
-def on_path(name: str, strict: bool = True):
-    """Temporarily put a pinned upstream checkout on sys.path."""
-    p = str(path_for(name))
-    verify_pin(name, strict=strict)
-    sys.path.insert(0, p)
-    try:
-        yield p
-    finally:
-        if p in sys.path:
-            sys.path.remove(p)

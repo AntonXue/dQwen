@@ -20,8 +20,6 @@ transformers==5.13.0            # Qwen3.5 family requires >= 5.x
 accelerate==1.14.0
 flash-linear-attention==0.5.1   # GatedDeltaNet kernels (dQwen3.5 hybrid)
 tilelang==0.1.12                # required on Hopper with triton >= 3.4
-flash_attn==2.8.3               # SDAR imports this unguarded at module top level
-einops==0.8.1                   # SDAR
 datasets==4.4.1
 evaluate==0.4.6                 # HF code_eval (the code-benchmark grader)
 

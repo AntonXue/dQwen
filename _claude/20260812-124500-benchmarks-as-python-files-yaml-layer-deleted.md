@@ -202,3 +202,37 @@ modified lm-eval never diffed, SDAR published via LMDeploy) — provenance
 next to the code that consumes it. The path stays gitignored as the
 designated clone target for parity checkouts (error messages print the
 exact clone command).
+
+## UPDATE 8: the pruning pass (Anton's rulings, all four executed)
+
+Symbol-level audit first (dead code deleted in 13837b2: samplers'
+pre-grid loglikelihood wrappers, sigma_scale, eos_id). Then the
+rarely-used menu, ruled and executed:
+
+1. SDAR PRUNED entirely (no SDAR evals planned; Table-4 row policy
+   already excluded it as a boundary family): models/sdar.py, both
+   registry entries, the BUILDERS line, and flash_attn + einops out of
+   requirements.txt (they existed only for SDAR). UPSTREAM_PINS keeps
+   the SDAR/JetEngine rows as provenance for the manuscript's
+   adjacent-decode prose.
+2. Registry rows: three 404'd repos (v1/v2 LR-sweep tests -- load()
+   traps; traceability lives in _claude) and four instruct entries
+   deleted. 24 -> 15 models, 4 builders.
+3. dream.generate_native + ORDER_TO_ALG deleted (Anton's YAGNI call,
+   endorsed): Dream's sampler ships INSIDE their pinned HF repo
+   (model.diffusion_generate still works -- shims stay), and the
+   undersell caveat is handled by citation, not by us re-running their
+   decoder. Note added to dream.py's docstring.
+4. Upstream clone-and-run hatch deleted (path_for/head_of/verify_pin/
+   on_path + llada.generate_upstream): its flagship use case (bracketing
+   SDAR's un-parity-testable greedy) died with SDAR, and vendored-vs-
+   upstream equality was verified bitwise in July (receipts in the
+   port-evidence doc). UPSTREAM_PINS survives as a pure data ledger.
+
+KEPT, with the reasoning now settled: llada.generate_native is the
+engine's ORACLE, not a convenience -- the parity gate (now single-gate)
+diffs the unified engine against it token-for-token, and it fired twice
+today proving refactors moved nothing. The distinction that resolved
+Anton's confusion: we implement Dream's unmasking IDEAS (orders in
+_score) but LLaDA's ALGORITHM; parity is only a testable claim for the
+latter. Gate re-run post-prune: PASS.
