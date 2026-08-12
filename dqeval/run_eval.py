@@ -46,19 +46,12 @@ def main() -> int:
     ap.set_defaults(log_samples=True)
     a = ap.parse_args()
 
-    # --- foot-gun guards -------------------------------------------------
-    # (--mode and its --allow-append gate were removed 2026-08-12: decoding is
-    # always full-canvas now; append lost the head-to-head and its one user,
-    # SDAR, is out of the comparator set. See dqeval/config.py for receipts.)
-    #
-    # MMLU (and friends) publish AT a shot count; lm-eval's task default is 0, so
-    # omitting --num-fewshot silently produces a 0-shot run that looks normal and is
-    # not comparable to anything published. This exact slip cost a full round on
-    # 2026-08-05 (0-shot 24.73 vs the correct 5-shot 26.46).
-    # Shot counts follow Dream's base-model table (arXiv:2508.15487), which is our
-    # comparison target; SDAR (arXiv:2510.06303) matches on the overlapping tasks.
-    # 0-shot entries are listed explicitly so "not set" stays distinguishable from
-    # "deliberately zero".
+    # --- foot-gun guard ---------------------------------------------------
+    # MMLU (and friends) publish AT a shot count; lm-eval's task default may be
+    # 0, so omitting --num-fewshot silently produces a 0-shot run that looks
+    # normal but is not comparable to anything published. Shot counts follow
+    # Dream's base-model table (arXiv:2508.15487). 0-shot entries are listed
+    # explicitly so "not set" stays distinguishable from "deliberately zero".
     _PUBLISHED_SHOTS = {"mmlu": 5, "gsm8k_cot": 8, "mbpp": 3, "mbpp_ticks": 3, "humaneval": 0,
                         "arc_easy": 0, "arc_challenge": 0, "hellaswag": 0, "piqa": 0,
                         "race": 0, "race_sub": 0, "hellaswag_sub": 0, "winogrande": 5, "bbh_fewshot": 3, "minerva_math": 4}
@@ -96,9 +89,9 @@ def main() -> int:
         limit=a.limit,
         num_fewshot=a.num_fewshot,
         bootstrap_iters=0,
-        # keep every prompt + generation for post-hoc debugging (dumped below). The
-        # aggregate json alone cannot distinguish a formatting/extraction bug from a
-        # genuine miss -- exactly the ambiguity that forced a manual MBPP regen once.
+        # keep every prompt + generation for post-hoc debugging (dumped below);
+        # the aggregate json alone cannot distinguish a formatting/extraction
+        # bug from a genuine miss.
         log_samples=a.log_samples,
         # code tasks (humaneval/mbpp) EXECUTE model-generated code; lm-eval refuses
         # unless this is set. Requires HF_ALLOW_CODE_EVAL=1 in the environment too.
@@ -123,9 +116,8 @@ def main() -> int:
             json.dump({"results": res["results"], "versions": res.get("versions"),
                        "configs": res.get("configs"), "model": a.model,
                        "revision": a.revision, "limit": a.limit,
-                       # decode provenance. Without this a result json cannot be told
-                       # apart from one produced at a different gen_length or block
-                       # size -- an ambiguity that has already forced a full re-run.
+                       # decode provenance: a result json must be attributable
+                       # to its exact decode settings.
                        "decode": {"gen_length": a.gen_length,
                                   "block_length": a.block_length,
                                   "steps_per_block": a.steps_per_block,

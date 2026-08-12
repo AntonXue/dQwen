@@ -126,7 +126,7 @@ def generate(adapter: ModelAdapter, prompt_ids: torch.Tensor,
     for b in range(cfg.num_blocks):
         lo = p_len + b * cfg.block_length
         hi = lo + cfg.block_length
-        end = canvas.size(1)   # full canvas, always (append mode removed 2026-08-12)
+        end = canvas.size(1)   # the model always sees the whole canvas
 
         n_masked = int((canvas[0, lo:hi] == mask_id).sum())
         schedule = _transfer_schedule(n_masked, cfg.steps_per_block, dev)

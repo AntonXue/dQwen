@@ -8,7 +8,7 @@ Registered as model type "dqeval". Drive it through lm-eval's `simple_evaluate`:
 
 `pretrained` is a dqeval REGISTRY NAME (see dqeval.adapter.MODELS), not a raw HF
 repo -- so the family's compat shims and the correct logit surface are applied
-automatically. That is the point: the same wrapper serves LLaDA, Dream, SDAR and
+automatically. That is the point: the same wrapper serves LLaDA, Dream and
 dQwen with no per-family branching here.
 
 TWO METHODS the harness needs:
@@ -44,13 +44,10 @@ from dqeval.config import DecodeConfig
 from dqeval import nelbo
 from dqeval.samplers import unified
 
-# Model-end stop strings, shared by every generation driver (this wrapper,
-# tests/step_sweep.py). ONE copy on purpose: these truncation rules move
-# scores, so two hand-maintained lists means two silently different protocols.
-# The code fence is included because base models with instruct-flavoured
-# pretraining (Dream) wrap completions in ```...``` + prose, which task-level
-# `until` strings do not catch; python source never contains ``` so stopping
-# there is safe.
+# Model-end stop strings, shared by every generation driver — truncation
+# rules move scores, so there is exactly one copy. The ``` fence catches
+# models (Dream) that wrap completions in markdown, which task-level `until`
+# strings miss; python source never contains ``` so it is safe to stop on.
 EOT_BASE = ("```", "<|im_end|>", "<|endoftext|>")
 
 

@@ -1,31 +1,21 @@
-"""The grid layer: one Cell = one SLURM task = one output file.
+"""The grid layer: one Cell = (model, revision, decode, benchmark, shard)
+= one SLURM task = one output file, keyed by that tuple everywhere.
 
-Design settled with Anton 2026-08-11/12 (spec discussion in the manuscript
-repo's chat; the VistaCoder _claude/20260811-190000 eval request holds the
-grid itself). Principles:
+  - lm-eval-first: prompts, few-shot, extraction and metrics come from the
+    pinned lm-eval; this module only stripes a task's docs and records a
+    sidecar.
+  - generate then grade: every cell dumps raw generations + n_forward per
+    sample, so regrades (HumanEval+/MBPP+, format studies) are CPU
+    re-passes, never new GPU runs.
+  - shards are stripes (docs[k::n]), never contiguous chunks: benchmark
+    difficulty drifts with position (first-80 HumanEval is ~19pp easier
+    than the full set), so chunks are biased samples. Per-shard aggregates
+    are meaningless; the merge step recomputes from per-sample records and
+    refuses partial grids.
 
-  - CELL GRAMMAR: (model, revision, decode, benchmark, shard) is the primary
-    key everywhere — filenames, meta records, the master table.
-  - LM-EVAL-FIRST: prompts, few-shot, extraction, metrics all come from the
-    PINNED lm-eval 0.4.8 (the reproduces-published-numbers claim). This module
-    only doctors the task's docs (striped shards) and records a sidecar.
-  - GENERATE THEN GRADE: every cell dumps raw generations + n_forward per
-    sample. Regrades (HumanEval+/MBPP+ etc.) are CPU re-passes over the
-    sidecar, never new GPU runs.
-  - SHARDS ARE STRIPES, docs[k::n] — contiguous chunks are biased samples
-    (the n=80 HumanEval episode: first-80 is ~19pp easier than the full set).
-    Per-shard aggregate metrics are therefore MEANINGLESS; the merge step
-    recomputes from per-sample records and refuses partial grids.
-  - RERUN EVERYTHING: no legacy numbers are merged in; old results become a
-    regression check against the new grid, not part of it.
-
-Usage (library):
-    from dqeval.grid import Cell, run_cell
-    run_cell(Cell("dqwen3.5-2b-base-v3", "step50000-swa",
-                  "block32-tau0.8", "gsm8k", (2, 8)))
-
-Usage (SLURM shim; the cluster side owns sbatch specifics):
-    python -m dqeval.grid manifest.jsonl $SLURM_ARRAY_TASK_ID
+Library:  run_cell(Cell("dqwen3.5-2b-base-v3", "step50000-swa",
+                        "block32-tau0.8", "gsm8k", (2, 8)))
+SLURM:    python -m dqeval.grid manifest.jsonl $SLURM_ARRAY_TASK_ID
 """
 
 from __future__ import annotations
@@ -38,12 +28,10 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 # --------------------------------------------------------------------------
-# benchmarks: generation-defining constants. mbpp vs mbpp_ticks are DISTINCT
-# benchmarks (different prompts -> different generations); HumanEval+ / MBPP+
-# are GRADERS over saved generations and deliberately absent here.
-# Shot counts follow run_eval._PUBLISHED_SHOTS (Dream's base-model table).
-# NB stock mbpp is the cross-model headline ([BEGIN]/[DONE]); the fence
-# variant exists as its own benchmark for the format-sensitivity study.
+# Benchmarks are generation-defining: mbpp vs mbpp-fence are distinct rows
+# (different prompts -> different generations), while HumanEval+/MBPP+ are
+# graders over saved generations and deliberately absent here. Shot counts
+# follow Dream's base-model table (see run_eval._PUBLISHED_SHOTS).
 # --------------------------------------------------------------------------
 BENCH = {
     "humaneval":  dict(task="humaneval",    gen=512,  shots=0, shards=1, unsafe=True),
@@ -54,7 +42,7 @@ BENCH = {
     "mmlu":       dict(task="mmlu",         gen=None, shots=5, shards=1, unsafe=False),
 }
 
-TAU_GRID = (0.5, 0.6, 0.7, 0.8, 0.9)          # Anton 2026-08-12: simple, uniform
+TAU_GRID = (0.5, 0.6, 0.7, 0.8, 0.9)          # adaptive-commit thresholds
 BLOCK_STATIC = (32, 16, 8, 4, 2)              # steps per 32-block
 STANDARD_STATIC = (512, 256, 128, 64, 32, 16) # total steps over the whole canvas
 
@@ -117,8 +105,8 @@ def _leaf_tasks(td):
 
 
 def _stripe(td, k, n):
-    """docs[k::n] on every leaf task's test split. Content hashes go into the
-    meta record so the merge step can verify union = full set, no overlap."""
+    """docs[k::n] on every leaf task's test split. The meta record carries a
+    doc-set fingerprint so the merge step can verify the shards' union."""
     if (k, n) == (0, 1):
         return
     for task in _leaf_tasks(td):
@@ -129,8 +117,8 @@ def _stripe(td, k, n):
 
 def _set_shots(td, shots):
     # simple_evaluate applies num_fewshot via set_config; since we hand-build
-    # the task_dict for striping, we must do the same (task DEFAULTS may be
-    # 0-shot — the exact slip that cost a round on 2026-08-05).
+    # the task_dict for striping, we must do the same (task defaults may be
+    # 0-shot, which produces normal-looking but incomparable numbers).
     for task in _leaf_tasks(td):
         if shots is not None:
             task.set_config(key="num_fewshot", value=shots)

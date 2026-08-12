@@ -1,7 +1,7 @@
 """Decode configuration: the one knob space every sampler is parameterised by.
 
-The claim this file encodes is that LLaDA, Dream, SDAR and dQwen do not need four
-different decode APIs -- their published samplers are four points in the space
+The claim this file encodes is that LLaDA, Dream and dQwen do not need
+different decode APIs -- their published samplers are points in the space
 below. Each family's official recipe therefore appears as a PRESET, not as a
 separate code path. `tests/parity/` is what keeps that claim honest.
 """
@@ -26,14 +26,8 @@ class DecodeConfig:
     """
 
     # --- canvas -----------------------------------------------------------
-    # Decoding is ALWAYS full-canvas: the whole answer canvas is visible from
-    # the start and blocks are revealed left-to-right (LLaDA/Dream native
-    # style). There used to be a `mode` knob here ("append" grew the canvas
-    # block-by-block with no trailing masks, biasing the model toward short
-    # stub answers; "window" was never implemented beyond the type). append
-    # lost the head-to-head (dQwen3.5-9B HumanEval 62.20 -> 64.63 full;
-    # LLaDA 32.32 -> 32.93 = its published number) and its one genuine user,
-    # SDAR, is out of the comparator set -- both modes REMOVED 2026-08-12.
+    # Decoding is always full-canvas: the whole answer canvas is visible from
+    # the start and blocks are revealed left-to-right (LLaDA/Dream native).
     gen_length: int = 1024   # LLaDA-style default answer canvas
     block_length: int = 32          # semi-AR granularity within the canvas
     # --- schedule ---------------------------------------------------------
@@ -85,10 +79,8 @@ class DecodeConfig:
 class Preset:
     """A named DecodeConfig plus where its numbers come from.
 
-    `provenance` is not decoration. SDAR alone ships four disagreeing sampler
-    implementations with three different confidence thresholds (0.85 in their
-    generate.py, 0.75 in JetEngine, 0.9 in the LMDeploy path that actually
-    produced their published table), so a config without a citation is unusable.
+    `provenance` is not decoration: upstream repos ship multiple disagreeing
+    sampler configs, so a preset without a citation is unusable.
     """
 
     config: DecodeConfig
@@ -114,24 +106,14 @@ PRESETS: dict[str, Preset] = {
         "ML-GSAI/LLaDA@96441d4 EVAL.md (gen_length=steps=block_length=256)",
     ),
     # ---- dQwen -----------------------------------------------------------
-    # ("sdar_published", the one block-append preset, was removed with append
-    # mode on 2026-08-12 -- SDAR is out of the comparator set. Its receipts,
-    # should it return: block=4, steps=4, dynamic threshold=0.9 per the
-    # LMDeploy path behind their published table; see third_party/LOCKFILE.md.)
-    #
-    # Historical champion was block-append, but a head-to-head found
-    # full-canvas BEATS it: HumanEval dQwen3.5-9B append 62.20 -> full 64.63,
-    # LLaDA 32.32 -> 32.93 (=published). dQwen3.5 is trained with STANDARD DLM
-    # masking (random masking over the full sequence), so full-canvas is the
-    # decode aligned with its training -- append was the mismatch.
     "dqwen_champion": Preset(
         DecodeConfig(
             gen_length=1024, block_length=32, steps_per_block=32,
             temperature=0.0,
             order="low_confidence", commit="static", sigma_scale=0.0,
         ),
-        "gen=1024, block=32, steps_per_block=32, low_confidence, full-canvas, greedy "
-        "(gen=1024 matches LLaDA; supersedes ADLMC block_append; full > append +2.43 HE)",
+        "gen=1024 (matches LLaDA), block=32, steps_per_block=32, "
+        "low_confidence, greedy",
     ),
 }
 

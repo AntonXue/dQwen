@@ -54,9 +54,8 @@ def grade(prompt, completion, test, entry_point, timeout=8):
         signal.signal(signal.SIGALRM, old)
 
 
-# HumanEval's task-level stops. The model-end set (EOT_BASE + pad) comes from
-# dqeval.harness so this probe truncates under the SAME rules as the real
-# harness — a drifted copy here would silently measure a different protocol.
+# HumanEval's task-level stops; the model-end set comes from dqeval.harness
+# so this probe truncates under the same rules as the real harness.
 HE_UNTIL = ["\nclass ", "\ndef ", "\n#", "\nif __name__", "\nprint("]
 
 
