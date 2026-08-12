@@ -29,9 +29,9 @@ import sys
 import torch
 
 from dqeval.adapter import load
-from dqeval.config import DecodeConfig
-from dqeval.families.llada import sampler_native, sampler_upstream
-from dqeval.samplers import unified
+from dqeval.sampler import DecodeConfig
+from dqeval.families import llada
+from dqeval import sampler as unified
 
 PROMPTS = [
     "def add(a, b):\n    ",
@@ -66,11 +66,11 @@ def main() -> int:
         print(f"\n  prompt {p!r}")
         ids = adapter.encode(p)
 
-        nat = sampler_native.generate(adapter, ids, cfg)
+        nat = llada.generate_native(adapter, ids, cfg)
         show("native", nat)
 
         try:
-            up = sampler_upstream.generate(adapter, ids, cfg)
+            up = llada.generate_upstream(adapter, ids, cfg)
             show("upstream", up)
             if torch.equal(nat.gen_ids.cpu(), up.gen_ids.cpu()):
                 print("    GATE 1 PASS  native == upstream (token-identical)")

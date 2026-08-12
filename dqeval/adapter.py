@@ -32,7 +32,7 @@ import torch
 
 @dataclass
 class GenOutput:
-    """One generation. bs=1 by construction -- see `dqeval.samplers`."""
+    """One generation. bs=1 by construction -- see `dqeval.sampler`."""
 
     prompt_ids: torch.Tensor
     gen_ids: torch.Tensor
@@ -193,11 +193,11 @@ class ModelAdapter(ABC):
 
 
 _FAMILY_MODULES = {
-    "llada": "dqeval.families.llada.adapter",
-    "dream": "dqeval.families.dream.adapter",
-    "sdar": "dqeval.families.sdar.adapter",
-    "coda": "dqeval.families.coda.adapter",
-    "dqwen": "dqeval.families.dqwen.adapter",
+    "llada": "dqeval.families.llada",
+    "dream": "dqeval.families.dream",
+    "sdar": "dqeval.families.sdar",
+    "coda": "dqeval.families.coda",
+    "dqwen": "dqeval.families.dqwen",
 }
 
 
@@ -209,3 +209,151 @@ def load(name: str, revision: Optional[str] = None, dtype=torch.bfloat16,
     spec = MODELS[name]
     mod = importlib.import_module(_FAMILY_MODULES[spec.family])
     return mod.build(spec, revision=revision, dtype=dtype, device=device)
+
+
+# ==========================================================================
+# (merged from dqeval/hf.py)
+# ==========================================================================
+
+"""Thin helpers over HuggingFace dynamic-module loading.
+
+Every comparator ships its modeling code via `trust_remote_code`, so we resolve the
+class through the dynamic-module machinery rather than the Auto* factories. That
+gives each family a hook to install its compat shims on the CLASS before any
+weights are materialised -- which is where several of them have to happen.
+"""
+
+
+from typing import Optional
+
+import torch
+from transformers import AutoConfig, AutoTokenizer
+from transformers.dynamic_module_utils import get_class_from_dynamic_module
+
+
+def resolve(repo: str, revision: Optional[str] = None, auto_class: str = "AutoModel"):
+    """Return (config, model_class) for a remote-code repo, without loading weights."""
+    cfg = AutoConfig.from_pretrained(repo, revision=revision, trust_remote_code=True)
+    amap = cfg.auto_map or {}
+    ref = amap.get(auto_class)
+    if ref is None:                      # fall back to whatever the repo does expose
+        ref = amap.get("AutoModel") or amap.get("AutoModelForCausalLM")
+    if ref is None:
+        raise RuntimeError(f"{repo}: auto_map exposes no usable model class: {amap}")
+    klass = get_class_from_dynamic_module(ref, repo, revision=revision)
+    return cfg, klass
+
+
+def tokenizer(repo: str, revision: Optional[str] = None):
+    return AutoTokenizer.from_pretrained(repo, revision=revision, trust_remote_code=True)
+
+
+def materialize(klass, repo: str, cfg, revision: Optional[str] = None,
+                dtype=torch.bfloat16, device: str = "cuda"):
+    model = klass.from_pretrained(repo, config=cfg, revision=revision, dtype=dtype)
+    return model.to(device).eval()
+
+
+def assert_finite_rope(model) -> None:
+    """Guard against the tf5 meta-device buffer trap.
+
+    transformers>=5 builds models under a bare `torch.device("meta")`. Rotary
+    `inv_freq` is a non-persistent buffer, so it is absent from the checkpoint and
+    materialises as uninitialised memory. tf5 repairs this inside the BASE
+    `PreTrainedModel._init_weights`, but any remote-code model that OVERRIDES
+    `_init_weights` (Dream and SDAR both do) never reaches that branch.
+
+    The failure is silent: the model loads, forwards, and returns correctly-shaped
+    logits that are noise. Measured cost when unrepaired: argmax agreement 20-40%
+    against the native environment. Cheap to assert, so we always assert.
+    """
+    bad = [n for n, b in model.named_buffers()
+           if n.endswith("inv_freq") and not torch.isfinite(b).all()]
+    if bad:
+        raise RuntimeError(
+            f"non-finite rotary inv_freq buffers: {bad[:3]}{'...' if len(bad) > 3 else ''}. "
+            "This is the transformers>=5 meta-device trap -- the family's compat shim "
+            "must recompute inv_freq AFTER from_pretrained materialises the model."
+        )
+
+
+# ==========================================================================
+# (merged from dqeval/upstream.py)
+# ==========================================================================
+
+"""Access to pinned upstream reference checkouts.
+
+Upstream repos are reference material and test fixtures -- NEVER runtime
+dependencies. Nothing here is on the import path during a normal eval. Two callers:
+
+  * tests/parity/           mints goldens by running their code unmodified
+  * families/<fam>.py generate_upstream()   the upstream escape hatch
+
+Why the escape hatch exists at all, given we re-implement everything: a touchup
+creates a code path with NO upstream counterpart to compare against. SDAR greedy is
+the clean example -- greedy does not exist upstream (their script divides by
+temperature then multinomials), so our greedy can never be parity-tested. Being able
+to run their code on demand lets us at least bracket such a path instead of flying
+blind. It also costs almost nothing, since the parity fixtures need it anyway.
+
+Populate with `third_party/fetch.sh`.
+"""
+
+
+import contextlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+_THIRD_PARTY = Path(__file__).resolve().parent.parent / "third_party"
+
+
+def pins() -> dict:
+    with open(_THIRD_PARTY / "pins.json") as f:
+        return json.load(f)["repos"]
+
+
+def path_for(name: str) -> Path:
+    p = _THIRD_PARTY / name
+    if not p.exists():
+        raise FileNotFoundError(
+            f"upstream reference {name!r} not fetched. Run third_party/fetch.sh"
+        )
+    return p
+
+
+def head_of(name: str) -> str:
+    out = subprocess.run(["git", "-C", str(path_for(name)), "rev-parse", "--short", "HEAD"],
+                         capture_output=True, text=True)
+    return out.stdout.strip()
+
+
+def verify_pin(name: str, strict: bool = True) -> str:
+    """Check the checkout sits at its pinned commit.
+
+    Unpinned upstream is worse than no upstream: JetEngine's dynamic_threshold
+    default has already drifted 0.9 -> 0.75 under opt-numbered research commits, so
+    a number attributed to "their sampler" without a commit is unattributable.
+    """
+    want = pins()[name]["commit"]
+    have = head_of(name)
+    if not have.startswith(want) and not want.startswith(have):
+        msg = f"{name} is at {have}, pinned to {want}. Run third_party/fetch.sh"
+        if strict:
+            raise RuntimeError(msg)
+        print(f"WARNING: {msg}", file=sys.stderr)
+    return have
+
+
+@contextlib.contextmanager
+def on_path(name: str, strict: bool = True):
+    """Temporarily put a pinned upstream checkout on sys.path."""
+    p = str(path_for(name))
+    verify_pin(name, strict=strict)
+    sys.path.insert(0, p)
+    try:
+        yield p
+    finally:
+        if p in sys.path:
+            sys.path.remove(p)

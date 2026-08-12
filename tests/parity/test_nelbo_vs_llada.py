@@ -6,7 +6,7 @@ has to be a test, not a claim.
 
 Runs BOTH implementations against the same weights, same prompt/answer, same seed:
 
-    ours   dqeval.nelbo.mc_nelbo_loglikelihood   (via the ported adapter, tf 5.13)
+    ours   dqeval.sampler.mc_nelbo_loglikelihood   (via the ported adapter, tf 5.13)
     theirs <LLaDA repo>/get_log_likelihood.py    (unmodified upstream)
 
 Expected: bitwise identical. `forward_process` is a byte-faithful copy of theirs, so
@@ -28,7 +28,7 @@ import sys
 import torch
 
 from dqeval.adapter import load
-from dqeval.nelbo import mc_nelbo_loglikelihood
+from dqeval.sampler import mc_nelbo_loglikelihood
 
 PROMPT = "The capital of France is"
 ANSWER = " Paris, a city known for its art and history."

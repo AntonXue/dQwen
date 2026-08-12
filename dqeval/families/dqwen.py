@@ -18,7 +18,7 @@ from typing import Optional
 
 import torch
 
-from dqeval import hf
+from dqeval import adapter as hf
 from dqeval.adapter import ModelAdapter, ModelSpec
 
 

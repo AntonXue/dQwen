@@ -31,7 +31,7 @@ from pathlib import Path
 # Benchmarks are generation-defining: mbpp vs mbpp-fence are distinct rows
 # (different prompts -> different generations), while HumanEval+/MBPP+ are
 # graders over saved generations and deliberately absent here. Shot counts
-# follow Dream's base-model table (see run_eval._PUBLISHED_SHOTS).
+# follow Dream's base-model table.
 # --------------------------------------------------------------------------
 BENCH = {
     "humaneval":  dict(task="humaneval",    gen=512,  shots=0, shards=1, unsafe=True),

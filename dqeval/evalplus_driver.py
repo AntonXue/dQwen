@@ -49,9 +49,9 @@ def _truncate(text: str, stops) -> str:
 
 def generate_completion(adapter, prompt: str, cfg, stops) -> str:
     import torch  # noqa: F401
-    from dqeval.samplers import unified
+    from dqeval import sampler
     ids = adapter.encode(prompt)
-    out = unified.generate(adapter, ids, cfg, stop_strings=stops)
+    out = sampler.generate(adapter, ids, cfg, stop_strings=stops)
     return _truncate(out.text, stops)
 
 
@@ -163,7 +163,7 @@ def main() -> int:
                 print(f"  generated {i + 1}/{len(items)}", flush=True)
     else:
         from dqeval.adapter import load
-        from dqeval.config import DecodeConfig
+        from dqeval.sampler import DecodeConfig
         from dqeval.grid import _pin_math_sdpa
         _pin_math_sdpa()   # same deterministic backend as GATE cells
         adapter = load(a.model, revision=a.revision)

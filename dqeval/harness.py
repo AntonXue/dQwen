@@ -40,9 +40,8 @@ from lm_eval.api.model import LM
 from lm_eval.api.registry import register_model
 
 from dqeval.adapter import load
-from dqeval.config import DecodeConfig
-from dqeval import nelbo
-from dqeval.samplers import unified
+from dqeval import sampler
+from dqeval.sampler import DecodeConfig
 
 # Model-end stop strings, shared by every generation driver — truncation
 # rules move scores, so there is exactly one copy. The ``` fence catches
@@ -134,7 +133,7 @@ class DQEvalLM(LM):
                 # multi-token continuation -> full MC-NELBO (no shared-forward reuse)
                 p = torch.tensor(ctx, device=dev)
                 a = torch.tensor(cont, device=dev)
-                ll = nelbo.mc_nelbo_loglikelihood(
+                ll = sampler.mc_nelbo_loglikelihood(
                     self.adapter.logits, p, a,
                     mc_num=self.mc_num, batch_size=self.mc_bs, mask_id=mask_id,
                 )
@@ -178,7 +177,7 @@ class DQEvalLM(LM):
         # stop_strings early-stops the decode itself (saves the forwards that
         # would fill the rest of the canvas); truncate_at is the post-hoc
         # backstop covering full/window mode, which decodes the whole canvas.
-        gen = unified.generate(self.adapter, ids, self.decode,
+        gen = sampler.generate(self.adapter, ids, self.decode,
                                stop_strings=stops)
         return truncate_at(gen.text, stops), gen
 
