@@ -14,7 +14,7 @@ so `revision=` is a first-class argument rather than a separate repo per checkpo
 
 from typing import Optional
 import torch
-from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+from .adapter import (ModelAdapter, ModelSpec,
                            assert_finite_rope, materialize, resolve, tokenizer)
 
 

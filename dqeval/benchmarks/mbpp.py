@@ -6,7 +6,7 @@ FEWSHOT_SAMPLES is the protocol invariant shared by every MBPP variant
 across variants or a prompt-format probe becomes a two-variable experiment.
 """
 
-from dqeval.benchmarks._grading import pass_at_1
+from ._grading import pass_at_1
 
 FEWSHOT_SAMPLES = [{'task_id': 2,
   'text': 'Write a function to find the similar elements from the given two tuple '

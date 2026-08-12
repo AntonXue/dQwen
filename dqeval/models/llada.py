@@ -8,13 +8,13 @@ inherited identity and there is no eval-side shift. Confirmed by reading their
 
 from typing import Optional
 import torch
-from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+from .adapter import (ModelAdapter, ModelSpec,
                            assert_finite_rope, materialize, resolve, tokenizer)
 import torch.nn.functional as F
-from dqeval.models.adapter import ModelAdapter
-from dqeval.models.samplers import GenOutput
-from dqeval.models.samplers import DecodeConfig
-from dqeval.models.adapter import on_path
+from .adapter import ModelAdapter
+from .samplers import GenOutput
+from .samplers import DecodeConfig
+from .adapter import on_path
 
 
 class LLaDAAdapter(ModelAdapter):

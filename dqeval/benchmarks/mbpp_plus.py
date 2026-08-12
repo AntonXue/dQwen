@@ -13,8 +13,8 @@ COMPARABILITY: published MBPP+ numbers (EvalPlus's own pipeline) use a
 under the house protocol, not a reproduction (Dream-tripwire-style
 disclosure in the manuscript ledger)."""
 
-from dqeval.benchmarks._grading import pass_at_1, plus_process_docs
-from dqeval.benchmarks.mbpp import FEWSHOT_SAMPLES
+from ._grading import pass_at_1, plus_process_docs
+from .mbpp import FEWSHOT_SAMPLES
 
 TASK = {
     "task": "mbpp_plus_full",

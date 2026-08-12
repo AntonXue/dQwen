@@ -5,8 +5,8 @@ Table-4 MBPP column: the fence's sign tracks code-instruction exposure
 solution pattern is corpus-dependent. Same frozen 3-shot examples as mbpp.py
 (protocol invariant)."""
 
-from dqeval.benchmarks._grading import pass_at_1
-from dqeval.benchmarks.mbpp import FEWSHOT_SAMPLES
+from ._grading import pass_at_1
+from .mbpp import FEWSHOT_SAMPLES
 
 TASK = {
     "task": "mbpp_ticks",

@@ -15,7 +15,7 @@ Two SDAR-specific wrinkles handled in compat.py:
 
 from typing import Optional
 import torch
-from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+from .adapter import (ModelAdapter, ModelSpec,
                            assert_finite_rope, materialize, tokenizer)
 import sys
 import types
@@ -24,9 +24,9 @@ from transformers import AutoConfig
 from transformers.dynamic_module_utils import get_class_from_dynamic_module
 import torch.nn.functional as F
 from transformers.cache_utils import DynamicCache
-from dqeval.models.adapter import ModelAdapter
-from dqeval.models.samplers import GenOutput
-from dqeval.models.samplers import DecodeConfig
+from .adapter import ModelAdapter
+from .samplers import GenOutput
+from .samplers import DecodeConfig
 from torch.nn.attention.flex_attention import create_block_mask
 
 

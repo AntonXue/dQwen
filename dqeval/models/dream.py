@@ -21,13 +21,13 @@ separate methods.
 
 from typing import Optional
 import torch
-from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+from .adapter import (ModelAdapter, ModelSpec,
                            assert_finite_rope, materialize, resolve, tokenizer)
 import sys
 from transformers.generation.configuration_utils import GenerationConfig
-from dqeval.models.adapter import ModelAdapter
-from dqeval.models.samplers import GenOutput
-from dqeval.models.samplers import DecodeConfig
+from .adapter import ModelAdapter
+from .samplers import GenOutput
+from .samplers import DecodeConfig
 
 
 class DreamAdapter(ModelAdapter):

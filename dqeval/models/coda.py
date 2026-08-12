@@ -33,7 +33,7 @@ calls `.eval()`); in train mode it expects labels and does its own masking.
 
 from typing import Optional
 import torch
-from dqeval.models.adapter import (ModelAdapter, ModelSpec,
+from .adapter import (ModelAdapter, ModelSpec,
                            assert_finite_rope, materialize, resolve, tokenizer)
 import sys
 

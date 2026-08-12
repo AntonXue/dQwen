@@ -14,8 +14,8 @@ family, a <family>.py with a build() plus one BUILDERS line).
 
 import torch
 
-from dqeval.models import coda, dqwen, dream, llada, sdar
-from dqeval.models.adapter import ModelAdapter, ModelSpec
+from . import coda, dqwen, dream, llada, sdar
+from .adapter import ModelAdapter, ModelSpec
 
 MODELS: dict[str, ModelSpec] = {
     # ours (private org)
