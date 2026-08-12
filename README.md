@@ -58,9 +58,8 @@ Notes that prevent wrong numbers:
 - `mbpp` vs `mbpp-fence` are different prompts (different generations).
   The "+" columns are ordinary cells: `humaneval-plus` shares humaneval's
   prompts (denser tests), `mbpp-plus` runs EvalPlus's 378 sanitized
-  problems under our scaffold via the local `mbpp_plus_full` task (stock
-  lm-eval `mbpp_plus` never executes the plus suite — see
-  `dqeval/tasks/mbpp_plus_full.yaml`, which also carries the
+  problems under our scaffold via `dqeval/tasks/mbpp_plus.py` (stock
+  lm-eval `mbpp_plus` never executes the plus suite; the file carries the
   published-number comparability caveat).
 - Few-shot counts, gen lengths, greedy decoding, bs=1, and the math-only
   attention backend are all fixed by the cell — nothing to remember.
@@ -86,6 +85,16 @@ is `python summarize.py [filter]`, read-only.
 
 Check `nvidia-smi` first; GPUs 0/3 are usually someone's training run.
 A 2B HumanEval cell takes ~20 s/doc-shard; 9B GSM8K shards run hours.
+
+## One file per benchmark
+
+`dqeval/tasks/` holds every benchmark as one skimmable Python file
+(`humaneval.py`, `mbpp_plus.py`, `gsm8k.py`, `mmlu.py`, ...): the complete
+task config — prompt template, frozen few-shot examples, stops, metrics,
+grading knobs — with lm-eval as the execution engine underneath.
+`tests/task_freeze_gate.py` holds the stock-derived configs byte-identical
+to the pinned lm-eval (doc fingerprints + rendered prompts); run it whenever
+`tasks/` changes or the pin is bumped.
 
 ## Design in one paragraph
 

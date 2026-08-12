@@ -1,9 +1,10 @@
 """The grid layer: one Cell = (model, revision, decode, benchmark, shard)
 = one SLURM task = one output file, keyed by that tuple everywhere.
 
-  - lm-eval-first: prompts, few-shot, extraction and metrics come from the
-    pinned lm-eval; this module only stripes a task's docs and records a
-    sidecar.
+  - one file per benchmark: task configs live in dqeval/tasks/*.py, frozen
+    from pinned lm-eval and held to stock by tests/task_freeze_gate.py;
+    lm-eval is the execution engine. This module stripes docs and records
+    a sidecar.
   - generate then grade: every cell dumps raw generations + n_forward per
     sample, so regrades (HumanEval+/MBPP+, format studies) are CPU
     re-passes, never new GPU runs.
@@ -35,7 +36,7 @@ from pathlib import Path
 # a second grading framework -- grader A/B: 9/1640 verdicts differed,
 # family cells exact), and mbpp-plus runs EvalPlus's sanitized problems
 # under OUR scaffold via the local mbpp_plus_full task (stock mbpp_plus
-# never executes the plus suite -- see dqeval/tasks/mbpp_plus_full.yaml).
+# never executes the plus suite -- see dqeval/tasks/mbpp_plus.py).
 # Shot counts follow Dream's base-model table.
 # --------------------------------------------------------------------------
 BENCH = {
@@ -89,17 +90,29 @@ def parse_decode(decode: str, gen_length: int) -> dict:
 # lm-eval plumbing
 # --------------------------------------------------------------------------
 
-def _tasks_dir():
-    return str(Path(__file__).parent / "tasks")
-
-
 def _build_task_dict(cell: Cell):
+    # configs come from dqeval.tasks (one python file per benchmark, frozen
+    # from pinned lm-eval; tests/task_freeze_gate.py holds them to stock)
     from lm_eval.tasks import TaskManager, get_task_dict
+    from dqeval.tasks import task_config
     bench = BENCH[cell.benchmark]
-    td = get_task_dict([bench["task"]], TaskManager(include_path=_tasks_dir()))
+    td = get_task_dict([task_config(bench["task"])], TaskManager())
+    _restore_names(td)
     _stripe(td, *cell.shard)
     _set_shots(td, bench["shots"])
     return td
+
+
+def _restore_names(td):
+    # lm-eval's loader pops "task" out of a dict config and never writes it
+    # back onto the task object (its python-class branch does the same repair
+    # itself, self-described as "very scuffed"). Without this, unregistered
+    # tasks run as [Task: None] and result aliasing crashes.
+    for key, v in td.items():
+        if isinstance(v, dict):
+            _restore_names(v)
+        elif v.config.task is None:
+            v.config.task = key
 
 
 def _leaf_tasks(td):
@@ -274,14 +287,10 @@ def _provenance(cell: Cell, lm):
     p["versions"] = dict(torch=torch.__version__,
                          transformers=transformers.__version__,
                          lm_eval=version("lm_eval"))
-    # code-grading config comes from the setup_lmeval.sh env patches; record
-    # it so a cell run in an UNPATCHED env (flat 3s timeouts) is detectable
-    # from its records rather than silently different
-    try:
-        from lm_eval.tasks.humaneval.utils import _CODE_TIMEOUT, _CODE_WORKERS
-        p["code_eval"] = dict(timeout_s=_CODE_TIMEOUT, workers=_CODE_WORKERS)
-    except ImportError:
-        p["code_eval"] = "UNPATCHED-ENV (stock 3s timeout)"
+    # code-grading knobs live in dqeval/tasks/_grading.py; recorded so any
+    # env-var override is visible from the cell's records
+    from dqeval.tasks._grading import _CODE_TIMEOUT, _CODE_WORKERS
+    p["code_eval"] = dict(timeout_s=_CODE_TIMEOUT, workers=_CODE_WORKERS)
     if cell.decode != "ar":
         p["sdpa_math_only"] = (torch.backends.cuda.math_sdp_enabled()
                                and not torch.backends.cuda.flash_sdp_enabled())

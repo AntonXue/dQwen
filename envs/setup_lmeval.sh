@@ -74,50 +74,10 @@ done
 echo ">> installing MATH verification deps (sympy, math_verify, antlr4 4.11)"
 $PIP install -q "antlr4-python3-runtime==4.11" math_verify sympy || true
 
-# PATCH 3: HF `evaluate` code_eval defaults to num_workers=4 AND a flat 3s timeout
-# for a problem's ENTIRE test script (~3ms/case on 1000-case plus suites; verdicts
-# become machine-load-sensitive). lm_eval calls .compute() with neither knob, so we
-# inject env-overridable defaults: LM_EVAL_CODE_WORKERS (32) + LM_EVAL_CODE_TIMEOUT
-# (10s). Idempotent: keyed on the _CODE_TIMEOUT marker (upgrades workers-only envs).
-echo ">> patching lm_eval code_eval workers+timeout (LM_EVAL_CODE_WORKERS/LM_EVAL_CODE_TIMEOUT)"
-$PY - "$SP" <<'PYEOF'
-import os, sys
-sp = sys.argv[1]
-imp = 'import evaluate as hf_evaluate\n'
-block = ('import os\n\nimport evaluate as hf_evaluate\n\n'
-         '# dqeval patch: HF code_eval defaults to num_workers=4; bump to a sane,\n'
-         '# env-overridable default so grading uses the cores available.\n'
-         '_CODE_WORKERS = int(os.environ.get("LM_EVAL_CODE_WORKERS") or min(32, os.cpu_count() or 8))\n'
-         '# dqeval patch: code_eval defaults to a flat 3s for a problem\'s ENTIRE test\n'
-         '# script; 10s keeps verdicts deterministic under load. Env-overridable.\n'
-         '_CODE_TIMEOUT = float(os.environ.get("LM_EVAL_CODE_TIMEOUT") or 10.0)\n')
-kw = '        num_workers=_CODE_WORKERS,\n        timeout=_CODE_TIMEOUT,\n'
-targets = {
-    os.path.join(sp, "lm_eval/tasks/mbpp/utils.py"):
-        ('        k=[1],\n    )[0]["pass@1"]',
-         '        k=[1],\n' + kw + '    )[0]["pass@1"]'),
-    os.path.join(sp, "lm_eval/tasks/humaneval/utils.py"):
-        ('        k=k,\n    )',
-         '        k=k,\n' + kw + '    )'),
-}
-for path, (old, new) in targets.items():
-    if not os.path.exists(path):
-        print("   skip (absent):", path); continue
-    src = open(path).read()
-    if "_CODE_TIMEOUT" in src:
-        print("   already patched:", os.path.basename(os.path.dirname(path))); continue
-    if "_CODE_WORKERS" in src:   # workers-only env: upgrade in place
-        src = src.replace(
-            '_CODE_WORKERS = int(os.environ.get("LM_EVAL_CODE_WORKERS") or min(32, os.cpu_count() or 8))\n',
-            '_CODE_WORKERS = int(os.environ.get("LM_EVAL_CODE_WORKERS") or min(32, os.cpu_count() or 8))\n'
-            '_CODE_TIMEOUT = float(os.environ.get("LM_EVAL_CODE_TIMEOUT") or 10.0)\n', 1)
-        src = src.replace('        num_workers=_CODE_WORKERS,\n',
-                          kw, 1)
-    else:
-        src = src.replace(imp, block, 1).replace(old, new, 1)
-    open(path, "w").write(src)
-    print("   patched:", path)
-PYEOF
+# (A former PATCH 3 injected code_eval workers/timeout into lm_eval's stock
+# humaneval/mbpp utils. Dead since 2026-08-12: benchmarks are vendored in
+# dqeval/tasks/*.py and grading lives in dqeval/tasks/_grading.py, so the
+# knobs are ordinary in-repo code -- LM_EVAL_CODE_WORKERS / _TIMEOUT.)
 
 echo ">> verifying import under transformers $($PY -c 'import transformers; print(transformers.__version__)')"
 $PY -c "from lm_eval import simple_evaluate; from lm_eval.api.registry import register_model; print('lm_eval import OK')"
