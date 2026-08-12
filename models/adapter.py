@@ -75,10 +75,6 @@ class ModelAdapter(ABC):
         raise ValueError(f"{self.spec.repo}: no pad/eos token id available")
 
     @property
-    def eos_id(self) -> Optional[int]:
-        return self.tokenizer.eos_token_id
-
-    @property
     def device(self) -> torch.device:
         return next(self.model.parameters()).device
 
