@@ -51,7 +51,8 @@ class DQEvalLM(LM):
                  max_length=2048, gen_length=1024, block_length=32,
                  steps_per_block=32, mode="full", order="low_confidence",
                  top_p=1.0, top_k=0, mc_num=128, mc_bs=16,
-                 temperature=0.0, cfg_scale=0.0, **kw):
+                 temperature=0.0, cfg_scale=0.0,
+                 commit="static", confidence_threshold=0.9, **kw):
         super().__init__()
         self.adapter = load(pretrained, revision=revision)
         self.max_length = int(max_length)
@@ -63,6 +64,7 @@ class DQEvalLM(LM):
             steps_per_block=int(steps_per_block), mode=mode, order=order,
             top_p=float(top_p), top_k=int(top_k),
             temperature=float(temperature), cfg_scale=float(cfg_scale),
+            commit=commit, confidence_threshold=float(confidence_threshold),
         )
         # Second line of defence behind run_eval's --allow-append gate, for callers
         # that build model_args themselves. Warn rather than raise: SDAR is genuinely
@@ -150,29 +152,30 @@ class DQEvalLM(LM):
     # -- generative: gsm8k, minerva_math, humaneval, mbpp, bbh -------------
     @torch.inference_mode()
     def generate_until(self, requests):
-        dev = self.adapter.device
-        out = []
-        for r in requests:
-            ctx = r.args[0]
-            kw = r.args[1] if len(r.args) > 1 and isinstance(r.args[1], dict) else {}
-            until = list(kw.get("until", []) or [])
-            # also stop on the model's own end tokens (LLaDA emits these; masked DLMs
-            # that don't self-terminate rely on `until` instead) and on a markdown
-            # code fence: base models with instruct-flavoured pretraining (Dream)
-            # wrap completions in ```...``` + prose, which HumanEval's `until` does
-            # NOT catch -- the fence then makes the graded code unparseable. Python
-            # never contains a triple backtick, so stopping at ``` is safe.
-            eot = [t for t in ("```", "<|im_end|>", "<|endoftext|>",
-                               self.adapter.tokenizer.pad_token) if t]
-            ids = self.adapter.encode(ctx)
-            # EARLY-STOP during decode -- a masked DLM does not emit EOS, so without
-            # this it fills the whole canvas and ends mid-statement (syntax error).
-            gen = unified.generate(self.adapter, ids, self.decode,
-                                   stop_strings=until + eot)
-            text = gen.text
-            # backstop: truncate again post-hoc (covers full/window mode too)
-            for st in eot + until:
-                if st and st in text:
-                    text = text.split(st)[0]
-            out.append(text)
-        return out
+        return [self._generate_one(r)[0] for r in requests]
+
+    def _generate_one(self, r):
+        """(final_text, GenOutput) for one request — factored out so subclasses
+        (dqeval.grid.RecordingLM) can record raw text + n_forward per request."""
+        ctx = r.args[0]
+        kw = r.args[1] if len(r.args) > 1 and isinstance(r.args[1], dict) else {}
+        until = list(kw.get("until", []) or [])
+        # also stop on the model's own end tokens (LLaDA emits these; masked DLMs
+        # that don't self-terminate rely on `until` instead) and on a markdown
+        # code fence: base models with instruct-flavoured pretraining (Dream)
+        # wrap completions in ```...``` + prose, which HumanEval's `until` does
+        # NOT catch -- the fence then makes the graded code unparseable. Python
+        # never contains a triple backtick, so stopping at ``` is safe.
+        eot = [t for t in ("```", "<|im_end|>", "<|endoftext|>",
+                           self.adapter.tokenizer.pad_token) if t]
+        ids = self.adapter.encode(ctx)
+        # EARLY-STOP during decode -- a masked DLM does not emit EOS, so without
+        # this it fills the whole canvas and ends mid-statement (syntax error).
+        gen = unified.generate(self.adapter, ids, self.decode,
+                               stop_strings=until + eot)
+        text = gen.text
+        # backstop: truncate again post-hoc (covers full/window mode too)
+        for st in eot + until:
+            if st and st in text:
+                text = text.split(st)[0]
+        return text, gen
