@@ -59,7 +59,7 @@ Notes that prevent wrong numbers:
   HumanEval+ is a regrade of saved generations (same prompts, denser
   tests) — no new cells. MBPP+ is NOT: it uses EvalPlus's edited
   sanitized prompts, so it needs its own generation runs
-  (`dqeval/evalplus_driver.py`).
+  (`evalplus_driver.py`).
 - Few-shot counts, gen lengths, greedy decoding, bs=1, and the math-only
   attention backend are all fixed by the cell — nothing to remember.
 
