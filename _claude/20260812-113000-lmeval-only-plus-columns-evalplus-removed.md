@@ -51,3 +51,25 @@ pin in requirements-eval.txt.
   tripwire-style disclosure required wherever that column is narrated.
 - HE+ under lm-eval keeps published comparability (same prompts; grader
   delta bounded by the A/B).
+
+## UPDATE: flip decomposition (Anton asked "purely timeouts?") — NO
+
+Reran all 9 flips with 60s limits on BOTH sides:
+
+- **2 were timeouts**: HumanEval/139 (lm's flat 3s too tight; passes @60s)
+  and HumanEval/100 (EvalPlus's gt-calibrated limit too tight; passes
+  @60s/100x).
+- **7 are test-SUITE skew, not grading mechanics**, concentrated on 4
+  problems. The two distribution channels ship subtly different suites:
+  case counts differ (HumanEval/9: package 963 vs HF 962; HumanEval/96:
+  190 vs 180), and on HumanEval/92 the channels disagree about the same
+  input: `any_int(1.5, 5, 3.5)` — our AR solutions return True, the HF
+  suite expects False and fails them (correctly: the spec requires all
+  ints), while the evalplus package PASSES them. On /92 the lm-eval
+  channel is the stricter-and-right one.
+
+So: not slow code, and not a grader bug on our side — upstream suite
+version skew between `evalplus==0.3.1`'s internal data and the
+`evalplus/humanevalplus` HF dataset. Protocol = the HF channel (what
+lm-eval loads), pinnable by dataset revision. Bound unchanged: <=1.22pp,
+family cells unaffected.
