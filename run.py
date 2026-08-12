@@ -5,6 +5,7 @@
   python run.py manifest.jsonl INDEX                      one manifest row
   python run.py --list                                    what can I ask for?
   python run.py --pending manifest.jsonl                  array indices still to run
+  python run.py --prewarm manifest.jsonl                  warm caches (login node)
 
 Examples:
   python run.py dqwen3.5-2b-base-v3 step50000-swa block32-tau0.8 gsm8k 2/8
@@ -472,6 +473,27 @@ def main(argv):
         print(f"  block32-static-sK    K in {BLOCK_STATIC}")
         print(f"  standard-static-sK   K in {STANDARD_STATIC}")
         print(f"  block32-tauT | standard-tauT   T in {TAU_GRID}")
+        return 0
+    if argv[0] == "--prewarm":
+        # login-node only (needs network): download exactly what the manifest
+        # references, so the array can run with HF_*_OFFLINE=1. Models resolve
+        # through the registry (bare HF ids pass through); datasets come via
+        # the same task construction run_cell uses; code_eval is HF-hub code.
+        from huggingface_hub import snapshot_download
+        cells = load_manifest(argv[1])
+        repos = sorted({(MODELS[c.model].repo if c.model in MODELS else c.model,
+                         c.revision or "main") for c in cells})
+        for repo, rev in repos:
+            print(f">> model {repo} @ {rev}")
+            snapshot_download(repo, revision=rev)
+        for bench in sorted({c.benchmark for c in cells}):
+            print(f">> datasets for {bench}")
+            _build_task_dict(Cell("x", None, "ar", bench, (0, 1)))
+        if any(BENCH[c.benchmark]["unsafe"] for c in cells):
+            print(">> HF code_eval metric module")
+            import evaluate
+            evaluate.load("code_eval")
+        print("prewarm complete -- the array can run offline")
         return 0
     if argv[0] == "--pending":
         # validates every line (bad cells raise here, on the login node, not

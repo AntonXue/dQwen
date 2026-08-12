@@ -7,7 +7,7 @@
 # Requeues are free: completed cells exit in seconds (summary sentinel),
 # and --pending regenerates the remaining index list at any time.
 # Prereqs, once, on a LOGIN node (network): bash setup_env.sh   (harness
-# layer into the existing qwen35 env) and python prewarm_caches.py
+# layer into the existing qwen35 env) and python run.py --prewarm
 # manifest.jsonl (models + datasets + code_eval into $HF_HOME).
 #SBATCH -J dqeval
 #SBATCH -p gh

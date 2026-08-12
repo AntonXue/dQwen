@@ -103,7 +103,7 @@ One array task = one cell. On a login node (the only place with network):
 ```bash
 bash setup_env.sh                        # harness layer into the cluster qwen35 env
                                          #   (default never touches the hand-built torch)
-python prewarm_caches.py manifest.jsonl  # models + datasets + code_eval -> $HF_HOME
+python run.py --prewarm manifest.jsonl   # models + datasets + code_eval -> $HF_HOME
 python run.py --pending manifest.jsonl   # validates every line, prints remaining indices
 sbatch --array=<indices>%32 sbatch_cells.sh manifest.jsonl
 ```
