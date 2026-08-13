@@ -16,4 +16,4 @@ for t in "$@"; do
     sbatch -N "$lanes" sbatch_tiles.sh "$t" "$j"
   done
 done
-squeue -u "$USER" -o '%.10i %.12j %.5D %.10M %.10L %.8T'
+squeue -u "${USER:-$(whoami)}" -o '%.10i %.12j %.5D %.10M %.10L %.8T'

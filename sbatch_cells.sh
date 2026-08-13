@@ -16,9 +16,10 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH -t 06:00:00
 #SBATCH --output=_slurm_out/%x_%A_%a.out
-set -euo pipefail
-source ~/.bashrc
-conda activate qwen35
+set -eo pipefail
+source ~/.bashrc          # rc files + conda reference unset vars, so
+conda activate qwen35     # nounset only AFTER env setup (smoke-caught)
+set -u
 
 export SCRATCH=${SCRATCH:-/scratch/11079/antonxue}
 export HF_HOME=${HF_HOME:-$SCRATCH/cache/huggingface}
