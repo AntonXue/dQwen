@@ -103,3 +103,27 @@ three-source evidence sweep worth keeping:
 Consequences: CoDA-768 undersell caveat dies (1024 > 768); LLaDA-Base
 protocol matched exactly on canvas; expect small upward shifts vs every
 512-canvas PROBE number (LLaDA's own HE ablation says +2.5pp direction).
+
+## UPDATE 2: GH200 probes (block32-s32, canvas 1024; junk stripes, deleted)
+
+| probe | docs | fwd mean/max | committed tok mean/max | >512 |
+|---|--:|--:|--:|--:|
+| 2B gsm8k | 102 | 156 / 1024 | 140 / 1024 | 6 |
+| 2B math | 23 | 294 / 1024 | 275 / 1024 | 3 |
+| 9B math | 13 | 246 / 1024 | 230 / 1024 | 1 |
+| LLaDA math | 13 | 330 / 1024 | 325 / 1026 | 2 |
+
+- **1024 ruling vindicated empirically**: ~12% of real MATH generations
+  exceed 512 tokens (matches the 8.5% gold tail) — all would be
+  truncation-zeros at canvas 512. GSM8K's 6% tail is pure non-termination
+  (runaway canvas-fillers; median ~90 tok), not honest length.
+- **Early-stop discount is large**: realized forwards are 15–30% of the
+  1024 worst case, so canvas 1024 costs far less than 2x canvas 512.
+- **Walltime**: worst campaign shards extrapolate to LLaDA math-of32
+  ~1.7h and the 9B standard-static-s1024 ceiling ~3h — everything fits
+  the 4h template; launch part 2 with `sbatch -t 06:00:00` for margin on
+  those two shapes. Whole campaign ≈ 400–450 GPU-h ≈ under a day of wall
+  at %32.
+- Parity on cluster: sampler gate (unified == LLaDA native) **PASS** on
+  torch 2.10/GH200. nelbo gate needed the pinned LLaDA clone
+  (~/foo/LLaDA @ 96441d4, now cloned); result recorded at launch time.
