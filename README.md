@@ -99,22 +99,28 @@ whenever the specs change or the pin is bumped.
 
 ## Cluster deployment (TACC Vista, GH200 -- one GPU per node)
 
-One array task = one cell. On a login node (the only place with network):
+The qgh QOS caps jobs per user (20 running / 40 submitted, array TASKS
+each count), so campaigns launch TILED: `plan_tiles.py` packs cells into
+~3.2h node-lanes from measured GH200 rates, 16 lanes per 8h job. Prep on
+a node with network, submit from a LOGIN node (sbatch is login-only):
 
 ```bash
 bash setup_env.sh                        # harness layer into the cluster qwen35 env
                                          #   (default never touches the hand-built torch)
 python run.py --prewarm manifest.jsonl   # models + datasets + code_eval -> $HF_HOME
-python run.py --pending manifest.jsonl   # validates every line, prints remaining indices
-sbatch --array=<indices>%32 sbatch_cells.sh manifest.jsonl
+python manifests/plan_tiles.py manifest.jsonl   # -> manifest.tiles.json + packing report
+bash launch.sh manifest.tiles.json       # LOGIN node: sbatch every job in the plan
 ```
 
-Compute nodes run fully offline (`sbatch_cells.sh` sets `HF_*_OFFLINE=1`).
-Requeue freely -- completed cells exit in seconds, `--pending` regenerates
-the index list, and concurrent requeues of one cell cannot corrupt output
-(unique tmp + atomic rename). Coalesce stripes afterwards with
-`python summarize.py --merge` (verifies each union is complete and disjoint
-before printing a merged number).
+Compute nodes run fully offline (the sbatch scripts set `HF_*_OFFLINE=1`).
+Requeue freely -- completed cells exit in seconds, so a lane killed at
+the wall loses only its in-flight cell: re-run `launch.sh` and it
+fast-skips to where it died. `run.py --pending manifest.jsonl` shows what
+remains; `sbatch_cells.sh` (one array task = one cell) remains for
+single-cell debugging within the caps. Concurrent reruns of one cell
+cannot corrupt output (unique tmp + atomic rename). Coalesce stripes
+afterwards with `python summarize.py --merge` (verifies each union is
+complete and disjoint before printing a merged number).
 
 NOTE on hardware: publication cells should all come from ONE hardware
 generation. Local-workstation cells are PROBE; restamp on the cluster.
