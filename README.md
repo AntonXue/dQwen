@@ -42,7 +42,7 @@ requeue failures freely — completed cells exit in seconds.
 | MODEL | dqeval registry name (`--list`); for `ar` cells, a bare HF id |
 | REVISION | HF revision (`step25000-swa`, `step50000-swa`); `main` or `-` for default |
 | DECODE | `ar` · `mc-nelbo` (mmlu only) · `block32-static-sK` · `standard-static-sK` · `block32-tauT` · `standard-tauT` |
-| BENCHMARK | `humaneval` · `humaneval-plus` · `mbpp` · `mbpp-plus` · `mbpp-fence` · `mbpp-plus-fence` · `gsm8k` · `math` · `mmlu` |
+| BENCHMARK | `humaneval` · `humaneval-plus` · `mbpp` · `mbpp-plus` · `mbpp-fence` · `mbpp-plus-fence` · `gsm8k` · `math500` · `mmlu` |
 | K/N | stripe shard: docs `[k::n]`, `k` in `0..n-1`. Omit for the whole set |
 
 Notes that prevent wrong numbers:
@@ -50,8 +50,8 @@ Notes that prevent wrong numbers:
 - **Shards are stripes, never chunks** — benchmark difficulty drifts with
   position, so "first N" is a biased sample. Never quote a partial shard's
   aggregate; merge all N first.
-- **Shard every DLM generation cell to <=200 docs** (suggested counts in
-  `--list`: gsm8k 8, math 32, mbpp 4, mbpp-plus 2; humaneval and mmlu run
+- **Shard every DLM generation cell to ~250 docs** (suggested counts in
+  `--list`: gsm8k 6, math500 2, mbpp 2, mbpp-plus 2; humaneval and mmlu run
   whole -- mmlu's mc-nelbo generates nothing). **AR cells run UNSHARDED**:
   they are fast (HFLM bs=16), and batch composition differs between
   striped and whole runs (measured 0.23pp on gsm8k) -- unsharded keeps
