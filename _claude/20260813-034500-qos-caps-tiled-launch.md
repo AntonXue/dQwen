@@ -44,9 +44,33 @@ fast-skips, `--pending` audits.
 ## Launch flow (part 1 first, then 2+3 after its merge validates)
 
     ssh <login>; cd ~/foo/dQwen
-    bash launch.sh manifests/part1-ar-baselines.tiles.json
+    bash slurm_launch.sh manifests/part1-ar-baselines.tiles.json
 
 Then `summarize.py --merge`, diff vs the 08-12 workstation AR batch
 (expect: MATH/MBPP AR cells ABOVE the old 256-cap numbers — the _ARLM
 canvas fix — others within cross-hardware noise), recalibrate AR rates in
 plan_tiles.py from measured wall_s, and launch parts 2+3.
+
+## UPDATE: dress rehearsal caught TWO launch-killers; SLURM surface = 1 file
+
+Anton ("super super make sure with a small test") was right to be
+nervous. Executing the literal job-script body on the idev node (a
+SLURM allocation, so `srun` is real) found:
+
+1. **`set -u` before `source ~/.bashrc`** — the rc references
+   $SHELL_STARTUP_DEBUG unset, so nounset killed every job at line one.
+   Both sbatch scripts had it (the original kit was never sbatch-run).
+   Fix: strict mode only AFTER rc + conda activate.
+2. **`cd "$(dirname "$0")"` in a batch script** — sbatch runs a SPOOLED
+   COPY (/var/spool/...), so $0 leaves the repo. Fix: prefer
+   $SLURM_SUBMIT_DIR (and this very idev session demonstrates the trap:
+   its SLURM_SUBMIT_DIR is ~/foo/ADLMC, wherever idev was typed).
+
+Then the consolidation (Anton): launch.sh + sbatch_tiles.sh +
+sbatch_cells.sh -> **one dual-mode `slurm_launch.sh`** (submits plans;
+IS the submitted job script; payload mode dispatches on `<tiles> <int>`
+args). sbatch_cells.sh DELETED — its array premise is dead under the
+caps and single-cell debugging is a bare `run.py` call. Rehearsed both
+modes: submit (stubbed sbatch, correct -N/args/abs-path) and payload
+(live 3-cell mini-campaign end-to-end offline + 24s idempotent re-sweep,
+verified before and after the merge).

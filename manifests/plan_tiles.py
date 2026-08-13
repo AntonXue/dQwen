@@ -113,9 +113,7 @@ def main(path):
     over = [s for _, s in lanes if s > 3.6 * 3600]
     if over:
         print(f"  WARNING: {len(over)} lane(s) estimated past 3.6h")
-    print("submit:")
-    for j, job in enumerate(jobs):
-        print(f"  sbatch -N {len(job)} sbatch_tiles.sh {out} {j}")
+    print(f"submit (login node):  bash slurm_launch.sh {out}")
 
 
 if __name__ == "__main__":

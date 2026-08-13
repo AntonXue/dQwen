@@ -109,18 +109,20 @@ bash setup_env.sh                        # harness layer into the cluster qwen35
                                          #   (default never touches the hand-built torch)
 python run.py --prewarm manifest.jsonl   # models + datasets + code_eval -> $HF_HOME
 python manifests/plan_tiles.py manifest.jsonl   # -> manifest.tiles.json + packing report
-bash launch.sh manifest.tiles.json       # LOGIN node: sbatch every job in the plan
+bash slurm_launch.sh manifest.tiles.json # LOGIN node: sbatch every job in the plan
 ```
 
-Compute nodes run fully offline (the sbatch scripts set `HF_*_OFFLINE=1`).
-Requeue freely -- completed cells exit in seconds, so a lane killed at
-the wall loses only its in-flight cell: re-run `launch.sh` and it
-fast-skips to where it died. `run.py --pending manifest.jsonl` shows what
-remains; `sbatch_cells.sh` (one array task = one cell) remains for
-single-cell debugging within the caps. Concurrent reruns of one cell
-cannot corrupt output (unique tmp + atomic rename). Coalesce stripes
-afterwards with `python summarize.py --merge` (verifies each union is
-complete and disjoint before printing a merged number).
+`slurm_launch.sh` is the whole SLURM surface: it submits the plan's jobs
+AND is the job script they run (payload mode). Compute nodes run fully
+offline (it sets `HF_*_OFFLINE=1`). Requeue freely -- completed cells
+exit in seconds, so a lane killed at the wall loses only its in-flight
+cell: re-run `slurm_launch.sh` on the same plan and it fast-skips to
+where it died. `run.py --pending manifest.jsonl` shows what remains;
+single-cell debugging is a direct `run.py` invocation on an idev node.
+Concurrent reruns of one cell cannot corrupt output (unique tmp + atomic
+rename). Coalesce stripes afterwards with `python summarize.py --merge`
+(verifies each union is complete and disjoint before printing a merged
+number).
 
 NOTE on hardware: publication cells should all come from ONE hardware
 generation. Local-workstation cells are PROBE; restamp on the cluster.
