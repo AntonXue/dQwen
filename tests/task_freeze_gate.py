@@ -21,14 +21,13 @@ STOCK_PAIRS = {  # vendored registry name -> stock lm-eval task name
     "humaneval": "humaneval",
     "mbpp": "mbpp",
     "gsm8k_cot": "gsm8k_cot",
-    "minerva_math": "minerva_math",
     "mmlu": "mmlu",
 }
-SHOTS = {"humaneval": 0, "mbpp": 3, "gsm8k_cot": 8, "minerva_math": 4,
+SHOTS = {"humaneval": 0, "mbpp": 3, "gsm8k_cot": 8, "minerva_math500": 4,
          "mmlu": 5, "humaneval_plus_sound": 0, "mbpp_plus_full": 3,
          "mbpp_ticks": 3, "mbpp_plus_ticks": 3}
 VARIANTS = ["humaneval_plus_sound", "mbpp_plus_full", "mbpp_ticks",
-            "mbpp_plus_ticks"]
+            "mbpp_plus_ticks", "minerva_math500"]
 
 
 def leaves(td):

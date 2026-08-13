@@ -14,7 +14,7 @@
 #SBATCH -A ASC25023
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=1
-#SBATCH -t 04:00:00
+#SBATCH -t 06:00:00
 #SBATCH --output=_slurm_out/%x_%A_%a.out
 set -euo pipefail
 source ~/.bashrc

@@ -221,18 +221,18 @@ class RecordingLM(DQEvalLM):
 BENCH = {
     "humaneval":  dict(task="humaneval",    gen=1024, shots=0, shards=1, unsafe=True),
     "humaneval-plus": dict(task="humaneval_plus_sound", gen=1024, shots=0, shards=1, unsafe=True),
-    "mbpp":       dict(task="mbpp",         gen=1024, shots=3, shards=4, unsafe=True),
+    "mbpp":       dict(task="mbpp",         gen=1024, shots=3, shards=2, unsafe=True),
     "mbpp-plus":  dict(task="mbpp_plus_full", gen=1024, shots=3, shards=2, unsafe=True),
-    "mbpp-fence": dict(task="mbpp_ticks",   gen=1024, shots=3, shards=4, unsafe=True),
+    "mbpp-fence": dict(task="mbpp_ticks",   gen=1024, shots=3, shards=2, unsafe=True),
     "mbpp-plus-fence": dict(task="mbpp_plus_ticks", gen=1024, shots=3, shards=2, unsafe=True),
-    "gsm8k":      dict(task="gsm8k_cot",    gen=1024, shots=8, shards=8, unsafe=False),
-    "math":       dict(task="minerva_math", gen=1024, shots=4, shards=32, unsafe=False),
+    "gsm8k":      dict(task="gsm8k_cot",    gen=1024, shots=8, shards=6, unsafe=False),
+    "math500":    dict(task="minerva_math500", gen=1024, shots=4, shards=2, unsafe=False),
     "mmlu":       dict(task="mmlu",         gen=None, shots=5, shards=1, unsafe=False),
 }
 
-TAU_GRID = (0.5, 0.6, 0.7, 0.8, 0.9)          # adaptive-commit thresholds
+TAU_GRID = (0.5, 0.6, 0.7, 0.8, 0.9, 0.95)    # adaptive-commit thresholds
 BLOCK_STATIC = (32, 16, 8, 4, 2)              # steps per 32-block
-STANDARD_STATIC = (512, 256, 128, 64, 32, 16) # total steps over the whole canvas
+STANDARD_STATIC = (1024, 512, 256, 128, 64, 32, 16)  # total steps over the whole canvas
 
 
 @dataclass(frozen=True)
@@ -316,11 +316,28 @@ def _doc_fingerprint(td):
     return {"n_docs": n_docs, "sha256": h.hexdigest()}
 
 
+class _ARLM(HFLM):
+    """HFLM with the benchmark's canvas as the generation cap. Stock HFLM
+    hardcodes max_gen_toks=256 and only humaneval's spec overrides it --
+    without this, the ruled 1024 canvas would silently skip the AR side
+    (fatal on MATH, where 8.5% of gold solutions exceed 512 tokens and a
+    truncated solution grades zero)."""
+
+    def __init__(self, *a, gen_toks=None, **kw):
+        self._gen_toks = gen_toks
+        super().__init__(*a, **kw)
+
+    @property
+    def max_gen_toks(self):
+        return self._gen_toks or 256
+
+
 def _build_lm(cell: Cell):
     bench = BENCH[cell.benchmark]
     if cell.decode == "ar":
-        return HFLM(pretrained=cell.model, revision=cell.revision or "main",
-                    dtype="bfloat16", batch_size=16, trust_remote_code=True)
+        return _ARLM(pretrained=cell.model, revision=cell.revision or "main",
+                     dtype="bfloat16", batch_size=16, trust_remote_code=True,
+                     gen_toks=bench["gen"])
     if cell.decode == "mc-nelbo":
         if bench["gen"] is not None:
             raise ValueError("mc-nelbo decode is only for MC benchmarks (mmlu)")

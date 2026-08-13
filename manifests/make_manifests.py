@@ -18,10 +18,19 @@ _claude/) plus Anton's 2026-08-13 rulings; this file is the executable form:
          (Anton 2026-08-13 extended the HE-only spec). Cells part2 already
          carries are dropped here so the parts can queue concurrently.
 
-Fence benchmarks stay DLM-only: the MBPP format study is about our models'
-training data, and no doc requests AR fence cells.
+Evening rulings (Anton 2026-08-13, second session):
+  * MATH500 replaces full MATH-5000 -- the column's reproduction anchor was
+    already spent by the math_verify metric ruling, and 5k was the single
+    biggest compute line (~150 GPU-h -> ~15). benchmark key: math500.
+  * Acceleration ALSO runs mbpp (500 docs, of2) -- HE+GSM8K+MBPP frontier.
+  * part2 gains full @25k rows for 0.8B/4B/9B (the S4.2 budget-trade
+    symmetry; 2B already had one). NO v1-mixture arm (S4.6 stays
+    workstation-stamped).
+  * AR cells get fence benchmarks too (over-run: lets the format table
+    carry AR rows if ever narrated).
+  * AR canvas: run.py now wires BENCH gen into HFLM (stock hardcodes 256).
 
-Shard rule (Anton 2026-08-13): no DLM cell generates more than ~200 docs.
+Shard rule (Anton 2026-08-13 evening): ~250 docs per generation cell.
 mmlu is exempt (mc-nelbo generates nothing -- single-token MC scores via the
 shared-forward path, ~1 forward/doc); AR cells stay UNSHARDED regardless
 (bs=16 batch composition moves numbers ~0.23pp between striped and whole).
@@ -40,16 +49,16 @@ import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# benchmark -> stripe count for DLM generation cells (docs/shard stays <=200:
-# he 164 whole, mbpp 499/4~125, mbpp+ 378/2=189, gsm8k 1319/8~165, math
-# 5000/32~156)
-DLM_SHARDS = {"humaneval": 1, "humaneval-plus": 1, "mbpp": 4, "mbpp-plus": 2,
-              "mbpp-fence": 4, "mbpp-plus-fence": 2, "gsm8k": 8, "math": 32}
+# benchmark -> stripe count for DLM generation cells (~250 docs/shard:
+# he 164 whole, mbpp 500/2=250, mbpp+ 378/2=189, gsm8k 1319/6~220,
+# math500 500/2=250)
+DLM_SHARDS = {"humaneval": 1, "humaneval-plus": 1, "mbpp": 2, "mbpp-plus": 2,
+              "mbpp-fence": 2, "mbpp-plus-fence": 2, "gsm8k": 6, "math500": 2}
 
 CODE_BENCHES = ["humaneval", "humaneval-plus", "mbpp", "mbpp-plus",
                 "mbpp-fence", "mbpp-plus-fence"]
 AR_BENCHES = ["humaneval", "humaneval-plus", "mbpp", "mbpp-plus",
-              "gsm8k", "math", "mmlu"]
+              "mbpp-fence", "mbpp-plus-fence", "gsm8k", "math500", "mmlu"]
 
 AR_TWINS = [
     "Qwen/Qwen3.5-0.8B",      # dqwen3.5-0.8b twin
@@ -67,6 +76,9 @@ BIG_ROWS = [
     ("dqwen3.5-2b-base-v3",   "step50000-swa"),
     ("dqwen3.5-4b-base-v3",   "step50000-swa"),
     ("dqwen3.5-9b-base-v3",   "step50000-swa"),
+    ("dqwen3.5-0.8b-base-v3", "step25000-swa"),  # S4.2 budget-trade rows: every
+    ("dqwen3.5-4b-base-v3",   "step25000-swa"),  #   size at both budgets, all
+    ("dqwen3.5-9b-base-v3",   "step25000-swa"),  #   columns (over-run ruling)
     ("dqwen3.5-2b-base-v3",   "step25000-swa"),  # width-matched pair, hybrid leg
     ("dqwen3-1.7b-base-v3",   "step25000-swa"),  # width-matched pair, control leg
     ("dqwen3-1.7b-base-v3",   "step50000-swa"),  # control@50k (20260811-203500)
@@ -129,7 +141,7 @@ def part1():
 def part2():
     cells = []
     for model, rev in BIG_ROWS:
-        for b in CODE_BENCHES + ["gsm8k", "math"]:
+        for b in CODE_BENCHES + ["gsm8k", "math500"]:
             cells += sharded(model, rev, "block32-static-s32", b,
                              DLM_SHARDS[b])
         cells.append(cell(model, rev, "mc-nelbo", "mmlu"))
@@ -144,6 +156,7 @@ def part3(taken):
         for decode in ACCEL_DECODES:
             cells.append(cell(model, rev, decode, "humaneval"))
             cells += sharded(model, rev, decode, "gsm8k", DLM_SHARDS["gsm8k"])
+            cells += sharded(model, rev, decode, "mbpp", DLM_SHARDS["mbpp"])
     return [c for c in cells if tag(c) not in taken]
 
 

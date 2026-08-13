@@ -18,7 +18,8 @@ RUNS = Path(__file__).parent / "_runs"
 HEAD_TASK = {"humaneval": "humaneval", "humaneval-plus": "humaneval_plus",
              "mbpp": "mbpp", "mbpp-plus": "mbpp_plus_full",
              "mbpp-fence": "mbpp_ticks", "mbpp-plus-fence": "mbpp_plus_ticks",
-             "gsm8k": "gsm8k_cot", "math": "minerva_math", "mmlu": "mmlu"}
+             "gsm8k": "gsm8k_cot", "math": "minerva_math",
+             "math500": "minerva_math500", "mmlu": "mmlu"}
 # metric preference within the headline task's results dict
 METRICS = ("math_verify,none", "exact_match,strict-match", "pass@1,create_test",
            "pass_at_1,none", "acc,none", "exact_match,none")

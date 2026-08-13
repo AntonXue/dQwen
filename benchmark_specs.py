@@ -405,67 +405,38 @@ GSM8K = {
 }
 
 
-# ---- math (minerva protocol)
-# MATH (Hendrycks), Minerva 4-shot protocol (`minerva_math`, 7 subject
-# subtasks + size-weighted group). Config frozen from pinned lm-eval 0.4.8;
-# fidelity-gated 2026-08-12.
-#
-# CONFIG is frozen here; the EXTRACTION/GRADING LOGIC is imported from the
-# pinned install (Minerva answer normalization is ~200 lines of regex, and
-# math_verify's symbolic equivalence — the ruled MATH column metric — lives in
-# process_results). Copying that logic would create a second source of truth
-# for exactly the code where a silent transcription slip changes numbers;
-# importing keeps it single-sourced while the pin holds.
-#
-# Metrics per doc: exact_match (strict Minerva) AND math_verify — the
-# manuscript column is math_verify (Anton's 2026-08-12 ruling; strict
-# collapses to a format test on big post-trained AR models).
-MINERVA_SUBJECTS = [
-    ("minerva_math_algebra", "algebra"),
-    ("minerva_math_counting_and_prob", "counting_and_probability"),
-    ("minerva_math_geometry", "geometry"),
-    ("minerva_math_intermediate_algebra", "intermediate_algebra"),
-    ("minerva_math_num_theory", "number_theory"),
-    ("minerva_math_prealgebra", "prealgebra"),
-    ("minerva_math_precalc", "precalculus"),
-]
+# ---- math500 (minerva protocol on the Lightman-500 subset)
+# MATH500 (HuggingFaceH4/MATH-500: the 500-problem subset of Lightman et
+# al. 2023, the reasoning-era standard) under the SAME Minerva protocol as
+# the comparators' full-set runs: identical 4-shot prompt, extraction, and
+# metrics (strict exact_match + math_verify, the ruled column metric).
+# RULED 2026-08-13 (Anton): full MATH-5000 was the campaign's single
+# biggest line item (~150 GPU-h), and this column's direct-reproduction
+# anchor was ALREADY spent by the math_verify ruling -- comparator
+# published numbers are strict-metric full-set, context-only either way.
+# stderr at n=500 is ~2.2pp: do not narrate sub-2pp MATH deltas.
+# Extraction/grading LOGIC imported from the pinned install (same
+# single-source rationale as before: 200 lines of Minerva regex).
 
-
-def _minerva_leaf(task_name, dataset_name):
-    return {
-        "task": task_name,
-        "tag": ["math_word_problems"],
-        "dataset_path": "EleutherAI/hendrycks_math",
-        "dataset_name": dataset_name,
-        "dataset_kwargs": {"trust_remote_code": True},
-        "training_split": "train",
-        "test_split": "test",
-        "process_docs": minerva_process_docs,
-        "doc_to_text": minerva_doc_to_text,
-        "doc_to_target": "{{answer if few_shot is undefined else solution}}",
-        "process_results": minerva_process_results,
-        "target_delimiter": " ",
-        "fewshot_config": {"sampler": "first_n", "samples": minerva_fewshot_samples},
-        "num_fewshot": 4,
-        "metric_list": [
-            {"metric": "exact_match", "aggregation": "mean", "higher_is_better": True},
-            {"metric": "math_verify", "aggregation": "mean", "higher_is_better": True},
-        ],
-        "output_type": "generate_until",
-        "generation_kwargs": {"until": ["Problem:"], "do_sample": False,
-                              "temperature": 0.0},
-        "repeats": 1,
-        "metadata": {"version": 2.0},
-    }
-
-
-MINERVA_MATH = {
-    "group": "minerva_math",
-    "task": [_minerva_leaf(*row) for row in MINERVA_SUBJECTS],
-    "aggregate_metric_list": [
-        {"metric": "exact_match", "weight_by_size": True},
-        {"metric": "math_verify", "weight_by_size": True},
+MATH500 = {
+    "task": "minerva_math500",
+    "dataset_path": "HuggingFaceH4/MATH-500",
+    "test_split": "test",
+    "process_docs": minerva_process_docs,
+    "doc_to_text": minerva_doc_to_text,
+    "doc_to_target": "{{answer if few_shot is undefined else solution}}",
+    "process_results": minerva_process_results,
+    "target_delimiter": " ",
+    "fewshot_config": {"sampler": "first_n", "samples": minerva_fewshot_samples},
+    "num_fewshot": 4,
+    "metric_list": [
+        {"metric": "exact_match", "aggregation": "mean", "higher_is_better": True},
+        {"metric": "math_verify", "aggregation": "mean", "higher_is_better": True},
     ],
+    "output_type": "generate_until",
+    "generation_kwargs": {"until": ["Problem:"], "do_sample": False,
+                          "temperature": 0.0},
+    "repeats": 1,
     "metadata": {"version": 1.0},
 }
 
@@ -636,7 +607,7 @@ TASKS = {
     "mbpp_ticks": MBPP_FENCE,
     "mbpp_plus_ticks": MBPP_PLUS_FENCE,
     "gsm8k_cot": GSM8K,
-    "minerva_math": MINERVA_MATH,
+    "minerva_math500": MATH500,
     "mmlu": MMLU,
 }
 
