@@ -125,5 +125,6 @@ protocol matched exactly on canvas; expect small upward shifts vs every
   those two shapes. Whole campaign ≈ 400–450 GPU-h ≈ under a day of wall
   at %32.
 - Parity on cluster: sampler gate (unified == LLaDA native) **PASS** on
-  torch 2.10/GH200. nelbo gate needed the pinned LLaDA clone
-  (~/foo/LLaDA @ 96441d4, now cloned); result recorded at launch time.
+  torch 2.10/GH200. nelbo gate **PASS, diff 0.000e+00** (bitwise) after
+  cloning its oracle, the pinned LLaDA repo, to ~/foo/LLaDA @ 96441d4.
+  Both parity gates green on the publication hardware.
