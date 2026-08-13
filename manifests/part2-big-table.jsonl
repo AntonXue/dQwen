@@ -603,9 +603,9 @@
 {"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s32", "benchmark": "math", "shard": [30, 32]}
 {"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s32", "benchmark": "math", "shard": [31, 32]}
 {"model": "coda-1.7b-base", "revision": null, "decode": "mc-nelbo", "benchmark": "mmlu"}
-{"model": "dqwen3.5-0.8b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s512", "benchmark": "humaneval"}
-{"model": "dqwen3.5-2b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s512", "benchmark": "humaneval"}
-{"model": "dqwen3.5-4b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s512", "benchmark": "humaneval"}
-{"model": "dqwen3.5-9b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s512", "benchmark": "humaneval"}
-{"model": "dqwen3.5-2b-base-v3", "revision": "step25000-swa", "decode": "standard-static-s512", "benchmark": "humaneval"}
-{"model": "dqwen3-1.7b-base-v3", "revision": "step25000-swa", "decode": "standard-static-s512", "benchmark": "humaneval"}
+{"model": "dqwen3.5-0.8b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s1024", "benchmark": "humaneval"}
+{"model": "dqwen3.5-2b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s1024", "benchmark": "humaneval"}
+{"model": "dqwen3.5-4b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s1024", "benchmark": "humaneval"}
+{"model": "dqwen3.5-9b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s1024", "benchmark": "humaneval"}
+{"model": "dqwen3.5-2b-base-v3", "revision": "step25000-swa", "decode": "standard-static-s1024", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step25000-swa", "decode": "standard-static-s1024", "benchmark": "humaneval"}

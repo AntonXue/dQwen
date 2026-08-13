@@ -70,3 +70,36 @@ EVAL-REQUEST-20260811-190000, HANDOFF-20260811-134555, 20260811-203500):
   with that wall in mind).
 - The v1-mixture arm (§4.6's 19/20 table) is in NO part — decide whether
   those numbers need cluster restamps or stay workstation-stamped.
+
+## UPDATE same night: gen RULED — 1024 everywhere. Evidence sweep first.
+
+The gen question above is CLOSED, superseding the keep-512/1024 rec:
+**canvas = 1024 on every generation benchmark** (BENCH edited, manifests
+regenerated; ceiling decode is now standard-static-s1024). Anton's call
+("we're on a massive cluster — be safe + match LLaDA"), made after a
+three-source evidence sweep worth keeping:
+
+1. **Stock lm-eval** (read from the pinned install): humaneval yaml sets
+   max_gen_toks=1024; mbpp/gsm8k_cot/minerva_math set NOTHING and inherit
+   HFLM's default **256** (models/huggingface.py:428).
+2. **Published DLM protocols** (agent-verified from repo configs):
+   LLaDA-Base **1024 on all four** benchmarks (single block = canvas);
+   Dream/Dream-Coder 512 code, 256 gsm8k, 512 math; CoDA 768 code-only;
+   the Minerva paper itself generated 512. ⚠ LLaDA's own EVAL.md shows
+   canvas 1024→512 moves their HE 35.4→32.9 — and OUR harness measures
+   LLaDA HE at 32.93 under the old gen=512 protocol, i.e. we reproduce
+   their 512-canvas number to the decimal. Canvas is a live protocol
+   variable for DLMs, not a cap.
+3. **Gold-solution token lengths** (both tokenizer extremes agree):
+   gsm8k p99=221, humaneval max 285, mbpp max ~503, mbpp-plus max 364 —
+   512 would have been safe for all of those. **MATH is the exception:
+   8.5% of golds exceed 512** (p90=475, p99=997, max 2019), concentrated
+   in precalc 24% / int-algebra 18% / geometry 16% and Level 5 (22% of
+   L5); 198/425 tail docs carry [asy] figure code (153 rescued below 512
+   if stripped); the \boxed answer sits at the END, so truncation = zero,
+   not partial credit. Even 1024 clips 43 golds (0.9%) — protocol-appendix
+   disclosure, not worth 2048 (nobody in the literature goes past 1024).
+
+Consequences: CoDA-768 undersell caveat dies (1024 > 768); LLaDA-Base
+protocol matched exactly on canvas; expect small upward shifts vs every
+512-canvas PROBE number (LLaDA's own HE ablation says +2.5pp direction).

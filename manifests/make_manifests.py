@@ -26,6 +26,12 @@ mmlu is exempt (mc-nelbo generates nothing -- single-token MC scores via the
 shared-forward path, ~1 forward/doc); AR cells stay UNSHARDED regardless
 (bs=16 batch composition moves numbers ~0.23pp between striped and whole).
 
+Canvas rule (Anton 2026-08-13): gen=1024 on EVERY generation benchmark
+(BENCH in run.py). Matches LLaDA-Base's published protocol on all four of
+its benchmarks, covers CoDA's 768, and clears MATH's gold-solution tail
+(8.5% of golds exceed 512 tokens; anatomy in _claude/20260813-005207).
+The full-canvas ceiling decode is therefore standard-static-s1024.
+
 Run: python manifests/make_manifests.py   (rewrites the .jsonl siblings)
 """
 
@@ -128,7 +134,7 @@ def part2():
                              DLM_SHARDS[b])
         cells.append(cell(model, rev, "mc-nelbo", "mmlu"))
     for model, rev in CEILING_ROWS:
-        cells.append(cell(model, rev, "standard-static-s512", "humaneval"))
+        cells.append(cell(model, rev, "standard-static-s1024", "humaneval"))
     return cells
 
 
