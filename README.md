@@ -50,8 +50,9 @@ Notes that prevent wrong numbers:
 - **Shards are stripes, never chunks** — benchmark difficulty drifts with
   position, so "first N" is a biased sample. Never quote a partial shard's
   aggregate; merge all N first.
-- **`gsm8k` and `math` should be sharded** (8 and 16 ways respectively)
-  for DLM cells; code benchmarks run whole. **AR cells run UNSHARDED**:
+- **Shard every DLM generation cell to <=200 docs** (suggested counts in
+  `--list`: gsm8k 8, math 32, mbpp 4, mbpp-plus 2; humaneval and mmlu run
+  whole -- mmlu's mc-nelbo generates nothing). **AR cells run UNSHARDED**:
   they are fast (HFLM bs=16), and batch composition differs between
   striped and whole runs (measured 0.23pp on gsm8k) -- unsharded keeps
   AR numbers composition-independent.

@@ -221,12 +221,12 @@ class RecordingLM(DQEvalLM):
 BENCH = {
     "humaneval":  dict(task="humaneval",    gen=512,  shots=0, shards=1, unsafe=True),
     "humaneval-plus": dict(task="humaneval_plus_sound", gen=512, shots=0, shards=1, unsafe=True),
-    "mbpp":       dict(task="mbpp",         gen=512,  shots=3, shards=1, unsafe=True),
-    "mbpp-plus":  dict(task="mbpp_plus_full", gen=512, shots=3, shards=1, unsafe=True),
-    "mbpp-fence": dict(task="mbpp_ticks",   gen=512,  shots=3, shards=1, unsafe=True),
-    "mbpp-plus-fence": dict(task="mbpp_plus_ticks", gen=512, shots=3, shards=1, unsafe=True),
+    "mbpp":       dict(task="mbpp",         gen=512,  shots=3, shards=4, unsafe=True),
+    "mbpp-plus":  dict(task="mbpp_plus_full", gen=512, shots=3, shards=2, unsafe=True),
+    "mbpp-fence": dict(task="mbpp_ticks",   gen=512,  shots=3, shards=4, unsafe=True),
+    "mbpp-plus-fence": dict(task="mbpp_plus_ticks", gen=512, shots=3, shards=2, unsafe=True),
     "gsm8k":      dict(task="gsm8k_cot",    gen=1024, shots=8, shards=8, unsafe=False),
-    "math":       dict(task="minerva_math", gen=1024, shots=4, shards=16, unsafe=False),
+    "math":       dict(task="minerva_math", gen=1024, shots=4, shards=32, unsafe=False),
     "mmlu":       dict(task="mmlu",         gen=None, shots=5, shards=1, unsafe=False),
 }
 
