@@ -140,6 +140,15 @@ def merge_groups(store="grid_v1"):
                   f"{len(shards)}/{n} stripes (missing {missing[:6]}"
                   f"{'...' if len(missing) > 6 else ''})")
             continue
+        # protocol guard: stripes measured under different shot counts must
+        # never combine (gsm8k moved 8-shot -> 4-shot 2026-08-14; old cells
+        # are archived, but a stray copy would silently poison a merge)
+        shots = {json.loads(open(jl).readline())["bench"].get("shots")
+                 for jl in shards.values()}
+        if len(shots) > 1:
+            print(f"MIXED-PROTOCOL {model} {bench} {decode} n={n}: "
+                  f"stripes disagree on shots {sorted(shots, key=str)} -- refusing to merge")
+            continue
         per_doc = collections.defaultdict(dict)   # gid -> {key: [vals]}
         complete = True
         for k, jl in shards.items():
