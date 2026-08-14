@@ -14,7 +14,7 @@ family, a <family>.py with a build() plus one BUILDERS line).
 
 import torch
 
-from . import coda, dqwen, dream, llada
+from . import coda, dlm1b, dqwen, dream, llada
 from .adapter import ModelAdapter, ModelSpec
 
 MODELS: dict[str, ModelSpec] = {
@@ -51,6 +51,16 @@ MODELS: dict[str, ModelSpec] = {
         "Salesforce/CoDA-v0-Base", "coda", 151669, 151643,
         notes="AR-aligned raw logits (shift in _canonicalize); needs the "
               "CoDAModel._supports_sdpa shim on transformers>=4.54"),
+    # DLM1B project (sibling repo ~/foo/DLM1B): AR->DLM adaptation of Qwen3-0.6B via
+    # on-the-fly-tokenized OWT continued pretraining. `repo` is the local training-run
+    # dir (NOT an HF hub id); `revision` selects the milestone checkpoint subdirectory
+    # (380/760/1530/3050/5340/7600, or "main" for the highest step present). Same ids
+    # as dqwen3-0.6b-base (same Qwen3-0.6B backbone, same MASK/PAD tokens).
+    "dlm1b-owt-baseline-1b": ModelSpec(
+        "/home/ayx98/foo/DLM1B/_runs/20260814-044535-owt-baseline-1b", "dlm1b",
+        151660, 151643,
+        notes="cross-repo: weights+modeling code live in ~/foo/DLM1B, tokenizer "
+              "sourced from Qwen/Qwen3-0.6B (checkpoint dir ships no tokenizer)"),
 }
 
 BUILDERS = {
@@ -58,6 +68,7 @@ BUILDERS = {
     "dream": dream.build,
     "coda": coda.build,
     "dqwen": dqwen.build,
+    "dlm1b": dlm1b.build,
 }
 assert {spec.family for spec in MODELS.values()} <= set(BUILDERS), \
     "every family named in the MODELS catalog needs a builder here"
