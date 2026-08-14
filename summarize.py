@@ -2,6 +2,7 @@
 
     python summarize.py            # everything
     python summarize.py gsm8k      # substring filter on any column
+    python summarize.py --store grid_v1_vista [...]   # read another store
 
 _runs holds only raw per-cell artifacts (see _runs/README.md); this script
 is the aggregation layer, and it never writes anything back.
@@ -38,8 +39,8 @@ def headline(bench, results):
     return "?", None
 
 
-def grid_rows():
-    for jl in sorted(RUNS.glob("grid_v1/*/*.jsonl")):
+def grid_rows(store="grid_v1"):
+    for jl in sorted(RUNS.glob(f"{store}/*/*.jsonl")):
         meta = summary = None
         with open(jl) as f:
             for line in f:
@@ -87,9 +88,9 @@ def regrade_rows():
                "pass@1 base/plus", v, str(rj.relative_to(RUNS)))
 
 
-def main():
+def main(store="grid_v1"):
     needle = sys.argv[1] if len(sys.argv) > 1 else ""
-    rows = [r for r in list(grid_rows()) + list(regrade_rows())
+    rows = [r for r in list(grid_rows(store)) + list(regrade_rows())
             if needle in "\t".join(r)]
     rows.sort(key=lambda r: (r[2], r[1], r[3], r[0]))
     if not rows:
@@ -108,10 +109,10 @@ def main():
 # lm_eval_sample records; global doc id = k + doc_id * n proves the stripes
 # are disjoint and complete. gsm8k logs two records per doc (one per
 # extraction filter, same key); strict = per-doc min, per the Gate-B note.
-def merge_groups():
+def merge_groups(store="grid_v1"):
     import collections
     groups = collections.defaultdict(dict)   # (model, bench, decode, n) -> {k: file}
-    for jl in sorted(RUNS.glob("grid_v1/*/*.jsonl")):
+    for jl in sorted(RUNS.glob(f"{store}/*/*.jsonl")):
         meta = json.loads(open(jl).readline())
         if meta.get("kind") != "meta":
             continue
@@ -163,7 +164,12 @@ def merge_groups():
 
 
 if __name__ == "__main__":
+    store = "grid_v1"
+    if "--store" in sys.argv:
+        i = sys.argv.index("--store")
+        store = sys.argv[i + 1]
+        del sys.argv[i:i + 2]
     if len(sys.argv) > 1 and sys.argv[1] == "--merge":
-        merge_groups()
+        merge_groups(store)
     else:
-        main()
+        main(store)

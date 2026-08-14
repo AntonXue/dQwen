@@ -18,6 +18,7 @@ Two kinds of entries:
 | dir | what | naming |
 |---|---|---|
 | `grid_v1/` | generation cells from `run.py` (the canonical store) | `<benchmark>/<model>@<revision>__<benchmark>__<decode>__s<K>of<N>.jsonl` |
+| `grid_v1_vista/` | **the campaign store**: all 1,154 cells from the TACC Vista launch (GH200, canvas 1024, GATE path), rsync'd 2026-08-14. Publication numbers come from HERE (one-hardware rule); `grid_v1/` is the workstation PROBE record. Read with `--store grid_v1_vista`. | same naming as `grid_v1/` |
 | `regrades/` | **frozen** 2026-08-12 EvalPlus-graded HE+ record (predates the lm-eval-only ruling; new "+" numbers are grid cells) | `<yyyymmdd-hhmmss>__<model>@<revision>__<benchmark>-plus__from-<source>.jsonl` (+ `_eval_results.json`) |
 
 `grid_v1` cell filenames are deliberately **not** timestamped: the filename
