@@ -129,11 +129,18 @@ def assert_finite_rope(model) -> None:
     correct shapes, noise logits (measured argmax agreement 20-40% vs
     native). Cheap to assert, so always asserted, every family.
     """
+    # inv_freq[0] = theta**0 = 1.0 exactly, for every rope variant: a sharp
+    # invariant that also catches ALL-ZERO buffers -- torch 2.10/aarch64
+    # materialises meta buffers as zeros, which are finite and slipped this
+    # gate (the 2026-08-14 silent CoDA campaign row).
     bad = [n for n, b in model.named_buffers()
-           if n.endswith("inv_freq") and not torch.isfinite(b).all()]
+           if n.endswith("inv_freq")
+           and (not torch.isfinite(b).all()
+                or abs(float(b.reshape(-1)[0]) - 1.0) > 1e-3)]
     if bad:
         raise RuntimeError(
-            f"non-finite rotary inv_freq buffers: {bad[:3]}{'...' if len(bad) > 3 else ''}. "
+            f"broken rotary inv_freq buffers (non-finite, or [0] != 1.0 -- the "
+            f"all-zeros meta trap): {bad[:3]}{'...' if len(bad) > 3 else ''}. "
             "This is the transformers>=5 meta-device trap -- the family's compat shim "
             "must recompute inv_freq AFTER from_pretrained materialises the model."
         )

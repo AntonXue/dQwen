@@ -158,8 +158,14 @@ def apply_shims(cfg, klass) -> list[str]:
                 if type(m).__name__ != "CoDARotaryEmbedding":
                     continue
                 buf = getattr(m, "inv_freq", None)
-                if buf is None or torch.isfinite(buf).all():
+                if buf is None:
                     continue
+                # ALWAYS recompute: what a meta-materialised buffer holds is
+                # torch's choice -- garbage (non-finite) on 2.7/x86, ZEROS on
+                # 2.10/aarch64. Zeros pass every finiteness predicate and are
+                # position-blindness (the 2026-08-14 silent CoDA campaign row);
+                # a brokenness test cannot be trusted, recomputation is cheap
+                # pure config data.
                 head_dim = getattr(model.config, "head_dim", None) or (
                     model.config.hidden_size // model.config.num_attention_heads)
                 fresh = mod.default_rope_frequencies(
