@@ -225,10 +225,11 @@ BENCH = {
     "mbpp-plus":  dict(task="mbpp_plus_full", gen=1024, shots=3, shards=2, unsafe=True),
     "mbpp-fence": dict(task="mbpp_ticks",   gen=1024, shots=3, shards=2, unsafe=True),
     "mbpp-plus-fence": dict(task="mbpp_plus_ticks", gen=1024, shots=3, shards=2, unsafe=True),
-    # gsm8k moved 8-shot -> 4-shot 2026-08-14 (Qwen3 report + LLaDA both use 4;
-    # we were the outlier). 8-shot cells archived in *_gsm8k_8shot stores;
-    # meta.bench.shots is the discriminator (_claude/20260814-121922).
-    "gsm8k":      dict(task="gsm8k_cot",    gen=1024, shots=4, shards=6, unsafe=False),
+    # gsm8k: lm-eval's stock 8-shot CoT default, kept by ruling (Anton
+    # 2026-08-14, reversing a same-day 4-shot plan; Qwen3/LLaDA declare
+    # 4-shot -- the paper DISCLOSES the difference, _claude/20260814-121922
+    # has the audit). meta.bench.shots is the record if this ever moves.
+    "gsm8k":      dict(task="gsm8k_cot",    gen=1024, shots=8, shards=6, unsafe=False),
     "math500":    dict(task="minerva_math500", gen=1024, shots=4, shards=2, unsafe=False),
     "mmlu":       dict(task="mmlu",         gen=None, shots=5, shards=1, unsafe=False),
 }

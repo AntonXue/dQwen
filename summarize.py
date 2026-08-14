@@ -141,8 +141,9 @@ def merge_groups(store="grid_v1"):
                   f"{'...' if len(missing) > 6 else ''})")
             continue
         # protocol guard: stripes measured under different shot counts must
-        # never combine (gsm8k moved 8-shot -> 4-shot 2026-08-14; old cells
-        # are archived, but a stray copy would silently poison a merge)
+        # never combine. Born of the 2026-08-14 gsm8k shot-count episode
+        # (planned 4-shot move, reversed same day); kept as general
+        # protection -- meta.bench.shots is the per-cell record.
         shots = {json.loads(open(jl).readline())["bench"].get("shots")
                  for jl in shards.values()}
         if len(shots) > 1:

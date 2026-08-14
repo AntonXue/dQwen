@@ -160,59 +160,18 @@ def part3(taken):
     return [c for c in cells if tag(c) not in taken]
 
 
-# ---- gsm8k 4-shot rerun (2026-08-14 ruling; _claude/20260814-121922 is the
-# plan, -123751 the freeze). The store's 632 8-shot gsm8k cells are archived;
-# these manifests are the same cells reborn at 4-shot, in phase order:
-#   phase1  validation gate -- RUN FIRST, everything else waits on it. Two
-#           NEW calibration anchors checked against Qwen3 report Table 8
-#           (Qwen3-1.7B-Base gsm8k 75.44, 0.6B-Base 59.59; >3pp = STOP),
-#           plus the 8 bare-repo AR retakes. Anchor extras (mmlu/mbpp/
-#           humaneval) are directly checkable against Table 8 too.
-#   phase2  the 14 big-table rows at block32-static-s32 -- unblocks the
-#           manuscript.
-#   phase3  the acceleration sweep (s32 already in phase2).
-# ⚠ The -Base anchors are CALIBRATION ONLY, never AR counterparts -- the
-# counterparts stay the bare post-trained repos (manuscript S3.1 names them).
-
-CALIBRATION_ANCHORS = ["Qwen/Qwen3-1.7B-Base", "Qwen/Qwen3-0.6B-Base"]
-
-
-def gsm8k_phase1():
-    cells = [cell(m, None, "ar", "gsm8k") for m in CALIBRATION_ANCHORS + AR_TWINS]
-    cells += [cell(m, None, "ar", b) for m in CALIBRATION_ANCHORS
-              for b in ("mmlu", "mbpp", "humaneval")]
-    return cells
-
-
-def gsm8k_phase2():
-    return [c for model, rev in BIG_ROWS
-            for c in sharded(model, rev, "block32-static-s32", "gsm8k",
-                             DLM_SHARDS["gsm8k"])]
-
-
-def gsm8k_phase3():
-    return [c for model, rev in ACCEL_ROWS
-            for d in ACCEL_DECODES if d != "block32-static-s32"
-            for c in sharded(model, rev, d, "gsm8k", DLM_SHARDS["gsm8k"])]
-
-
 def main():
     p1, p2 = part1(), part2()
     p3 = part3({tag(c) for c in p1 + p2})
-    g1, g2, g3 = gsm8k_phase1(), gsm8k_phase2(), gsm8k_phase3()
     for name, cells in [("part1-ar-baselines", p1),
                         ("part2-big-table", p2),
-                        ("part3-acceleration", p3),
-                        ("gsm8k-rerun-phase1", g1),
-                        ("gsm8k-rerun-phase2", g2),
-                        ("gsm8k-rerun-phase3", g3)]:
+                        ("part3-acceleration", p3)]:
         path = os.path.join(HERE, name + ".jsonl")
         with open(path, "w") as f:
             for c in cells:
                 f.write(json.dumps(c) + "\n")
         print(f"{name}.jsonl  {len(cells)} cells")
-    repos = sorted({(c["model"], c["revision"])
-                    for c in p1 + p2 + p3 + g1 + g2 + g3})
+    repos = sorted({(c["model"], c["revision"]) for c in p1 + p2 + p3})
     print(f"{len(repos)} distinct model@revision to prewarm")
 
 

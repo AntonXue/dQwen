@@ -330,13 +330,14 @@ MBPP_PLUS_FENCE = {
 
 
 # ---- gsm8k
-# GSM8K, 4-shot chain-of-thought (`gsm8k_cot`; first 4 of the stock 8 CoT
-# exemplars). 8-shot until 2026-08-14 — both reference protocols (Qwen3
-# tech report, LLaDA) use 4-shot, so we were the outlier; the 8-shot cells
-# are archived, meta.bench.shots discriminates (_claude/20260814-121922).
-# Frozen from pinned lm-eval 0.4.8; fidelity-gated byte-identical
-# 2026-08-12. Two extraction filters: strict-match ("The answer is N.") is
-# the headline metric; flexible-extract (last number) is recorded alongside.
+# GSM8K, 8-shot chain-of-thought (`gsm8k_cot` -- the stock lm-eval default,
+# i.e. the canonical Wei et al. CoT exemplars; also Dream's convention).
+# Kept at 8 by ruling 2026-08-14 (a 4-shot rerun was planned and reversed
+# the same day; Qwen3/LLaDA declare 4-shot -- the paper discloses the
+# difference; audit in _claude/20260814-121922). Frozen from pinned lm-eval
+# 0.4.8; fidelity-gated byte-identical 2026-08-12. Two extraction filters:
+# strict-match ("The answer is N.") is the headline metric; flexible-extract
+# (last number) is recorded alongside.
 GSM8K_FEWSHOT_SAMPLES = [{'question': 'There are 15 trees in the grove. Grove workers will plant trees in the '
               'grove today. After they are done, there will be 21 trees. How many '
               'trees did the grove workers plant today?',
@@ -386,7 +387,7 @@ GSM8K = {
     "doc_to_target": "{{answer.split('####')[-1].strip() if answer is defined else target}}",
     "target_delimiter": " ",
     "fewshot_config": {"sampler": "first_n", "samples": GSM8K_FEWSHOT_SAMPLES},
-    "num_fewshot": 4,   # authoritative value lives in run.py BENCH; kept in sync
+    "num_fewshot": 8,   # authoritative value lives in run.py BENCH; kept in sync
     "metric_list": [{"aggregation": "mean", "higher_is_better": True,
                      "ignore_case": True, "ignore_punctuation": False,
                      "metric": "exact_match",
@@ -404,7 +405,7 @@ GSM8K = {
                      "regex_pattern": "(-?[$0-9.,]{2,})|(-?[0-9]+)"},
                     {"function": "take_first"}]},
     ],
-    "metadata": {"version": 4.0},   # 4.0 = the 4-shot protocol (3.0 was 8-shot)
+    "metadata": {"version": 3.0},
 }
 
 
