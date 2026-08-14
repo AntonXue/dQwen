@@ -1,0 +1,16 @@
+{"model": "Qwen/Qwen3-1.7B-Base", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen3-0.6B-Base", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen3.5-0.8B", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen3.5-2B", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen3.5-4B", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen3.5-9B", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen3-1.7B", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen3-0.6B", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen2.5-7B", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen2.5-Coder-7B", "revision": null, "decode": "ar", "benchmark": "gsm8k"}
+{"model": "Qwen/Qwen3-1.7B-Base", "revision": null, "decode": "ar", "benchmark": "mmlu"}
+{"model": "Qwen/Qwen3-1.7B-Base", "revision": null, "decode": "ar", "benchmark": "mbpp"}
+{"model": "Qwen/Qwen3-1.7B-Base", "revision": null, "decode": "ar", "benchmark": "humaneval"}
+{"model": "Qwen/Qwen3-0.6B-Base", "revision": null, "decode": "ar", "benchmark": "mmlu"}
+{"model": "Qwen/Qwen3-0.6B-Base", "revision": null, "decode": "ar", "benchmark": "mbpp"}
+{"model": "Qwen/Qwen3-0.6B-Base", "revision": null, "decode": "ar", "benchmark": "humaneval"}
