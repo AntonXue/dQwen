@@ -57,6 +57,31 @@ to the workstation grid_v1_vista, re-merge, restamp the CoDA row.
 Expectations per the delegation brief: mmlu 30s-40s, HE near the
 PROBE-era 23.17 (canvas 1024 now).
 
+## UPDATE ~03:50: rerun LANDED — 19/19 in ~1h (vs 12+ GPU-h broken)
+
+Final merge: **zero INCOMPLETE, 264 groups, campaign structurally
+whole at 1,154/1,154.** The restamped CoDA row:
+
+| mmlu | gsm8k | math500 (mv) | he | he+ | mbpp | mbpp+ | fence | fence+ |
+|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 26.21 | 3.18 | 3.20 | **23.17** | 17.07 | 35.00 | 42.33 | 36.80 | 44.18 |
+
+- **HE 23.17 = the PROBE-era head-to-head EXACTLY** — canvas-invariant
+  like LLaDA (early stop makes trailing canvas unreachable). mbpp 35 in
+  their published range. Nothing 0.00; generations coherent. Post-fix
+  CoDA stops properly: cells ran ~10-15 min, not 2.5h.
+- ⚠ **mmlu 26.21 sits BELOW the brief's expected 30s-40s** (chance=25;
+  broken row was 24.15). Load is goldens-exact and the generative row
+  proves the same loaded model works, so this is NOT the silent-load
+  class — but workstation should check whether a PROBE-era CoDA mmlu
+  exists to compare; else it stands as a re-measurement (a 2B
+  code-specialist near chance on 5-shot MMLU is believable; their paper
+  never evaluates knowledge) with a disclosure line.
+
+Resync (workstation): the 19 refreshed cells overwrite their garbage
+namesakes in grid_v1_vista — same rsync line as before; then re-merge
+with --store vista and the row restamps.
+
 ## Sidebar: tonight's OTHER problem, resolved
 
 The post-campaign stalls (merge pass, first diagnosis attempts) were
