@@ -27,7 +27,18 @@ METRICS = ("math_verify,none", "exact_match,strict-match", "pass@1,create_test",
 
 
 def headline(bench, results):
-    r = results.get(HEAD_TASK.get(bench, bench))
+    want = HEAD_TASK.get(bench, bench)
+    r = results.get(want)
+    if not r:
+        # lm-eval sometimes carries a variant suffix on the task name
+        # (humaneval_plus -> humaneval_plus_sound). Before 2026-08-14 that
+        # made every HumanEval+ cell read "?" — a whole column of silent
+        # blanks that look like missing runs rather than a naming mismatch.
+        # A UNIQUE prefix match is unambiguous; anything else stays "?" so a
+        # genuine problem is still reported.
+        cand = [k for k in results if k.startswith(want)]
+        if len(cand) == 1:
+            r = results[cand[0]]
     if not r:
         return "?", None
     for m in METRICS:
