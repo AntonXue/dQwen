@@ -21,7 +21,10 @@ Writes <manifest>.tiles.json and prints the packing + sbatch lines.
 """
 
 import json
+import os
 import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 LANE_BUDGET_H = 3.2      # pack target inside the 4h wall (~20% margin)
 LANES_PER_JOB = 16
@@ -52,8 +55,49 @@ def sec_per_fwd(model):
     raise KeyError(f"no fwd rate for {model!r}")
 
 
+# ---- measured anchors (campaign calibration, 2026-08-15) ----------------
+# The store's own s32 cells carry wall_clock_s; whenever the same
+# (model@rev, bench) has a complete s32 anchor, cost-per-doc comes from
+# MEASUREMENT and the synthetic table above is only the fallback. The
+# campaign showed the synthetic table over-prices comparators 1.6-3.9x
+# (worst: mbpp). Decode factors vs the s32 anchor: static-sK = K/32
+# (forwards linear in steps), tau = 0.6 (measured 0.46-0.73 across the
+# family sweep), standard-static-s1024 = 1024 / mean(n_forward at s32,
+# HE anchor). TOTAL_DOCS is per-bench whole-set size for sec/doc.
+
+TOTAL_DOCS = {"humaneval": 164, "humaneval-plus": 164, "mbpp": 500,
+              "mbpp-plus": 378, "mbpp-fence": 500, "mbpp-plus-fence": 378,
+              "gsm8k": 1319, "math500": 500}
+STORE = os.path.join(os.path.dirname(HERE), "_runs", "grid_v1")
+_anchor_cache: dict = {}
+
+
+def _anchor(model, rev, bench):
+    """(sec_per_doc, mean_n_forward) from the store's s32 cells, or None."""
+    key = (model, rev, bench)
+    if key in _anchor_cache:
+        return _anchor_cache[key]
+    import glob as _g
+    tagbase = f"{model}@{rev or 'main'}__{bench}__block32-static-s32__"
+    out = None
+    fs = _g.glob(os.path.join(STORE, bench, tagbase + "*.jsonl"))
+    if fs:
+        wall, fwd = 0.0, []
+        for f in fs:
+            lines = open(f).readlines()
+            wall += json.loads(lines[-1]).get("wall_clock_s", 0)
+            fwd += [r["n_forward"] for line in lines
+                    if (r := json.loads(line)).get("kind") == "sample"
+                    and r.get("n_forward")]
+        if wall > 0 and fwd:
+            out = (wall / TOTAL_DOCS[bench], sum(fwd) / len(fwd))
+    _anchor_cache[key] = out
+    return out
+
+
 def est_seconds(c):
-    """Estimated lane time for one cell, including load overhead."""
+    """Estimated lane time for one cell, including load overhead.
+    Measured s32 anchor when the store has one; synthetic fallback."""
     bench, decode, model = c["benchmark"], c["decode"], c["model"]
     if decode == "ar":
         size = next(f for key, f in AR_SIZE if key in model)
@@ -62,7 +106,20 @@ def est_seconds(c):
     if decode == "mc-nelbo":
         return load + DOCS["mmlu"] * sec_per_fwd(model) * 1.25
     k, n = c.get("shard", (0, 1))
-    docs = DOCS[bench] if n == 1 else DOCS[bench]  # DOCS already per-shard
+
+    anc = None if bench == "mmlu" else _anchor(model, c.get("revision"), bench)
+    if anc is not None:
+        sec_doc_s32, fwd_s32 = anc
+        docs = TOTAL_DOCS[bench] / n
+        if decode.startswith("standard-static"):
+            steps = float(decode.rsplit("-s", 1)[1])
+            return load + docs * sec_doc_s32 * (steps / fwd_s32)
+        if "tau" in decode:
+            return load + docs * sec_doc_s32 * 0.6
+        steps = int(decode.rsplit("-s", 1)[1])
+        return load + docs * sec_doc_s32 * steps / 32
+
+    docs = DOCS[bench]  # synthetic path: DOCS is already per-shard
     if decode.startswith("standard-static"):
         fwd = 1024.0
     elif "tau" in decode:
