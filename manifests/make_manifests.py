@@ -183,20 +183,14 @@ ACCEL4_BIG   = [("llada-8b-base", None),                   # frontier 7-9B panel
                 ("dream-7b-base", None),
                 ("dream-coder-7b-base", None)]
 
-# Over-run extensions (Anton 2026-08-15, "rather over-run than under-run"):
-# 4e: the tau TAIL. The 0.5-0.95 grid saturates at the fast end (2B@50k HE:
-#     tau0.95 costs 64.9 forwards vs tau0.9's 57.0, both ~half of s32's
-#     114.9, accuracy flat) -- 0.98/0.99 extend the threshold curve toward
-#     the sequential anchor. parse_decode takes any float tau; TAU_GRID is
-#     untouched (it feeds part3, which must regenerate byte-identical).
-# 4f: the sequential ceiling (standard-static-s1024, HE) for the four
-#     comparators + control@50k -- completes the one-at-a-time anchor for
-#     every frontier panel, and for LLaDA it IS their published decode
-#     (gen=steps=block=1024). Supersedes the manuscript request's
-#     "not beyond the six CEILING_ROWS" line, by the over-run ruling.
-TAU_TAIL = ["block32-tau0.98", "block32-tau0.99"]
-TAIL_ROWS = ACCEL_ROWS + ACCEL4_CHEAP + ACCEL4_BIG   # every frontier row; the
-# one duplicate (coda in CHEAP, never in ACCEL_ROWS) keeps the list exact
+# Over-run extension kept (Anton 2026-08-15): 4f, the sequential ceiling
+# (standard-static-s1024, HE) for the four comparators + control@50k --
+# completes the one-at-a-time anchor for every frontier panel, and for
+# LLaDA it IS their published decode (gen=steps=block=1024). A tau TAIL
+# (0.98/0.99 for all frontier rows, 252 cells) was cut the same night as
+# too ambitious: the tau grid ENDS AT 0.95, and the fast-end saturation
+# (tau0.95 = 64.9 forwards vs tau0.9's 57.0 vs s32's 114.9 on 2B@50k HE,
+# accuracy flat) is narrated as a finding instead of extended.
 CEILING4_ROWS = ACCEL4_CHEAP + ACCEL4_BIG
 
 
@@ -213,12 +207,6 @@ def part4(taken):
             big.append(cell(model, rev, decode, "humaneval"))
             big += sharded(model, rev, decode, "gsm8k", DLM_SHARDS["gsm8k"])
             mbpp += sharded(model, rev, decode, "mbpp", DLM_SHARDS["mbpp"])
-    tail = []
-    for model, rev in TAIL_ROWS:
-        for decode in TAU_TAIL:
-            tail.append(cell(model, rev, decode, "humaneval"))
-            tail += sharded(model, rev, decode, "gsm8k", DLM_SHARDS["gsm8k"])
-            tail += sharded(model, rev, decode, "mbpp", DLM_SHARDS["mbpp"])
     ceil = [cell(m, r, "standard-static-s1024", "humaneval")
             for m, r in CEILING4_ROWS]
     seen, out = set(taken), []
@@ -226,7 +214,6 @@ def part4(taken):
                         ("part4b-accel-cheap", cheap),
                         ("part4c-accel-big", big),
                         ("part4d-accel-big-mbpp", mbpp),
-                        ("part4e-tau-tail", tail),
                         ("part4f-ceilings", ceil)]:
         keep = [c for c in cells if tag(c) not in seen]
         seen.update(tag(c) for c in keep)
