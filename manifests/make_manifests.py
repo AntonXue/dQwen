@@ -17,6 +17,9 @@ _claude/) plus Anton's 2026-08-13 rulings; this file is the executable form:
          (static steps 32..2, tau 0.5..0.95), on HumanEval AND GSM8K
          (Anton 2026-08-13 extended the HE-only spec). Cells part2 already
          carries are dropped here so the parts can queue concurrently.
+  part4  The decode-axis extension (manuscript EVAL-REQUEST 20260815-023130,
+         2026-08-15): tau smoke gate + full 11-decode sweeps for the
+         control@50k and the four comparators. Additive-only; section below.
 
 Evening rulings (Anton 2026-08-13, second session):
   * MATH500 replaces full MATH-5000 -- the column's reproduction anchor was
@@ -160,18 +163,66 @@ def part3(taken):
     return [c for c in cells if tag(c) not in taken]
 
 
+# ---- part4: the decode-axis extension (manuscript EVAL REQUEST 2026-08-15,
+# VistaCoder_Technical_Report/_claude/20260815-023130). Purely ADDITIVE --
+# part1/2/3 must keep regenerating byte-identical. Two figures drive it:
+# fig:decode-retention wants the control's ~100B leg swept (it is in
+# BIG_ROWS but was never in ACCEL_ROWS), and fig:decode-frontier cannot be
+# drawn at all until the four comparators have more than one decode config.
+# 4a is a GATE: the tau commit rule has never run outside dQwen3.5 -- do
+# not queue the big sweeps until the smoke cells pass (criteria in
+# _claude/20260815-*-HANDOFF). Smoke cells are real phase 4b/4c cells and
+# fast-skip there.
+
+SMOKE_ROWS = [("coda-1.7b-base", None), ("llada-8b-base", None),
+              ("dream-7b-base", None), ("dream-coder-7b-base", None)]
+
+ACCEL4_CHEAP = [("dqwen3-1.7b-base-v3", "step50000-swa"),  # retention @100B
+                ("coda-1.7b-base", None)]                  # frontier small panel
+ACCEL4_BIG   = [("llada-8b-base", None),                   # frontier 7-9B panel
+                ("dream-7b-base", None),
+                ("dream-coder-7b-base", None)]
+
+
+def part4(taken):
+    smoke = [cell(m, r, "block32-tau0.9", "humaneval") for m, r in SMOKE_ROWS]
+    cheap, big, mbpp = [], [], []
+    for model, rev in ACCEL4_CHEAP:
+        for decode in ACCEL_DECODES:
+            cheap.append(cell(model, rev, decode, "humaneval"))
+            cheap += sharded(model, rev, decode, "gsm8k", DLM_SHARDS["gsm8k"])
+            cheap += sharded(model, rev, decode, "mbpp", DLM_SHARDS["mbpp"])
+    for model, rev in ACCEL4_BIG:
+        for decode in ACCEL_DECODES:
+            big.append(cell(model, rev, decode, "humaneval"))
+            big += sharded(model, rev, decode, "gsm8k", DLM_SHARDS["gsm8k"])
+            mbpp += sharded(model, rev, decode, "mbpp", DLM_SHARDS["mbpp"])
+    seen, out = set(taken), []
+    for name, cells in [("part4a-tau-smoke", smoke),
+                        ("part4b-accel-cheap", cheap),
+                        ("part4c-accel-big", big),
+                        ("part4d-accel-big-mbpp", mbpp)]:
+        keep = [c for c in cells if tag(c) not in seen]
+        seen.update(tag(c) for c in keep)
+        out.append((name, keep))
+    return out
+
+
 def main():
     p1, p2 = part1(), part2()
     p3 = part3({tag(c) for c in p1 + p2})
-    for name, cells in [("part1-ar-baselines", p1),
-                        ("part2-big-table", p2),
-                        ("part3-acceleration", p3)]:
+    p4 = part4({tag(c) for c in p1 + p2 + p3})
+    all_cells = p1 + p2 + p3
+    for name, cells in ([("part1-ar-baselines", p1),
+                         ("part2-big-table", p2),
+                         ("part3-acceleration", p3)] + p4):
         path = os.path.join(HERE, name + ".jsonl")
         with open(path, "w") as f:
             for c in cells:
                 f.write(json.dumps(c) + "\n")
         print(f"{name}.jsonl  {len(cells)} cells")
-    repos = sorted({(c["model"], c["revision"]) for c in p1 + p2 + p3})
+    all_cells += [c for _, cells in p4 for c in cells]
+    repos = sorted({(c["model"], c["revision"]) for c in all_cells})
     print(f"{len(repos)} distinct model@revision to prewarm")
 
 

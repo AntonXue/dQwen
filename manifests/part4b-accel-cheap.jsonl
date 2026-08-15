@@ -1,0 +1,179 @@
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s16", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s16", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s16", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s8", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s8", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s8", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s4", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s4", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s4", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s2", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s2", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-static-s2", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.5", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.5", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.5", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.6", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.6", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.6", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.7", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.7", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.7", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.8", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.8", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.8", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.9", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.9", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.9", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.95", "benchmark": "humaneval"}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.95", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "block32-tau0.95", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "mbpp", "shard": [1, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "mbpp", "shard": [0, 2]}
+{"model": "coda-1.7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "mbpp", "shard": [1, 2]}

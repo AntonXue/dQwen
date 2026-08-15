@@ -1,0 +1,207 @@
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "llada-8b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s16", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s4", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-static-s2", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.5", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.6", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.7", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.8", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.9", "benchmark": "gsm8k", "shard": [5, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [0, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [1, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [2, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [3, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [4, 6]}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "block32-tau0.95", "benchmark": "gsm8k", "shard": [5, 6]}
