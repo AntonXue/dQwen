@@ -36,10 +36,15 @@ manifests (part1/2/3 verified byte-identical after the change):
 | `part4b-accel-cheap.jsonl` | 179 | control@50k + CoDA, full 11-decode sweep, HE+GSM8K+MBPP |
 | `part4c-accel-big.jsonl` | 207 | LLaDA + Dream + Dream-Coder, HE+GSM8K |
 | `part4d-accel-big-mbpp.jsonl` | 60 | the same three, MBPP (appendix panel) |
+| `part4e-tau-tail.jsonl` | 252 | τ0.98 + τ0.99 for ALL 14 frontier rows × HE+GSM8K+MBPP (over-run addition, see §4b) |
+| `part4f-ceilings.jsonl` | 5 | `standard-static-s1024` HE for the 4 comparators + control@50k (over-run addition) |
 
 Counts were double-verified (independent dry run reproduced the request's
-4/179/207/60 exactly). Dedup is against parts 1–3 AND earlier part4 files,
-so the 4 smoke cells appear only in 4a and fast-skip inside 4b/4c.
+4/179/207/60 exactly; 4e/4f are Anton's 2026-08-15 over-run extensions on
+top of the request — 4f deliberately supersedes its "no ceilings beyond
+the six" line). Dedup is against parts 1–3 AND earlier part4 files, so the
+4 smoke cells appear only in 4a and fast-skip inside 4b/4c. τ0.98/0.99
+need no code: `parse_decode` takes any float τ (verified).
 
 **No new models.** All five part4 models were campaign rows — everything
 should be cache-hit. `run.py --prewarm manifests/part4b-accel-cheap.jsonl`
@@ -84,17 +89,34 @@ protocol disclosure in the manuscript appendix, so it must not stay tacit.
 Run **4a**, then **4b** (both 1.7B — cheap, fills lanes while the big
 models stage), with **4c queued behind. If the night runs short, 4c is the
 one that matters** — it is the only phase whose figure cannot exist without
-it; 4b's retention upgrade has a disclosed-caveat fallback at 50B. **4d
-last**, riding spare lane capacity only (appendix panel; Anton's lean:
-never let it compete with 4c).
+it; 4b's retention upgrade has a disclosed-caveat fallback at 50B. Then
+**4d and 4f**, then **4e last** — 4e is the largest phase and is
+explicitly SPILLOVER-TOLERANT: idempotent requeue tomorrow is fine; do not
+let it displace anything earlier.
+
+### 4b. Why 4e/4f exist (Anton's over-run pass, ~03:00)
+
+The measured τ grid SATURATES at the fast end: 2B@50k HE has τ0.9 at 57.0
+forwards and τ0.95 at 64.9 vs s32's 114.9 — accuracy flat (9B likewise:
+47.9 / 54.2 / 93.7, τ0.9 actually highest at 64.63). τ0.98/0.99 extend the
+threshold curve toward the sequential anchor so the frontier's dominance
+claim spans the full cost range instead of clustering at ~half-cost. 4f
+gives every frontier panel its own one-at-a-time ceiling — and for LLaDA,
+`standard-static-s1024` IS the published decode (gen=steps=block=1024), so
+that cell doubles as a protocol-reproduction anchor.
 
 Sizing for your cost model (which landed within 3% on the campaign): a full
 11-decode sweep ≈ **5.5 s32-equivalents** per model-benchmark (fixed-step
 ladder (2+4+8+16+32)/32 ≈ 1.9×, six thresholds ≈ 3.5×; τ cells run FASTER
 than s32, ~half). So 4c ≈ 33 s32-equivalents across three 7–9B models on
-HE+GSM8K; 4b trivial; 4d ≈ 6 s32-equivalents of MBPP. Tile with
-`plan_tiles.py` as usual; same QOS discipline (20/40, ≤16 lanes, 8h walls);
-requeue freely — completed cells fast-skip.
+HE+GSM8K; 4b trivial; 4d ≈ 6 s32-equivalents of MBPP. **4e is the big
+one**: τ→1 approaches one-token-per-forward, so each tail cell costs
+roughly a full s32 run — ≈ 2 extra s32-grade passes over all 14 rows × 3
+benchmarks (~half of it in the seven heavyweight rows). **4f** ≈ 11
+HE-s32-equivalents per 7–9B cell (1024-step canvas, early-stop helps).
+Price both with your model; 4e spills to tomorrow without ceremony. Tile
+with `plan_tiles.py` as usual; same QOS discipline (20/40, ≤16 lanes, 8h
+walls); requeue freely — completed cells fast-skip.
 
 ## 5. Protocol locks (publication cells — non-negotiable)
 
@@ -120,10 +142,12 @@ requeue freely — completed cells fast-skip.
    phase.
 3. `python summarize.py --merge` prints the new stripe-groups all MERGED,
    zero INCOMPLETE, zero MIXED-PROTOCOL. Expected new groups: +50 gsm8k
-   (2 cheap models × 10 new decodes + 3 big × 10), +20 mbpp from 4b
-   (+30 more if 4d ran). HumanEval cells are unsharded (no groups).
-4. Cell-count check: 450 new files total across humaneval/ (50, incl. the
-   4 smoke), gsm8k/ (300), mbpp/ (100; 40 without 4d).
+   (2 cheap models × 10 new decodes + 3 big × 10) +28 more from the 4e
+   tail (14 rows × 2 taus); mbpp +20 from 4b, +30 from 4d, +28 from 4e.
+   HumanEval cells are unsharded (no groups).
+4. Cell-count check: **707** new files total across humaneval/ (83 = 50
+   sweep incl. smoke + 28 tail + 5 ceilings), gsm8k/ (468 = 300 + 168
+   tail), mbpp/ (156 = 100 + 56 tail). Phases 4a–4d alone: 450.
 5. A results doc in `_claude/` (your usual form): phases completed, store,
    the 4a table, any τ special handling, merge snapshot. Push.
 6. Tell Anton it's ready to pull. Workstation side then runs its usual
@@ -134,5 +158,20 @@ requeue freely — completed cells fast-skip.
    manuscript's `scripts/decode_retention.py` / `decode_frontier.py` read
    `grid_v1_vista` and take over from there.
 
-— the workstation Claude. Gate first, 4c is the night's payload, 4d only on
-spare capacity. Both §4 figures become real the moment 4c lands.
+## 7. Notes for the manuscript side (relay in your results doc)
+
+- **τ0.95 is in every sweep** (family rows already on disk; comparators
+  land tonight) — the figures should draw the full τ grid 0.5–0.95 PLUS
+  the 4e tail, and the fast-end saturation (§4b numbers) is a finding to
+  narrate, not a gap.
+- **HumanEval+ under acceleration needs NO cells, ever**: HE+ shares
+  HumanEval's prompts, decoding is greedy, and every cell stores raw
+  samples — the "do accelerated decodes survive stricter tests" aside is a
+  CPU-side regrade of saved generations.
+- Deliberately NOT run (unchanged): math500/mmlu/fence acceleration (mmlu
+  cannot generate; the frontier's benchmark trio is locked), the CoDA
+  native-g768 cell (needs a BENCH row; still parked), τ below 0.5 (fast
+  end already dense), non-32 block sizes (protocol-locked).
+
+— the workstation Claude. Gate first, 4c is the night's payload, 4d/4f
+next, 4e spills freely. Both §4 figures become real the moment 4c lands.

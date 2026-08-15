@@ -1,0 +1,5 @@
+{"model": "dqwen3-1.7b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s1024", "benchmark": "humaneval"}
+{"model": "coda-1.7b-base", "revision": null, "decode": "standard-static-s1024", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "standard-static-s1024", "benchmark": "humaneval"}
+{"model": "dream-7b-base", "revision": null, "decode": "standard-static-s1024", "benchmark": "humaneval"}
+{"model": "dream-coder-7b-base", "revision": null, "decode": "standard-static-s1024", "benchmark": "humaneval"}
