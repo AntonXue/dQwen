@@ -1,0 +1,6 @@
+{"model": "dqwen3.5-2b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s32", "benchmark": "humaneval"}
+{"model": "dqwen3.5-2b-base-v3", "revision": "step50000-swa", "decode": "standard-static-s128", "benchmark": "humaneval"}
+{"model": "dqwen3.5-2b-base-v3", "revision": "step50000-swa", "decode": "standard-tau0.9", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "standard-static-s32", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "standard-static-s128", "benchmark": "humaneval"}
+{"model": "llada-8b-base", "revision": null, "decode": "standard-tau0.9", "benchmark": "humaneval"}

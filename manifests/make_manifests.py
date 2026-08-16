@@ -56,7 +56,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # he 164 whole, mbpp 500/2=250, mbpp+ 378/2=189, gsm8k 1319/6~220,
 # math500 500/2=250)
 DLM_SHARDS = {"humaneval": 1, "humaneval-plus": 1, "mbpp": 2, "mbpp-plus": 2,
-              "mbpp-fence": 2, "mbpp-plus-fence": 2, "gsm8k": 6, "math500": 2}
+              "mbpp-fence": 2, "mbpp-plus-fence": 2, "gsm8k": 6,
+              "gsm8k-4shot": 6, "math500": 2}
 
 CODE_BENCHES = ["humaneval", "humaneval-plus", "mbpp", "mbpp-plus",
                 "mbpp-fence", "mbpp-plus-fence"]
@@ -221,20 +222,76 @@ def part4(taken):
     return out
 
 
+# ---- part5: the FULL-CANVAS protocol campaign (EVAL-REQUEST 20260815-211016
+# + Anton's compromise ruling 2026-08-16). Every comparator publishes
+# full-canvas base numbers (LLaDA steps=len=1024, no blocks; Dream's sampler
+# has no block concept) while our whole grid is block32 -- full-canvas is
+# expected to become the main-table protocol. The compromise: MATH500
+# carries the decode axes (consensus 4-shot, and our family ALIGNS there --
+# 9B leads all comparators at s32 where on gsm8k it trails all of them);
+# GSM8K gets 4-shot twins for the big tables ONLY, plus one full-canvas
+# headline config so the flipped table keeps its column. AR twin cells run
+# UNSHARDED per the standing batch-composition policy (the request's
+# "8 x 6 shards" was an error). Gates first: standard-static below s1024
+# has never run; standard-tau has never run at all.
+
+STANDARD_LADDER = ["standard-static-s%d" % s for s in (32, 64, 128, 256, 512, 1024)]
+STANDARD_TAUS = ["standard-tau%s" % t for t in ("0.5", "0.6", "0.7", "0.8", "0.9", "0.95")]
+LADDER_BENCHES = ["humaneval", "mbpp", "math500"]   # gsm8k deliberately absent
+GATE_ROWS = [("dqwen3.5-2b-base-v3", "step50000-swa"), ("llada-8b-base", None)]
+
+
+def part5(taken):
+    gates = [cell(m, r, d, "humaneval") for m, r in GATE_ROWS
+             for d in ("standard-static-s32", "standard-static-s128",
+                       "standard-tau0.9")]
+    ladder, gsm_fc, twins, backfill, tau = [], [], [], [], []
+    for model, rev in BIG_ROWS:
+        for decode in STANDARD_LADDER:
+            for b in LADDER_BENCHES:
+                ladder += sharded(model, rev, decode, b, DLM_SHARDS[b])
+        gsm_fc += sharded(model, rev, "standard-static-s1024", "gsm8k",
+                          DLM_SHARDS["gsm8k"])
+        for decode in ("block32-static-s32", "standard-static-s1024"):
+            twins += sharded(model, rev, decode, "gsm8k-4shot",
+                             DLM_SHARDS["gsm8k-4shot"])
+        for decode in ACCEL_DECODES:
+            if decode != "block32-static-s32":
+                backfill += sharded(model, rev, decode, "math500",
+                                    DLM_SHARDS["math500"])
+        for decode in STANDARD_TAUS:
+            for b in LADDER_BENCHES:
+                tau += sharded(model, rev, decode, b, DLM_SHARDS[b])
+    twins += [cell(m, None, "ar", "gsm8k-4shot") for m in AR_TWINS]
+    seen, out = set(taken), []
+    for name, cells in [("part5a-fullcanvas-gates", gates),
+                        ("part5b-fullcanvas-ladder", ladder),
+                        ("part5c-fullcanvas-gsm8k", gsm_fc),
+                        ("part5d-gsm8k4shot-tables", twins),
+                        ("part5e-math500-block-backfill", backfill),
+                        ("part5f-fullcanvas-tau", tau)]:
+        keep = [c for c in cells if tag(c) not in seen]
+        seen.update(tag(c) for c in keep)
+        out.append((name, keep))
+    return out
+
+
 def main():
     p1, p2 = part1(), part2()
     p3 = part3({tag(c) for c in p1 + p2})
     p4 = part4({tag(c) for c in p1 + p2 + p3})
-    all_cells = p1 + p2 + p3
+    p4_cells = [c for _, cells in p4 for c in cells]
+    p5 = part5({tag(c) for c in p1 + p2 + p3 + p4_cells})
+    all_cells = p1 + p2 + p3 + p4_cells
     for name, cells in ([("part1-ar-baselines", p1),
                          ("part2-big-table", p2),
-                         ("part3-acceleration", p3)] + p4):
+                         ("part3-acceleration", p3)] + p4 + p5):
         path = os.path.join(HERE, name + ".jsonl")
         with open(path, "w") as f:
             for c in cells:
                 f.write(json.dumps(c) + "\n")
         print(f"{name}.jsonl  {len(cells)} cells")
-    all_cells += [c for _, cells in p4 for c in cells]
+    all_cells += [c for _, cells in p5 for c in cells]
     repos = sorted({(c["model"], c["revision"]) for c in all_cells})
     print(f"{len(repos)} distinct model@revision to prewarm")
 
