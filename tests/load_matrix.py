@@ -62,10 +62,13 @@ def check(name: str, revision: str | None = None) -> tuple[bool, str]:
             problems.append(f"mask_id {m.mask_id} outside vocab {raw.shape[-1]}")
 
         # canonicalisation must match the family convention, exactly
-        if m.family == "dream":
+        if m.family in ("dream", "coda"):
+            # both AR-aligned families apply the same verbatim shift
+            # (coda port evidence 20260807-035500; latent gap found 2026-08-16
+            # -- this clause had never actually executed against coda)
             want = torch.cat([raw[:, :1], raw[:, :-1]], dim=1)
             if not torch.equal(can, want):
-                problems.append("Dream shift is not cat([l[:,:1], l[:,:-1]])")
+                problems.append(f"{m.family} shift is not cat([l[:,:1], l[:,:-1]])")
         elif not torch.equal(raw, can):
             problems.append(f"{m.family} canonicalize should be identity but is not")
 
