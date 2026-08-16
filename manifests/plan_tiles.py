@@ -26,7 +26,10 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-LANE_BUDGET_H = 3.2      # pack target inside the 4h wall (~20% margin)
+LANE_BUDGET_H = 3.2      # default; override per run: plan_tiles.py m.jsonl [budget_h]
+                         # (12h walls since 2026-08-16 -- 10h lanes pack
+                         # ~3x fewer jobs for the QOS running cap; keep
+                         # bigger margin for tau-bearing manifests)
 LANES_PER_JOB = 16
 
 DOCS = {"humaneval": 164, "humaneval-plus": 164, "mbpp": 250,
@@ -150,7 +153,9 @@ def pack(cells):
     return lanes
 
 
-def main(path):
+def main(path, budget_h=None):
+    global LANE_BUDGET_H
+    if budget_h: LANE_BUDGET_H = float(budget_h)
     cells = [json.loads(l) for l in open(path)]
     lanes = pack(cells)
     # Heaviest lanes first (Anton 2026-08-16): LPT scheduling -- job 0
@@ -178,4 +183,4 @@ def main(path):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(*sys.argv[1:3])
