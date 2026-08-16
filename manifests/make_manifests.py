@@ -229,11 +229,16 @@ def part4(taken):
 # expected to become the main-table protocol. The compromise: MATH500
 # carries the decode axes (consensus 4-shot, and our family ALIGNS there --
 # 9B leads all comparators at s32 where on gsm8k it trails all of them);
-# GSM8K gets 4-shot twins for the big tables ONLY, plus one full-canvas
-# headline config so the flipped table keeps its column. AR twin cells run
-# UNSHARDED per the standing batch-composition policy (the request's
-# "8 x 6 shards" was an error). Gates first: standard-static below s1024
-# has never run; standard-tau has never run at all.
+# GSM8K keeps one full-canvas headline config so the flipped table keeps
+# its column. Gates first: standard-static below s1024 has never run;
+# standard-tau has never run at all.
+#
+# RULING 2026-08-16 (Anton, reversal #2 on the 4-shot question): GSM8K
+# stays 8-SHOT, PERIOD -- the s1024 8-shot cells are "heavy and acceptable
+# anyways"; gsm8k-4shot is DROPPED ENTIRELY (part5d deleted, 176 cells).
+# The 08-14 cancellation stands reinforced; do not re-propose 4-shot.
+# BENCH["gsm8k-4shot"] remains in run.py as inert code (no manifest
+# references it).
 
 STANDARD_LADDER = ["standard-static-s%d" % s for s in (32, 64, 128, 256, 512, 1024)]
 STANDARD_TAUS = ["standard-tau%s" % t for t in ("0.5", "0.6", "0.7", "0.8", "0.9", "0.95")]
@@ -245,16 +250,13 @@ def part5(taken):
     gates = [cell(m, r, d, "humaneval") for m, r in GATE_ROWS
              for d in ("standard-static-s32", "standard-static-s128",
                        "standard-tau0.9")]
-    ladder, gsm_fc, twins, backfill, tau = [], [], [], [], []
+    ladder, gsm_fc, backfill, tau = [], [], [], []
     for model, rev in BIG_ROWS:
         for decode in STANDARD_LADDER:
             for b in LADDER_BENCHES:
                 ladder += sharded(model, rev, decode, b, DLM_SHARDS[b])
         gsm_fc += sharded(model, rev, "standard-static-s1024", "gsm8k",
                           DLM_SHARDS["gsm8k"])
-        for decode in ("block32-static-s32", "standard-static-s1024"):
-            twins += sharded(model, rev, decode, "gsm8k-4shot",
-                             DLM_SHARDS["gsm8k-4shot"])
         for decode in ACCEL_DECODES:
             if decode != "block32-static-s32":
                 backfill += sharded(model, rev, decode, "math500",
@@ -262,7 +264,6 @@ def part5(taken):
         for decode in STANDARD_TAUS:
             for b in LADDER_BENCHES:
                 tau += sharded(model, rev, decode, b, DLM_SHARDS[b])
-    twins += [cell(m, None, "ar", "gsm8k-4shot") for m in AR_TWINS]
     # part5g (manuscript amendment 2026-08-15 21:54 + the regrade-item
     # resolution): the flipped tables' MBPP-variant columns need REAL
     # generations at the headline (mbpp-plus = evalplus's EDITED prompts;
@@ -282,7 +283,6 @@ def part5(taken):
     for name, cells in [("part5a-fullcanvas-gates", gates),
                         ("part5b-fullcanvas-ladder", ladder),
                         ("part5c-fullcanvas-gsm8k", gsm_fc),
-                        ("part5d-gsm8k4shot-tables", twins),
                         ("part5e-math500-block-backfill", backfill),
                         ("part5g-headline-variants", variants),
                         ("part5f-fullcanvas-tau", tau)]:
