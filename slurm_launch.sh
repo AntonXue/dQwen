@@ -18,7 +18,7 @@
 #SBATCH -p gh
 #SBATCH -A ASC25023
 #SBATCH --ntasks-per-node=1
-#SBATCH -t 12:00:00
+#SBATCH -t 16:00:00
 #SBATCH --output=_slurm_out/%x_%j.out
 set -o pipefail   # -u only after rc files: they reference unset vars
                   # (smoke-caught; and no -e in payload -- one failed cell
