@@ -4,6 +4,17 @@
 > `~/foo/VistaCoder_Technical_Report`, not the author of this doc), at Anton's
 > instruction. **See §3b** — it adds 84 MBPP-variant cells and one unowned
 > regrade pass, both table-blocking. Everything else is untouched.
+>
+> ⚠ **AMENDED AGAIN ~22:00 by the doc's author** (the dQwen workstation
+> Claude), reviewing §3b: its correction is RIGHT and is now MANIFESTED as
+> `part5g-headline-variants.jsonl` — **98 cells**, the 84 it specified plus
+> 14 `humaneval-plus` s1024 cells that RESOLVE its "unowned regrade" item.
+> Resolution rationale in §3b's closing note: EvalPlus is removed and the
+> standing ruling is "new '+' numbers are grid cells", so the HE+ column
+> comes from cells that regenerate the identical greedy text through the
+> provenance-stamped path — no CPU side-channel, no new machinery, nothing
+> unowned. Totals below are updated (static 1,049; with τ 1,467); 5g joins
+> Wave 3.
 
 > 2026-08-15 ~21:45, workstation → cluster. Executes EVAL-REQUEST
 > `20260815-211016` **as amended by Anton's compromise ruling** (~21:30,
@@ -35,9 +46,10 @@ the flipped big table keeps its column.
 | `part5c-fullcanvas-gsm8k.jsonl` | 84 | 14 rows × `standard-static-s1024` × gsm8k (8-shot) |
 | `part5d-gsm8k4shot-tables.jsonl` | 176 | **NEW bench id `gsm8k-4shot`**: 14 rows × {block32-s32, standard-s1024} × 6 stripes + 8 AR cells **UNSHARDED** (the request's "8×6 shards" violated the AR batch-composition policy; corrected) |
 | `part5e-math500-block-backfill.jsonl` | 280 | 14 rows × the 10 non-s32 block decodes × math500 — the decode figures' math axis, block side |
+| `part5g-headline-variants.jsonl` | 98 | 14 rows × s1024 × {mbpp-plus, mbpp-fence, mbpp-plus-fence, humaneval-plus} — the §3b amendment, manifested (table-blocking) |
 | `part5f-fullcanvas-tau.jsonl` | 418 | `standard-tau{0.5..0.95}` × 14 rows × HE+MBPP+MATH500 — **GATED on 5a's τ cell** |
 
-Static total 951; with the τ half 1,369. Code changes you also get:
+Static total 1,049; with the τ half 1,467. Code changes you also get:
 `BENCH["gsm8k-4shot"]` (same task, `shots=4` — distinct id ⇒ distinct
 filenames/merge-groups, so the MIXED-PROTOCOL guard never trips; the
 4-exemplar rendering was verified byte-identical to stock-at-4 in the
@@ -88,7 +100,9 @@ Suggested waves under the qgh QOS (20 running / 40 submitted, 8h walls):
    partial results are usable early; s1024 completes the row.
 4. **Wave 3**: 5c + 5d's full-canvas half (the two gsm8k-s1024 blocks —
    together they rival 5b's heavy half; nothing draws from them until
-   the table flip, so they must not displace Wave 2).
+   the table flip, so they must not displace Wave 2) **+ 5g** (98 cells,
+   ~1.06M forwards/row for the mbpp trio + 0.17M for HE+ — table-blocking
+   like 5c/5d, so it belongs in this wave, ahead of τ).
 5. **Wave 4**: 5f if the τ gate passed. Spillover-tolerant like part4e
    was; cut it first if anything must give.
 
@@ -158,6 +172,16 @@ CPU-only and the mechanism is proven (`run.py:428` keeps response text; ten
 manifest or checklist item in part5 covers doing it. Two table columns
 (HumanEval+ across the flipped tables) depend on it existing.
 
+> **RESOLVED by the doc author, ~22:00** — as grid cells, not a regrade:
+> the cited mechanism was the frozen 2026-08-12 **EvalPlus** pass, and
+> EvalPlus is removed; the standing `_runs` ruling is "new '+' numbers are
+> grid cells". So `part5g` carries 14 `humaneval-plus` s1024 cells:
+> HE+ shares HumanEval's prompts and decoding is greedy, so these
+> regenerate the identical text and grade it through the standard
+> provenance-stamped path. Cost ≈ one extra HE-s1024 pass across the rows
+> (~0.17M forwards/row). Nothing is unowned; the SLURM Claude runs 5g
+> like any other manifest.
+
 ---
 
 ## 4. Protocol locks (unchanged; publication cells)
@@ -186,9 +210,10 @@ nothing moves, the two shot counts coexist by benchmark id.
    published 33.5 (the anchor); Dream s512 HE should NARROW the 43.90 vs
    57.9 gap, not close it (their published numbers also use temp-0.2
    top-p sampling and their own alg variants — ours stays greedy).
-6. **[added 2026-08-15 21:54 by the manuscript-side Claude, see §3b]** The 84
-   MBPP-variant cells, and confirmation that the HumanEval+ regrade pass has
-   been run over the full-canvas generations. Both are table-blocking.
+6. **[added 21:54 by the manuscript-side Claude; updated 22:00 by the doc
+   author]** `part5g` complete — the 84 MBPP-variant cells AND the 14
+   humaneval-plus cells (the regrade item, resolved as grid cells). All
+   table-blocking; report with Wave 3.
 
 — the workstation Claude. Gates, then waves; MATH500 is the axis, GSM8K
 is table-only, and no existing cell moves.

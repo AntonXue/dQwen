@@ -263,12 +263,28 @@ def part5(taken):
             for b in LADDER_BENCHES:
                 tau += sharded(model, rev, decode, b, DLM_SHARDS[b])
     twins += [cell(m, None, "ar", "gsm8k-4shot") for m in AR_TWINS]
+    # part5g (manuscript amendment 2026-08-15 21:54 + the regrade-item
+    # resolution): the flipped tables' MBPP-variant columns need REAL
+    # generations at the headline (mbpp-plus = evalplus's EDITED prompts;
+    # fences = a different template -- only HumanEval+ shares its base
+    # prompts). humaneval-plus rides along as grid cells rather than a CPU
+    # regrade: EvalPlus is removed and the standing ruling is "new '+'
+    # numbers are grid cells"; greedy + shared prompts regenerate identical
+    # text, so the cells ARE the regrade, with provenance. Headline decode
+    # only -- no figure wants a variant ladder.
+    variants = []
+    for model, rev in BIG_ROWS:
+        for b in ("mbpp-plus", "mbpp-fence", "mbpp-plus-fence",
+                  "humaneval-plus"):
+            variants += sharded(model, rev, "standard-static-s1024", b,
+                                DLM_SHARDS[b])
     seen, out = set(taken), []
     for name, cells in [("part5a-fullcanvas-gates", gates),
                         ("part5b-fullcanvas-ladder", ladder),
                         ("part5c-fullcanvas-gsm8k", gsm_fc),
                         ("part5d-gsm8k4shot-tables", twins),
                         ("part5e-math500-block-backfill", backfill),
+                        ("part5g-headline-variants", variants),
                         ("part5f-fullcanvas-tau", tau)]:
         keep = [c for c in cells if tag(c) not in seen]
         seen.update(tag(c) for c in keep)
