@@ -61,7 +61,9 @@ srun --ntasks-per-node=1 -n "$SLURM_NNODES" bash -c '
   LANE=$(python -c "import json; print(\" \".join(map(str, json.load(open(\"'"$TILES"'\"))[\"jobs\"]['"$JOB"'][$SLURM_PROCID])))")
   for i in $LANE; do
     echo "== lane $SLURM_PROCID cell $i ($(date +%H:%M:%S))"
-    python run.py "$MANIFEST" "$i" || echo "== cell $i FAILED (continuing)"
+    python run.py "$MANIFEST" "$i" \
+      || { echo "== cell $i failed once, retrying in 90s (scratch weather)"; sleep 90; \
+           python run.py "$MANIFEST" "$i" || echo "== cell $i FAILED (continuing)"; }
   done
   echo "== lane $SLURM_PROCID done ($(date +%H:%M:%S))"
 '
