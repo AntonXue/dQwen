@@ -230,12 +230,6 @@ BENCH = {
     # 4-shot -- the paper DISCLOSES the difference, _claude/20260814-121922
     # has the audit). meta.bench.shots is the record if this ever moves.
     "gsm8k":      dict(task="gsm8k_cot",    gen=1024, shots=8, shards=6, unsafe=False),
-    # gsm8k-4shot: the ADDITIVE 4-shot twin (Anton 2026-08-15/16 -- NOT the
-    # reversed replacement; both shot counts coexist). Distinct benchmark id
-    # = distinct filenames and merge groups, so the MIXED-PROTOCOL guard
-    # never trips. Same task; first 4 of the 8 CoT exemplars (verified
-    # byte-identical to stock-at-4 in the 20260814-123751 episode).
-    "gsm8k-4shot": dict(task="gsm8k_cot",   gen=1024, shots=4, shards=6, unsafe=False),
     "math500":    dict(task="minerva_math500", gen=1024, shots=4, shards=2, unsafe=False),
     "mmlu":       dict(task="mmlu",         gen=None, shots=5, shards=1, unsafe=False),
 }

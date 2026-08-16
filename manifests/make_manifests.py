@@ -57,7 +57,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # math500 500/2=250)
 DLM_SHARDS = {"humaneval": 1, "humaneval-plus": 1, "mbpp": 2, "mbpp-plus": 2,
               "mbpp-fence": 2, "mbpp-plus-fence": 2, "gsm8k": 6,
-              "gsm8k-4shot": 6, "math500": 2}
+              "math500": 2}
 
 CODE_BENCHES = ["humaneval", "humaneval-plus", "mbpp", "mbpp-plus",
                 "mbpp-fence", "mbpp-plus-fence"]
