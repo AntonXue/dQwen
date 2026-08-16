@@ -1,5 +1,10 @@
 # HANDOFF to the SLURM Claude: part5, the full-canvas campaign — scope, sequencing, tiling
 
+> ⚠ **AMENDED 2026-08-15 21:54 by the manuscript-side Claude** (the session in
+> `~/foo/VistaCoder_Technical_Report`, not the author of this doc), at Anton's
+> instruction. **See §3b** — it adds 84 MBPP-variant cells and one unowned
+> regrade pass, both table-blocking. Everything else is untouched.
+
 > 2026-08-15 ~21:45, workstation → cluster. Executes EVAL-REQUEST
 > `20260815-211016` **as amended by Anton's compromise ruling** (~21:30,
 > after digesting the cost): **MATH500 carries the decode axes; GSM8K's
@@ -90,6 +95,71 @@ Suggested waves under the qgh QOS (20 running / 40 submitted, 8h walls):
 Requeue freely throughout — deterministic names + the summary sentinel
 make every completed cell a fast-skip.
 
+## 3b. AMENDMENT — the MBPP variant family under full canvas
+
+> ⚠ **Edited into this doc by a DIFFERENT Claude**: the manuscript-side
+> session working in `~/foo/VistaCoder_Technical_Report`, on **2026-08-15
+> ~21:54**, at Anton's instruction after a paper-side validation pass of
+> part5. Nothing above this section was changed. If this contradicts your own
+> plan, the manuscript side is the one that needs the numbers — but say so
+> rather than silently reconciling.
+>
+> Anton's rulings from that pass, for context: the deduped HumanEval s1024
+> skips are **fine** (no archive-and-rerun needed); the MATH500 metric
+> instability is a **known accepted risk**; the retention claim will be
+> **recomputed** against full-canvas rather than carried over; and he wants
+> **fence and non-fence MBPP and MBPP+ in standard decode too**, which is
+> what this section specifies.
+
+### The correction that makes this necessary
+
+The manuscript side assumed the `+` columns came free by CPU regrade under
+full canvas. **That is only true for HumanEval+.** Checked against
+`benchmark_specs.py`:
+
+| bench | task | shares stock prompt? | regradeable? |
+|---|---|---|---|
+| `humaneval-plus` | `humaneval_plus_sound` | **yes** — "same 164 problems and prompts as humaneval" | ✅ free regrade |
+| `mbpp-plus` | `mbpp_plus_full` | **no** — `evalplus/mbppplus`, 378 problems, *edited prompts* | ❌ needs generations |
+| `mbpp-fence` | `mbpp_ticks` | **no** — fence template replaces `[BEGIN]`/`[DONE]` | ❌ needs generations |
+| `mbpp-plus-fence` | `mbpp_plus_ticks` | **no** — both of the above | ❌ needs generations |
+
+So **`mbpp-plus` is not optional**: MBPP+ is a column in the main table, the
+size-class table and the appendix grid. Without it those tables cannot flip to
+full-canvas at all, which is the entire point of part5.
+
+### What to add — 84 cells at the headline
+
+At **`standard-static-s1024` only** (the flipped tables' headline), 14 rows,
+existing shard counts (`mbpp*` = 2):
+
+```
+mbpp-plus         14 x 1 x 2 =  28   REQUIRED — main-table column
+mbpp-fence        14 x 1 x 2 =  28   Anton: fence wanted in standard mode
+mbpp-plus-fence   14 x 1 x 2 =  28   Anton: fence wanted in standard mode
+                                ---
+                                 84
+```
+
+Cost is ~500 docs × 1024 forwards per shard-pair per row, i.e. comparable to
+one 5b MATH500 row per benchmark. Small next to 5b.
+
+**Deliberately NOT the full ladder.** Extending these three across
+`s{32..512}` too would be +420 cells and **no current figure needs it** — the
+decode figures use HumanEval, MBPP and MATH500 only, and fence is an appendix
+format-sensitivity aside that needs the headline alone. If someone later wants
+fence decode curves, that is a separate ask.
+
+### Also required, and currently unowned
+
+**Run the HumanEval+ regrade** over 5b's saved full-canvas generations. It is
+CPU-only and the mechanism is proven (`run.py:428` keeps response text; ten
+`regrade` cells already exist in the store from the 2026-08-12 pass), but no
+manifest or checklist item in part5 covers doing it. Two table columns
+(HumanEval+ across the flipped tables) depend on it existing.
+
+---
+
 ## 4. Protocol locks (unchanged; publication cells)
 
 GATE path only (sdpa=math, canvas 1024, bs=1, greedy); same store
@@ -116,6 +186,9 @@ nothing moves, the two shot counts coexist by benchmark id.
    published 33.5 (the anchor); Dream s512 HE should NARROW the 43.90 vs
    57.9 gap, not close it (their published numbers also use temp-0.2
    top-p sampling and their own alg variants — ours stays greedy).
+6. **[added 2026-08-15 21:54 by the manuscript-side Claude, see §3b]** The 84
+   MBPP-variant cells, and confirmation that the HumanEval+ regrade pass has
+   been run over the full-canvas generations. Both are table-blocking.
 
 — the workstation Claude. Gates, then waves; MATH500 is the axis, GSM8K
 is table-only, and no existing cell moves.
