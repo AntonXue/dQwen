@@ -117,6 +117,10 @@ def est_seconds(c):
         if decode.startswith("standard-static"):
             steps = float(decode.rsplit("-s", 1)[1])
             return load + docs * sec_doc_s32 * (steps / fwd_s32)
+        if decode.startswith("standard-tau"):
+            # measured at the 5a gate: standard-tau0.9 forwards = 317 (2B)
+            # / 130 (llada) of the 1024 canvas; 360 is conservative for both
+            return load + docs * sec_doc_s32 * (360 / fwd_s32)
         if "tau" in decode:
             return load + docs * sec_doc_s32 * 0.6
         steps = int(decode.rsplit("-s", 1)[1])
