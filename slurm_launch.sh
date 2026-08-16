@@ -61,6 +61,14 @@ srun --ntasks-per-node=1 -n "$SLURM_NNODES" bash -c '
   LANE=$(python -c "import json; print(\" \".join(map(str, json.load(open(\"'"$TILES"'\"))[\"jobs\"]['"$JOB"'][$SLURM_PROCID])))")
   for i in $LANE; do
     echo "== lane $SLURM_PROCID cell $i ($(date +%H:%M:%S))"
+    # STORM-WAIT: scratch flaps kill cells in their import window and can
+    # outlast a single retry (measured: the 08-16 05:56 outage burned 700+
+    # cells through pre-hardened lanes; a later flap beat retry-once).
+    # Probe the exact failure surface (site-packages + the stdlib module
+    # that broke) and STALL until healthy -- walls absorb the wait.
+    until timeout 30 python -c "import numpy, multiprocessing.popen_fork" >/dev/null 2>&1; do
+      echo "== scratch storm: stalling 180s ($(date +%H:%M:%S))"; sleep 180
+    done
     python run.py "$MANIFEST" "$i" \
       || { echo "== cell $i failed once, retrying in 90s (scratch weather)"; sleep 90; \
            python run.py "$MANIFEST" "$i" || echo "== cell $i FAILED (continuing)"; }
