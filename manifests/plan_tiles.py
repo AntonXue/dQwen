@@ -153,6 +153,10 @@ def pack(cells):
 def main(path):
     cells = [json.loads(l) for l in open(path)]
     lanes = pack(cells)
+    # Heaviest lanes first (Anton 2026-08-16): LPT scheduling -- job 0
+    # carries the heaviest lanes so big-model/high-step work starts
+    # earliest and cheap tails backfill at the end, minimizing makespan.
+    lanes = sorted(lanes, key=lambda t: -t[1])
     jobs = [lanes[j:j + LANES_PER_JOB]
             for j in range(0, len(lanes), LANES_PER_JOB)]
     out = path.replace(".jsonl", ".tiles.json")
