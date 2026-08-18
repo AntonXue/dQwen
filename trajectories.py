@@ -99,7 +99,8 @@ def _graded_prefix(text: str) -> str:
 
 
 def run_model(name: str, out_dir: Path, no_stop: bool = False,
-              gen: int = DEFAULT_GEN, problems=None) -> None:
+              gen: int = DEFAULT_GEN, problems=None,
+              schemes_subset=None) -> None:
     import models
     from models.samplers import DecodeConfig, generate
 
@@ -110,7 +111,22 @@ def run_model(name: str, out_dir: Path, no_stop: bool = False,
     all_schemes = schemes_for(gen)
     schemes = ({k: v for k, v in all_schemes.items() if k.startswith("block16")}
                if no_stop else all_schemes)
-    path = out_dir / f"trajectories_{name}{'_nostop' if no_stop else ''}.jsonl"
+    # --schemes subset (C.8 24-way parallelism, 2026-08-18): each subset
+    # writes its OWN shard file so per-scheme jobs never share a writer;
+    # shards concatenate into the canonical file at hand-back. Default
+    # (None) keeps the original single-file behavior byte-identical.
+    if schemes_subset is not None:
+        unknown = set(schemes_subset) - set(all_schemes)
+        if unknown:
+            raise SystemExit(f"unknown scheme(s): {sorted(unknown)}")
+        schemes = {k: v for k, v in schemes.items() if k in schemes_subset}
+        if not schemes:
+            print(f"[{name}] no applicable schemes for this variant; no-op")
+            return
+    shard = ("" if schemes_subset is None
+             else "__" + "+".join(sorted(schemes_subset)))
+    path = out_dir / (f"trajectories_{name}"
+                      f"{'_nostop' if no_stop else ''}{shard}.jsonl")
     done = set()
     if path.exists():
         done = {(r["scheme"], r["task_id"])
@@ -221,6 +237,9 @@ def main():
                     help="canvas length (schemes scale with it)")
     ap.add_argument("--problems", default="pool",
                     help="'pool' (the 6), 'all' (HE-164), or comma doc ids")
+    ap.add_argument("--schemes", default=None,
+                    help="comma subset of scheme names (parallel lanes write "
+                         "per-subset shard files); default = all, one file")
     ap.add_argument("--out", type=Path, default=OUT)
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
@@ -231,7 +250,8 @@ def main():
         render(a.out, no_stop=a.no_early_stop, gen=a.gen, problems=probs)
     elif a.model:
         run_model(a.model, a.out, no_stop=a.no_early_stop, gen=a.gen,
-                  problems=probs)
+                  problems=probs,
+                  schemes_subset=(a.schemes.split(",") if a.schemes else None))
     else:
         ap.error("need --model or --render")
 
