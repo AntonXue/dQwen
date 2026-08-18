@@ -79,12 +79,28 @@ def check_invariants(scheme: str, out) -> None:
         assert out.n_forward <= cap, f"{scheme}: forwards exceed static cap"
 
 
-def run_model(name: str, out_dir: Path) -> None:
+def _graded_prefix(text: str) -> str:
+    """What gets graded: text cut at the earliest protocol stop (post-hoc;
+    identical to early-stop truncation, since later blocks never alter
+    earlier commitments), then at the first markdown fence -- at the 128
+    canvas, models close correct solutions with fences + prose that the
+    1024-tuned stop set never sees. Full text is always stored."""
+    hits = [text.find(s) for s in STOPS if s and text.find(s) >= 0]
+    if hits:
+        text = text[:min(hits)]
+    return text.split("\n```")[0].split("```")[0]
+
+
+def run_model(name: str, out_dir: Path, no_stop: bool = False) -> None:
     import models
     from models.samplers import DecodeConfig, generate
 
     ds = datasets.load_dataset(HUMANEVAL["dataset_path"], split="test")
-    path = out_dir / f"trajectories_{name}.jsonl"
+    # no_stop: block-mode only -- standard mode has no early exit, so its
+    # trajectories are identical with or without stop strings.
+    schemes = ({k: v for k, v in SCHEMES.items() if k.startswith("block16")}
+               if no_stop else SCHEMES)
+    path = out_dir / f"trajectories_{name}{'_nostop' if no_stop else ''}.jsonl"
     done = set()
     if path.exists():
         done = {(r["scheme"], r["task_id"])
@@ -94,20 +110,15 @@ def run_model(name: str, out_dir: Path) -> None:
         for doc_id in POOL:                       # problem-major (Anton)
             doc = ds[doc_id]
             prompt_ids = m.encode(doc["prompt"])
-            for scheme, kw in SCHEMES.items():
+            for scheme, kw in schemes.items():
                 if (scheme, doc["task_id"]) in done:
                     continue
                 t0 = time.time()
                 cfg = DecodeConfig(gen_length=GEN, temperature=0.0, **kw)
-                out = generate(m, prompt_ids, cfg, stop_strings=STOPS)
+                out = generate(m, prompt_ids, cfg,
+                               stop_strings=None if no_stop else STOPS)
                 check_invariants(scheme, out)
-                # Grading-time sanitization ONLY (trajectories untouched):
-                # at the 128 canvas, models close the solution with a
-                # markdown fence + prose that the protocol's stop set
-                # (tuned on the 1024 canvas) never sees; a fence is never
-                # part of a valid completion, so grade up to it. The full
-                # text is stored regardless.
-                cut = out.text.split("\n```")[0].split("```")[0]
+                cut = _graded_prefix(out.text)
                 ref = doc["test"] + f"\ncheck({doc['entry_point']})"
                 passed = bool(pass_at_k([ref], [[doc["prompt"] + cut]],
                                         k=[1])["pass@1"])
@@ -116,7 +127,9 @@ def run_model(name: str, out_dir: Path) -> None:
                     task_id=doc["task_id"], gen_length=GEN,
                     commit_step=out.commit_step.tolist(),
                     forwards=out.n_forward, passed=passed,
+                    early_stop=not no_stop,
                     fence_cut=(cut != out.text),
+                    graded_prefix_chars=len(cut),
                     generation=out.text,
                     raw_generation=m.decode(out.gen_ids),
                     decode_config=kw,
@@ -127,8 +140,10 @@ def run_model(name: str, out_dir: Path) -> None:
                       f"({time.time() - t0:.1f}s)", flush=True)
 
 
-def render(out_dir: Path) -> None:
+def render(out_dir: Path, no_stop: bool = False) -> None:
     """Screening pages: one PNG per problem, rows=models, cols=schemes.
+    no_stop pages union the *_nostop block records with the ORIGINAL
+    standard records (whose trajectories are no-stop-identical).
     The PAPER figure is rendered manuscript-side; these are for eyeballs."""
     import matplotlib
     matplotlib.use("Agg")
@@ -136,7 +151,13 @@ def render(out_dir: Path) -> None:
 
     recs = [json.loads(line) for p in out_dir.glob("trajectories_*.jsonl")
             for line in open(p)]
-    by = {(r["model"], r["scheme"], r["task_id"]): r for r in recs}
+    by = {}
+    for r in recs:
+        es = r.get("early_stop", True)
+        want = ((not es) if (no_stop and r["scheme"].startswith("block16"))
+                else es)
+        if want:
+            by[(r["model"], r["scheme"], r["task_id"])] = r
     ds = datasets.load_dataset(HUMANEVAL["dataset_path"], split="test")
     for doc_id in POOL:
         tid = ds[doc_id]["task_id"]
@@ -168,9 +189,11 @@ def render(out_dir: Path) -> None:
                     ax.set_title(scheme, fontsize=8)
                 if j == 0:
                     ax.set_ylabel(model.replace("-base", ""), fontsize=8)
-        fig.suptitle(f"{tid} -- commit step (x) vs position (y)", fontsize=10)
+        fig.suptitle(f"{tid} -- commit step (x) vs position (y)"
+                     + (" [no early stop]" if no_stop else ""), fontsize=10)
         fig.tight_layout()
-        png = out_dir / f"screen_{tid.replace('/', '_')}.png"
+        png = out_dir / (f"screen_{tid.replace('/', '_')}"
+                         + ("_nostop" if no_stop else "") + ".png")
         fig.savefig(png, dpi=150)
         plt.close(fig)
         print(f"wrote {png}", flush=True)
@@ -180,13 +203,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", choices=sorted(MODELS))
     ap.add_argument("--render", action="store_true")
+    ap.add_argument("--no-early-stop", action="store_true",
+                    help="block-mode cells decode the whole canvas")
     ap.add_argument("--out", type=Path, default=OUT)
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
     if a.render:
-        render(a.out)
+        render(a.out, no_stop=a.no_early_stop)
     elif a.model:
-        run_model(a.model, a.out)
+        run_model(a.model, a.out, no_stop=a.no_early_stop)
     else:
         ap.error("need --model or --render")
 

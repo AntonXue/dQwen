@@ -72,3 +72,22 @@ two per page); the manuscript agent renders `figures/decode-behaviour.tex`
 from the JSONL in the style kit; C.7 body cites: canvas 128 + block 16
 (legibility; measured protocol is 1024/block-32 — mechanism identical),
 grading fence-cut, panels illustrative.
+
+---
+
+## ADDENDUM (~22:15, Anton's ask): the no-early-stop variant
+
+Anton: regenerate the block-mode cells WITHOUT early stopping, so the
+panels show full-canvas denoising. Done — 72 new records
+(`trajectories_<model>_nostop.jsonl`, `early_stop: false`) + a second
+page set (`screen_*_nostop.png`) that unions them with the original
+standard records (standard mode has no early exit, so its trajectories
+are identical either way — not re-run). Grading unchanged in substance:
+the graded prefix is cut at the earliest protocol stop POST-HOC (provably
+identical text, since later blocks never alter earlier commitments), then
+the fence; pass verdicts agree with the early-stop set (59/72 vs the
+corresponding cells). Driver flag: `--no-early-stop` (runs block schemes
+only; render mode picks the union). New texture now visible: block-τ
+commits the post-answer region in large vertical bursts — full-canvas τ
+spends 29–82 forwards where static-s16 spends 128. Both variants stay on
+disk; the renderer chooses per column.
