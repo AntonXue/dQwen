@@ -33,7 +33,8 @@ from benchmark_specs import HUMANEVAL, pass_at_k
 
 OUT = Path(__file__).parent / "_runs" / "20260817-202121-c7-decode-trajectories"
 
-GEN = 128                      # demo canvas (93.3% of canonical solutions fit)
+DEFAULT_GEN = 128              # the C.8 demo canvas; the HE-164 statistic
+                               # campaign runs --gen 256 (boss ask, 2026-08-18)
 TAU = 0.9                      # the paper's featured threshold
 POOL = [0, 3, 8, 31, 50, 56]   # the ENTIRE all-pass pool; no discretionary pick
 STOPS = HUMANEVAL["generation_kwargs"]["until"]
@@ -44,39 +45,45 @@ MODELS = {                     # row order of the figure
     "dream-coder-7b-base": None,
     "dqwen3.5-9b-base-v3": "step50000-swa",
 }
-SCHEMES = {                    # column order: block trio, then standard trio
-    "block16-static-s16":   dict(block_length=16, steps_per_block=16),
-    "block16-static-s8":    dict(block_length=16, steps_per_block=8),
-    "block16-tau0.9":       dict(block_length=16, steps_per_block=16,
-                                 commit="dynamic", confidence_threshold=TAU),
-    "standard-static-s128": dict(block_length=GEN, steps_per_block=GEN),
-    "standard-static-s64":  dict(block_length=GEN, steps_per_block=64),
-    "standard-tau0.9":      dict(block_length=GEN, steps_per_block=GEN,
-                                 commit="dynamic", confidence_threshold=TAU),
-}
 
 
-def check_invariants(scheme: str, out) -> None:
+def schemes_for(gen: int) -> dict:
+    """The 2x3 factorial at a given canvas: block trio, then standard trio.
+    The standard statics scale with the canvas (1 and 2 tokens/forward);
+    the block trio is canvas-independent (gen/16 staircase treads)."""
+    return {
+        "block16-static-s16": dict(block_length=16, steps_per_block=16),
+        "block16-static-s8":  dict(block_length=16, steps_per_block=8),
+        "block16-tau0.9":     dict(block_length=16, steps_per_block=16,
+                                   commit="dynamic", confidence_threshold=TAU),
+        f"standard-static-s{gen}": dict(block_length=gen, steps_per_block=gen),
+        f"standard-static-s{gen // 2}": dict(block_length=gen,
+                                             steps_per_block=gen // 2),
+        "standard-tau0.9":    dict(block_length=gen, steps_per_block=gen,
+                                   commit="dynamic", confidence_threshold=TAU),
+    }
+
+
+def check_invariants(scheme: str, out, gen: int) -> None:
     """The design doc's correctness gates -- fail loudly, per generation."""
     cs = out.commit_step.tolist()
     stamped = [s for s in cs if s >= 0]
     # every executed forward commits >= 1 position (the progress floor)
     assert set(stamped) == set(range(out.n_forward)), \
         f"{scheme}: stamped steps != executed forwards"
-    if scheme == "standard-static-s128":
-        assert sorted(cs) == list(range(GEN)), f"{scheme}: not a permutation"
-    if scheme == "standard-static-s64":
+    if scheme == f"standard-static-s{gen}":
+        assert sorted(cs) == list(range(gen)), f"{scheme}: not a permutation"
+    if scheme == f"standard-static-s{gen // 2}":
         assert all(stamped.count(t) == 2 for t in range(out.n_forward)), \
             f"{scheme}: expected exactly 2 commits per forward"
     if scheme.startswith("block16"):
         per_block = [[s for s in cs[b * 16:(b + 1) * 16] if s >= 0]
-                     for b in range(GEN // 16)]
+                     for b in range(gen // 16)]
         done = [b for b in per_block if b]
         assert all(max(a) < min(b) for a, b in zip(done, done[1:])), \
             f"{scheme}: staircase violated (blocks not step-monotone)"
     if "tau" in scheme:
-        cap = {"block16-tau0.9": 128, "standard-tau0.9": 128}[scheme]
-        assert out.n_forward <= cap, f"{scheme}: forwards exceed static cap"
+        assert out.n_forward <= gen, f"{scheme}: forwards exceed static cap"
 
 
 def _graded_prefix(text: str) -> str:
@@ -91,15 +98,18 @@ def _graded_prefix(text: str) -> str:
     return text.split("\n```")[0].split("```")[0]
 
 
-def run_model(name: str, out_dir: Path, no_stop: bool = False) -> None:
+def run_model(name: str, out_dir: Path, no_stop: bool = False,
+              gen: int = DEFAULT_GEN, problems=None) -> None:
     import models
     from models.samplers import DecodeConfig, generate
 
     ds = datasets.load_dataset(HUMANEVAL["dataset_path"], split="test")
+    problems = POOL if problems is None else problems
     # no_stop: block-mode only -- standard mode has no early exit, so its
     # trajectories are identical with or without stop strings.
-    schemes = ({k: v for k, v in SCHEMES.items() if k.startswith("block16")}
-               if no_stop else SCHEMES)
+    all_schemes = schemes_for(gen)
+    schemes = ({k: v for k, v in all_schemes.items() if k.startswith("block16")}
+               if no_stop else all_schemes)
     path = out_dir / f"trajectories_{name}{'_nostop' if no_stop else ''}.jsonl"
     done = set()
     if path.exists():
@@ -107,24 +117,24 @@ def run_model(name: str, out_dir: Path, no_stop: bool = False) -> None:
                 for r in map(json.loads, open(path))}
     m = models.load(name, revision=MODELS[name])
     with open(path, "a") as f:
-        for doc_id in POOL:                       # problem-major (Anton)
+        for doc_id in problems:                   # problem-major (Anton)
             doc = ds[doc_id]
             prompt_ids = m.encode(doc["prompt"])
             for scheme, kw in schemes.items():
                 if (scheme, doc["task_id"]) in done:
                     continue
                 t0 = time.time()
-                cfg = DecodeConfig(gen_length=GEN, temperature=0.0, **kw)
+                cfg = DecodeConfig(gen_length=gen, temperature=0.0, **kw)
                 out = generate(m, prompt_ids, cfg,
                                stop_strings=None if no_stop else STOPS)
-                check_invariants(scheme, out)
+                check_invariants(scheme, out, gen)
                 cut = _graded_prefix(out.text)
                 ref = doc["test"] + f"\ncheck({doc['entry_point']})"
                 passed = bool(pass_at_k([ref], [[doc["prompt"] + cut]],
                                         k=[1])["pass@1"])
                 f.write(json.dumps(dict(
                     model=name, revision=MODELS[name], scheme=scheme,
-                    task_id=doc["task_id"], gen_length=GEN,
+                    task_id=doc["task_id"], gen_length=gen,
                     commit_step=out.commit_step.tolist(),
                     forwards=out.n_forward, passed=passed,
                     early_stop=not no_stop,
@@ -140,7 +150,8 @@ def run_model(name: str, out_dir: Path, no_stop: bool = False) -> None:
                       f"({time.time() - t0:.1f}s)", flush=True)
 
 
-def render(out_dir: Path, no_stop: bool = False) -> None:
+def render(out_dir: Path, no_stop: bool = False,
+           gen: int = DEFAULT_GEN, problems=None) -> None:
     """Screening pages: one PNG per problem, rows=models, cols=schemes.
     no_stop pages union the *_nostop block records with the ORIGINAL
     standard records (whose trajectories are no-stop-identical).
@@ -159,12 +170,13 @@ def render(out_dir: Path, no_stop: bool = False) -> None:
         if want:
             by[(r["model"], r["scheme"], r["task_id"])] = r
     ds = datasets.load_dataset(HUMANEVAL["dataset_path"], split="test")
-    for doc_id in POOL:
+    for doc_id in (problems if problems is not None else POOL):
         tid = ds[doc_id]["task_id"]
-        fig, axes = plt.subplots(len(MODELS), len(SCHEMES),
+        schemes = list(schemes_for(gen))
+        fig, axes = plt.subplots(len(MODELS), len(schemes),
                                  figsize=(15, 10), squeeze=False)
         for i, model in enumerate(MODELS):
-            for j, scheme in enumerate(SCHEMES):
+            for j, scheme in enumerate(schemes):
                 ax = axes[i][j]
                 r = by.get((model, scheme, tid))
                 if r is None:
@@ -173,12 +185,12 @@ def render(out_dir: Path, no_stop: bool = False) -> None:
                 cs = r["commit_step"]
                 xs = [s for s in cs if s >= 0]
                 ys = [p for p, s in enumerate(cs) if s >= 0]
-                ax.plot([0, GEN], [0, GEN], color="0.85", lw=1, zorder=0)
+                ax.plot([0, gen], [0, gen], color="0.85", lw=1, zorder=0)
                 if scheme.startswith("block16"):
-                    for y in range(16, GEN, 16):
+                    for y in range(16, gen, 16):
                         ax.axhline(y, color="0.92", lw=0.5, zorder=0)
                 ax.scatter(xs, ys, s=4, color="#1b7a72", zorder=2)
-                ax.set_xlim(0, GEN); ax.set_ylim(0, GEN)
+                ax.set_xlim(0, gen); ax.set_ylim(0, gen)
                 ax.set_xticks([]); ax.set_yticks([])
                 ax.annotate(f"{r['forwards']} fwd"
                             + ("" if r["passed"] else "  ✗"),
@@ -205,13 +217,21 @@ def main():
     ap.add_argument("--render", action="store_true")
     ap.add_argument("--no-early-stop", action="store_true",
                     help="block-mode cells decode the whole canvas")
+    ap.add_argument("--gen", type=int, default=DEFAULT_GEN,
+                    help="canvas length (schemes scale with it)")
+    ap.add_argument("--problems", default="pool",
+                    help="'pool' (the 6), 'all' (HE-164), or comma doc ids")
     ap.add_argument("--out", type=Path, default=OUT)
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
+    probs = (POOL if a.problems == "pool" else
+             list(range(164)) if a.problems == "all" else
+             [int(x) for x in a.problems.split(",")])
     if a.render:
-        render(a.out, no_stop=a.no_early_stop)
+        render(a.out, no_stop=a.no_early_stop, gen=a.gen, problems=probs)
     elif a.model:
-        run_model(a.model, a.out, no_stop=a.no_early_stop)
+        run_model(a.model, a.out, no_stop=a.no_early_stop, gen=a.gen,
+                  problems=probs)
     else:
         ap.error("need --model or --render")
 
