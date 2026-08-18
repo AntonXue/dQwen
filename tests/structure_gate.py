@@ -42,7 +42,8 @@ def repo_imports(path):
 def main():
     fails = 0
     files = sorted(ROOT.glob("models/*.py")) + [
-        ROOT / "benchmark_specs.py", ROOT / "run.py", ROOT / "summarize.py"]
+        ROOT / "benchmark_specs.py", ROOT / "run.py", ROOT / "summarize.py",
+        ROOT / "trajectories.py"]
     for path in files:
         rel = str(path.relative_to(ROOT))
         in_package = path.parent.name == "models"

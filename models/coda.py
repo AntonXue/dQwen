@@ -117,11 +117,12 @@ def apply_shims(cfg, klass) -> list[str]:
 
     # (3) CoDA is UNTIED -- its checkpoint ships a real `lm_head.weight` (311 tensors)
     #     -- but its config.json OMITS `tie_word_embeddings`, and tf5's PreTrainedConfig
-    #     defaults that to True. Under 4.x this was harmless because tying happens in
-    #     `post_init()` and CoDALanguageModel.__init__ NEVER CALLS post_init (it ends at
-    #     `self.apply(self._init_weights)`); only the inner CoDAModel does. Under tf5 the
-    #     loader consults tie state directly, so an unrestored default would overwrite the
-    #     trained head with the embedding matrix -- silent, and catastrophic for logits.
+    #     defaults that to True. ⚠ Do NOT assume any transformers pin makes this shim
+    #     removable: the manuscript side MEASURED the tie firing on 4.57.1 too (an
+    #     earlier note here claimed 4.x was safe because CoDALanguageModel never calls
+    #     post_init -- refuted 2026-08-17; the loader path ties regardless). An
+    #     unrestored default overwrites the trained head with the embedding matrix --
+    #     silent, and catastrophic for logits (measured: 31 nats, 0% top-1).
     #     Asserted after load in adapter.build(): lm_head must NOT share storage with
     #     embed_tokens and must match the checkpoint.
     if getattr(cfg, "tie_word_embeddings", None):

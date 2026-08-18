@@ -76,6 +76,10 @@ class GenOutput:
     gen_ids: torch.Tensor
     text: str
     n_forward: int = 0
+    # commit_step[i] = forward index (0-based) at which gen position i was
+    # committed; -1 = never (canvas after an early stop). Cheap to record,
+    # and the C.7 trajectory exhibit is drawn entirely from it.
+    commit_step: "torch.Tensor | None" = None
 
 
 NEG_INF = float("-inf")
@@ -179,6 +183,7 @@ def generate(adapter, prompt_ids: torch.Tensor,
     canvas[:, :p_len] = prompt_ids
     n_forward = 0
     stop_text = None       # set when a stop string is hit
+    commit_step = torch.full((cfg.gen_length,), -1, dtype=torch.long)
 
     for b in range(cfg.num_blocks):
         lo = p_len + b * cfg.block_length
@@ -214,6 +219,8 @@ def generate(adapter, prompt_ids: torch.Tensor,
             blk = canvas[0, lo:hi]
             blk[take] = x0[take]
             canvas[0, lo:hi] = blk
+            commit_step[b * cfg.block_length
+                        + take.nonzero(as_tuple=True)[0].cpu()] = n_forward - 1
 
         # early stop: after a block completes, blocks 0..b are a contiguous
         # revealed prefix, so checking it for a stop string is sound -- and it
@@ -227,7 +234,8 @@ def generate(adapter, prompt_ids: torch.Tensor,
 
     gen_ids = canvas[0, p_len:]
     text = adapter.decode(gen_ids) if stop_text is None else stop_text
-    return GenOutput(gen_ids=gen_ids, text=text, n_forward=n_forward)
+    return GenOutput(gen_ids=gen_ids, text=text, n_forward=n_forward,
+                     commit_step=commit_step)
 
 
 # MC-NELBO log-likelihood. A masked DLM has no AR chain-rule likelihood, so
