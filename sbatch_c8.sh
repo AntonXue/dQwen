@@ -1,16 +1,19 @@
 #!/bin/bash
-# C.8 trajectory campaign: SIX jobs, one per decode scheme, 4 nodes each
-# (rank = model). 2h walls -- worst rank ~90 min (block16-s16 llada, both
-# stop variants); per-shard resume makes any clip a free requeue.
+# C.8 EXTENSION (boss ask 2026-08-20): five more model rows, same shape
+# that drained the first campaign -- six jobs, one per decode scheme,
+# rank = model. 2h walls: the first campaign's worst rank (9B, block16-s16,
+# both stop variants) measured 1:49; the 4B is now the heaviest lane at
+# roughly half that per-forward cost. Per-shard resume makes any clip a
+# free requeue.
 #
 #   for s in block16-static-s16 block16-static-s8 block16-tau0.9 \
 #            standard-static-s256 standard-static-s128 standard-tau0.9; do
 #     sbatch sbatch_c8.sh $s
 #   done
-#SBATCH -J c8-traj
+#SBATCH -J c8-ext
 #SBATCH -p gh
 #SBATCH -A ASC25023
-#SBATCH -N 4
+#SBATCH -N 5
 #SBATCH --ntasks-per-node=1
 #SBATCH -t 02:00:00
 #SBATCH --output=_slurm_out/%x_%j.out
@@ -26,7 +29,8 @@ mkdir -p _slurm_out
 SCHEME=$1
 
 srun --ntasks-per-node=1 -n "$SLURM_NNODES" bash -c '
-  MODELS=(llada-8b-base dream-7b-base dream-coder-7b-base dqwen3.5-9b-base-v3)
+  MODELS=(coda-1.7b-base dqwen3-1.7b-base-v3 dqwen3.5-0.8b-base-v3 \
+          dqwen3.5-2b-base-v3 dqwen3.5-4b-base-v3)
   MODEL=${MODELS[$SLURM_PROCID]}
   SCHEME="'"$SCHEME"'"
   OUT=_runs/20260818-140400-c8-trajectories-he164-g256
