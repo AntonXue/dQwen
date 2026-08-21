@@ -40,7 +40,7 @@ Notes:
 - `--ignore-existing` means only the 10 new files transfer (~25 MB);
   the 8 you hold are skipped, which is correct — the cluster has not
   modified them (md5-provable, §3).
-- `--exclude 'shards/'` still matters: `shards/` now holds 66 raw
+- `--exclude 'shards/'` still matters: `shards/` now holds 81 raw
   per-(model, scheme) shard files (provenance only, byte-identical
   content to the canonical files). ⚠ If you ever pull them, keep them
   in their subdirectory: any flat glob of `trajectories_*.jsonl` (e.g.
