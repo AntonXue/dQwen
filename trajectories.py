@@ -39,10 +39,16 @@ TAU = 0.9                      # the paper's featured threshold
 POOL = [0, 3, 8, 31, 50, 56]   # the ENTIRE all-pass pool; no discretionary pick
 STOPS = HUMANEVAL["generation_kwargs"]["until"]
 
-MODELS = {                     # row order of the figure
+MODELS = {                     # row order of the figure (comparators, control,
+                               # then the family ascending -- ours-last)
     "llada-8b-base": None,
     "dream-7b-base": None,
     "dream-coder-7b-base": None,
+    "coda-1.7b-base": None,                      # boss extension 2026-08-20
+    "dqwen3-1.7b-base-v3": "step50000-swa",      # "
+    "dqwen3.5-0.8b-base-v3": "step50000-swa",    # "
+    "dqwen3.5-2b-base-v3": "step50000-swa",      # "
+    "dqwen3.5-4b-base-v3": "step50000-swa",      # "
     "dqwen3.5-9b-base-v3": "step50000-swa",
 }
 
