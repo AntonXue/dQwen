@@ -1,0 +1,711 @@
+=== 0.8b deployment 2026-08-27T01:29:39-05:00 ===
+Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights:  16%|█▌        | 51/320 [00:00<00:00, 508.20it/s]Loading weights:  41%|████      | 130/320 [00:00<00:00, 667.54it/s]Loading weights:  62%|██████▏   | 197/320 [00:00<00:00, 648.89it/s]Loading weights: 100%|██████████| 320/320 [00:00<00:00, 938.44it/s]
+[dqwen3.5-0.8b-base-v3] {'model': 'dqwen3.5-0.8b-base-v3', 'revision': 'step50000-swa', 'd': 1024, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'fast', 'flash_sdp': True, 'mem_eff_sdp': True, 'fla': True, 'causal_conv1d': True, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-0.8b-base-v3] full B=1 L=256: 37.783ms 6776 tok/s 1614MB
+[dqwen3.5-0.8b-base-v3] full B=2 L=256: 37.894ms 13511 tok/s 1739MB
+[dqwen3.5-0.8b-base-v3] full B=4 L=256: 39.11ms 26183 tok/s 1983MB
+[dqwen3.5-0.8b-base-v3] full B=8 L=256: 40.341ms 50767 tok/s 2473MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=256: 42.506ms 96363 tok/s 3455MB
+[dqwen3.5-0.8b-base-v3] full B=32 L=256: 44.152ms 185541 tok/s 5419MB
+[dqwen3.5-0.8b-base-v3] full B=1 L=512: 37.959ms 13488 tok/s 1738MB
+[dqwen3.5-0.8b-base-v3] full B=2 L=512: 38.177ms 26822 tok/s 1983MB
+[dqwen3.5-0.8b-base-v3] full B=4 L=512: 38.964ms 52561 tok/s 2473MB
+[dqwen3.5-0.8b-base-v3] full B=8 L=512: 40.652ms 100758 tok/s 3455MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=512: 44.702ms 183258 tok/s 5419MB
+[dqwen3.5-0.8b-base-v3] full B=32 L=512: 80.003ms 204792 tok/s 9348MB
+[dqwen3.5-0.8b-base-v3] full B=1 L=1024: 39.374ms 26007 tok/s 1981MB
+[dqwen3.5-0.8b-base-v3] full B=2 L=1024: 40.039ms 51150 tok/s 2473MB
+[dqwen3.5-0.8b-base-v3] full B=4 L=1024: 41.521ms 98649 tok/s 3455MB
+[dqwen3.5-0.8b-base-v3] full B=8 L=1024: 44.483ms 184160 tok/s 5419MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=1024: 80.829ms 202700 tok/s 9347MB
+[dqwen3.5-0.8b-base-v3] full B=32 L=1024: 156.236ms 209734 tok/s 17204MB
+[dqwen3.5-0.8b-base-v3] full B=1 L=2048: 40.149ms 51010 tok/s 2469MB
+[dqwen3.5-0.8b-base-v3] full B=2 L=2048: 41.85ms 97873 tok/s 3455MB
+[dqwen3.5-0.8b-base-v3] full B=4 L=2048: 45.474ms 180147 tok/s 5419MB
+[dqwen3.5-0.8b-base-v3] full B=8 L=2048: 82.986ms 197431 tok/s 9347MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=2048: 160.334ms 204373 tok/s 17204MB
+[dqwen3.5-0.8b-base-v3] full B=32 L=2048: 314.919ms 208104 tok/s 32916MB
+[dqwen3.5-0.8b-base-v3] full B=1 L=4096: 40.599ms 100889 tok/s 3447MB
+[dqwen3.5-0.8b-base-v3] full B=2 L=4096: 47.093ms 173954 tok/s 5419MB
+[dqwen3.5-0.8b-base-v3] full B=4 L=4096: 87.795ms 186617 tok/s 9347MB
+[dqwen3.5-0.8b-base-v3] full B=8 L=4096: 170.81ms 191839 tok/s 17204MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=4096: 335.367ms 195416 tok/s 32916MB
+[dqwen3.5-0.8b-base-v3] full B=32 L=4096: 662.113ms 197960 tok/s 64342MB
+[dqwen3.5-0.8b-base-v3] full B=1 L=8192: 53.749ms 152412 tok/s 5403MB
+[dqwen3.5-0.8b-base-v3] full B=2 L=8192: 100.032ms 163788 tok/s 9347MB
+[dqwen3.5-0.8b-base-v3] full B=4 L=8192: 191.222ms 171361 tok/s 17204MB
+[dqwen3.5-0.8b-base-v3] full B=8 L=8192: 375.126ms 174704 tok/s 32916MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=8192: 742.607ms 176503 tok/s 64342MB
+[dqwen3.5-0.8b-base-v3] full B=32 L=8192: OOM
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=256: 38.457ms 6657 tok/s 1508MB
+[dqwen3.5-0.8b-base-v3] trunk B=2 L=256: 38.795ms 13198 tok/s 1525MB
+[dqwen3.5-0.8b-base-v3] trunk B=4 L=256: 38.41ms 26660 tok/s 1561MB
+[dqwen3.5-0.8b-base-v3] trunk B=8 L=256: 38.293ms 53482 tok/s 1629MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=256: 38.298ms 106951 tok/s 1765MB
+[dqwen3.5-0.8b-base-v3] trunk B=32 L=256: 38.905ms 210564 tok/s 2040MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=512: 37.69ms 13585 tok/s 1525MB
+[dqwen3.5-0.8b-base-v3] trunk B=2 L=512: 37.938ms 26991 tok/s 1561MB
+[dqwen3.5-0.8b-base-v3] trunk B=4 L=512: 37.906ms 54028 tok/s 1629MB
+[dqwen3.5-0.8b-base-v3] trunk B=8 L=512: 38.243ms 107105 tok/s 1765MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=512: 38.876ms 210721 tok/s 2040MB
+[dqwen3.5-0.8b-base-v3] trunk B=32 L=512: 68.4ms 239532 tok/s 2589MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=1024: 38.178ms 26822 tok/s 1561MB
+[dqwen3.5-0.8b-base-v3] trunk B=2 L=1024: 38.406ms 53325 tok/s 1629MB
+[dqwen3.5-0.8b-base-v3] trunk B=4 L=1024: 38.39ms 106694 tok/s 1765MB
+[dqwen3.5-0.8b-base-v3] trunk B=8 L=1024: 38.755ms 211379 tok/s 2040MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=1024: 69.659ms 235203 tok/s 2589MB
+[dqwen3.5-0.8b-base-v3] trunk B=32 L=1024: 133.341ms 245746 tok/s 3686MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=2048: 38.546ms 53131 tok/s 1629MB
+[dqwen3.5-0.8b-base-v3] trunk B=2 L=2048: 38.289ms 106976 tok/s 1765MB
+[dqwen3.5-0.8b-base-v3] trunk B=4 L=2048: 39.268ms 208618 tok/s 2040MB
+[dqwen3.5-0.8b-base-v3] trunk B=8 L=2048: 72.005ms 227540 tok/s 2589MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=2048: 138.634ms 236363 tok/s 3686MB
+[dqwen3.5-0.8b-base-v3] trunk B=32 L=2048: 268.857ms 243758 tok/s 5882MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=4096: 37.989ms 107821 tok/s 1766MB
+[dqwen3.5-0.8b-base-v3] trunk B=2 L=4096: 42.067ms 194737 tok/s 2040MB
+[dqwen3.5-0.8b-base-v3] trunk B=4 L=4096: 77.124ms 212437 tok/s 2589MB
+[dqwen3.5-0.8b-base-v3] trunk B=8 L=4096: 149.005ms 219912 tok/s 3686MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=4096: 288.7ms 227004 tok/s 5882MB
+[dqwen3.5-0.8b-base-v3] trunk B=32 L=4096: 570.082ms 229918 tok/s 10272MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=8192: 48.745ms 168058 tok/s 2040MB
+[dqwen3.5-0.8b-base-v3] trunk B=2 L=8192: 88.744ms 184621 tok/s 2589MB
+[dqwen3.5-0.8b-base-v3] trunk B=4 L=8192: 169.148ms 193724 tok/s 3686MB
+[dqwen3.5-0.8b-base-v3] trunk B=8 L=8192: 328.494ms 199504 tok/s 5882MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=8192: 647.819ms 202328 tok/s 10272MB
+[dqwen3.5-0.8b-base-v3] trunk B=32 L=8192: 1289.994ms 203213 tok/s 19051MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=256: 0.237ms 1080169 tok/s 1613MB
+[dqwen3.5-0.8b-base-v3] head B=2 L=256: 0.395ms 1296203 tok/s 1735MB
+[dqwen3.5-0.8b-base-v3] head B=4 L=256: 0.733ms 1396999 tok/s 1979MB
+[dqwen3.5-0.8b-base-v3] head B=8 L=256: 1.5ms 1365333 tok/s 2465MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=256: 2.976ms 1376344 tok/s 3439MB
+[dqwen3.5-0.8b-base-v3] head B=32 L=256: 5.98ms 1369900 tok/s 5387MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=512: 0.455ms 1125275 tok/s 1735MB
+[dqwen3.5-0.8b-base-v3] head B=2 L=512: 0.787ms 1301144 tok/s 1979MB
+[dqwen3.5-0.8b-base-v3] head B=4 L=512: 1.473ms 1390360 tok/s 2465MB
+[dqwen3.5-0.8b-base-v3] head B=8 L=512: 2.961ms 1383316 tok/s 3439MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=512: 5.993ms 1366928 tok/s 5387MB
+[dqwen3.5-0.8b-base-v3] head B=32 L=512: 11.833ms 1384602 tok/s 9283MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=1024: 0.813ms 1259533 tok/s 1979MB
+[dqwen3.5-0.8b-base-v3] head B=2 L=1024: 1.473ms 1390360 tok/s 2465MB
+[dqwen3.5-0.8b-base-v3] head B=4 L=1024: 2.968ms 1380054 tok/s 3439MB
+[dqwen3.5-0.8b-base-v3] head B=8 L=1024: 6.038ms 1356741 tok/s 5387MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=1024: 11.837ms 1384134 tok/s 9283MB
+[dqwen3.5-0.8b-base-v3] head B=32 L=1024: 23.684ms 1383550 tok/s 17075MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=2048: 1.453ms 1409498 tok/s 2465MB
+[dqwen3.5-0.8b-base-v3] head B=2 L=2048: 3.008ms 1361702 tok/s 3439MB
+[dqwen3.5-0.8b-base-v3] head B=4 L=2048: 5.986ms 1368527 tok/s 5387MB
+[dqwen3.5-0.8b-base-v3] head B=8 L=2048: 11.818ms 1386360 tok/s 9283MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=2048: 23.539ms 1392073 tok/s 17075MB
+[dqwen3.5-0.8b-base-v3] head B=32 L=2048: 47.273ms 1386330 tok/s 32659MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=4096: 2.842ms 1441239 tok/s 3439MB
+[dqwen3.5-0.8b-base-v3] head B=2 L=4096: 5.969ms 1372424 tok/s 5387MB
+[dqwen3.5-0.8b-base-v3] head B=4 L=4096: 11.822ms 1385891 tok/s 9283MB
+[dqwen3.5-0.8b-base-v3] head B=8 L=4096: 23.532ms 1392487 tok/s 17075MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=4096: 47.291ms 1385803 tok/s 32659MB
+[dqwen3.5-0.8b-base-v3] head B=32 L=4096: 93.273ms 1405251 tok/s 63827MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=8192: 5.822ms 1407077 tok/s 5387MB
+[dqwen3.5-0.8b-base-v3] head B=2 L=8192: 11.839ms 1383901 tok/s 9283MB
+[dqwen3.5-0.8b-base-v3] head B=4 L=8192: 23.514ms 1393553 tok/s 17075MB
+[dqwen3.5-0.8b-base-v3] head B=8 L=8192: 47.276ms 1386242 tok/s 32659MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=8192: 94.288ms 1390124 tok/s 63827MB
+[dqwen3.5-0.8b-base-v3] head B=32 L=8192: OOM
+=== 0.8b fla+math 2026-08-27T01:34:35-05:00 ===
+Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights: 100%|██████████| 320/320 [00:00<00:00, 11482.99it/s]
+[dqwen3.5-0.8b-base-v3] {'model': 'dqwen3.5-0.8b-base-v3', 'revision': 'step50000-swa', 'd': 1024, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': True, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-0.8b-base-v3] full B=1 L=1024: 40.64ms 25197 tok/s 1981MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=1024: 109.111ms 150159 tok/s 9347MB
+[dqwen3.5-0.8b-base-v3] full B=1 L=4096: 53.247ms 76925 tok/s 3447MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=4096: 727.737ms 90055 tok/s 32916MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=1024: 39.775ms 25745 tok/s 1615MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=1024: 94.568ms 173251 tok/s 3479MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=4096: 49.778ms 82285 tok/s 2853MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=4096: 652.435ms 100448 tok/s 23268MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=1024: 0.728ms 1406593 tok/s 1979MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=1024: 11.913ms 1375304 tok/s 9283MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=4096: 2.947ms 1389888 tok/s 3439MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=4096: 46.915ms 1396909 tok/s 32659MB
+=== 0.8b fallback+flash 2026-08-27T01:36:15-05:00 ===
+[transformers] The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights: 100%|██████████| 320/320 [00:00<00:00, 11822.95it/s]
+[dqwen3.5-0.8b-base-v3] {'model': 'dqwen3.5-0.8b-base-v3', 'revision': 'step50000-swa', 'd': 1024, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'fast', 'flash_sdp': True, 'mem_eff_sdp': True, 'fla': True, 'causal_conv1d': False, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-0.8b-base-v3] full B=1 L=1024: 37.513ms 27297 tok/s 1981MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=1024: 119.473ms 137136 tok/s 9347MB
+[dqwen3.5-0.8b-base-v3] full B=1 L=4096: 39.879ms 102711 tok/s 3447MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=4096: 488.082ms 134273 tok/s 32916MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=1024: 35.852ms 28562 tok/s 1561MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=1024: 107.677ms 152159 tok/s 2589MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=4096: 39.264ms 104319 tok/s 1766MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=4096: 443.378ms 147811 tok/s 5882MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=1024: 0.726ms 1410468 tok/s 1979MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=1024: 11.922ms 1374266 tok/s 9283MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=4096: 3.016ms 1358090 tok/s 3439MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=4096: 47.305ms 1385393 tok/s 32659MB
+=== 0.8b naive 2026-08-27T01:37:06-05:00 ===
+[transformers] The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights: 100%|██████████| 320/320 [00:00<00:00, 12771.33it/s]
+[dqwen3.5-0.8b-base-v3] {'model': 'dqwen3.5-0.8b-base-v3', 'revision': 'step50000-swa', 'd': 1024, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': False, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-0.8b-base-v3] full B=1 L=1024: 40.384ms 25357 tok/s 1981MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=1024: 147.006ms 111451 tok/s 9347MB
+[dqwen3.5-0.8b-base-v3] full B=1 L=4096: 61.077ms 67063 tok/s 3447MB
+[dqwen3.5-0.8b-base-v3] full B=16 L=4096: 880.142ms 74461 tok/s 32916MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=1024: 38.395ms 26670 tok/s 1615MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=1024: 132.889ms 123291 tok/s 3479MB
+[dqwen3.5-0.8b-base-v3] trunk B=1 L=4096: 57.935ms 70700 tok/s 2853MB
+[dqwen3.5-0.8b-base-v3] trunk B=16 L=4096: 806.915ms 81218 tok/s 23268MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=1024: 0.732ms 1398907 tok/s 1979MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=1024: 11.833ms 1384602 tok/s 9283MB
+[dqwen3.5-0.8b-base-v3] head B=1 L=4096: 2.947ms 1389888 tok/s 3439MB
+[dqwen3.5-0.8b-base-v3] head B=16 L=4096: 46.866ms 1398370 tok/s 32659MB
+=== coda deployment 2026-08-27T01:38:17-05:00 ===
+/scratch/11079/antonxue/miniconda3/envs/qwen35/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:   0%|          | 1/311 [00:01<07:27,  1.44s/it]Loading weights:   1%|          | 2/311 [00:04<12:11,  2.37s/it]Loading weights:  46%|████▋     | 144/311 [00:04<00:03, 48.97it/s]Loading weights:  66%|██████▌   | 204/311 [00:05<00:02, 47.86it/s]Loading weights:  78%|███████▊  | 242/311 [00:06<00:01, 49.24it/s]Loading weights:  86%|████████▋ | 269/311 [00:07<00:00, 46.35it/s]Loading weights:  93%|█████████▎| 288/311 [00:07<00:00, 49.72it/s]Loading weights:  98%|█████████▊| 304/311 [00:07<00:00, 46.62it/s]Loading weights: 100%|██████████| 311/311 [00:07<00:00, 38.94it/s]
+[coda-1.7b-base] {'model': 'coda-1.7b-base', 'revision': None, 'd': 2048, 'vocab': 151936, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'fast', 'flash_sdp': True, 'mem_eff_sdp': True, 'fla': True, 'causal_conv1d': True, 'trunk_module': None, 'embeds_kw': None, 'warmup': 5}
+[coda-1.7b-base] full B=1 L=256: 27.47ms 9319 tok/s 3983MB
+[coda-1.7b-base] full B=2 L=256: 27.648ms 18519 tok/s 4059MB
+[coda-1.7b-base] full B=4 L=256: 27.725ms 36934 tok/s 4209MB
+[coda-1.7b-base] full B=8 L=256: 28.253ms 72488 tok/s 4510MB
+[coda-1.7b-base] full B=16 L=256: 41.08ms 99708 tok/s 5112MB
+[coda-1.7b-base] full B=32 L=256: 81.546ms 100459 tok/s 6314MB
+[coda-1.7b-base] full B=1 L=512: 27.043ms 18933 tok/s 4059MB
+[coda-1.7b-base] full B=2 L=512: 27.062ms 37839 tok/s 4209MB
+[coda-1.7b-base] full B=4 L=512: 28.091ms 72906 tok/s 4510MB
+[coda-1.7b-base] full B=8 L=512: 41.91ms 97733 tok/s 5112MB
+[coda-1.7b-base] full B=16 L=512: 82.724ms 99028 tok/s 6314MB
+[coda-1.7b-base] full B=32 L=512: 159.969ms 102420 tok/s 8720MB
+[coda-1.7b-base] full B=1 L=1024: 27.009ms 37913 tok/s 4209MB
+[coda-1.7b-base] full B=2 L=1024: 28.141ms 72776 tok/s 4510MB
+[coda-1.7b-base] full B=4 L=1024: 43.067ms 95108 tok/s 5112MB
+[coda-1.7b-base] full B=8 L=1024: 85.471ms 95845 tok/s 6314MB
+[coda-1.7b-base] full B=16 L=1024: 165.305ms 99114 tok/s 8720MB
+[coda-1.7b-base] full B=32 L=1024: 324.977ms 100832 tok/s 13533MB
+[coda-1.7b-base] full B=1 L=2048: 29.509ms 69403 tok/s 4510MB
+[coda-1.7b-base] full B=2 L=2048: 45.874ms 89288 tok/s 5112MB
+[coda-1.7b-base] full B=4 L=2048: 90.502ms 90517 tok/s 6314MB
+[coda-1.7b-base] full B=8 L=2048: 176.578ms 92786 tok/s 8720MB
+[coda-1.7b-base] full B=16 L=2048: 346.938ms 94449 tok/s 13533MB
+[coda-1.7b-base] full B=32 L=2048: 686.812ms 95421 tok/s 23157MB
+[coda-1.7b-base] full B=1 L=4096: 50.689ms 80806 tok/s 5112MB
+[coda-1.7b-base] full B=2 L=4096: 101.23ms 80925 tok/s 6314MB
+[coda-1.7b-base] full B=4 L=4096: 197.421ms 82990 tok/s 8720MB
+[coda-1.7b-base] full B=8 L=4096: 389.416ms 84147 tok/s 13533MB
+[coda-1.7b-base] full B=16 L=4096: 770.205ms 85089 tok/s 23157MB
+[coda-1.7b-base] full B=32 L=4096: 1541.123ms 85050 tok/s 42405MB
+[coda-1.7b-base] full B=1 L=8192: 121.649ms 67341 tok/s 6314MB
+[coda-1.7b-base] full B=2 L=8192: 240.042ms 68255 tok/s 8720MB
+[coda-1.7b-base] full B=4 L=8192: 473.676ms 69178 tok/s 13533MB
+[coda-1.7b-base] full B=8 L=8192: 937.348ms 69916 tok/s 23157MB
+[coda-1.7b-base] full B=16 L=8192: 1875.574ms 69884 tok/s 42405MB
+[coda-1.7b-base] full B=32 L=8192: OOM
+[coda-1.7b-base] trunk: UNSUPPORTED (no accessor found)
+[coda-1.7b-base] head B=1 L=256: 0.257ms 996109 tok/s 3983MB
+[coda-1.7b-base] head B=2 L=256: 0.434ms 1179724 tok/s 4059MB
+[coda-1.7b-base] head B=4 L=256: 0.827ms 1238210 tok/s 4209MB
+[coda-1.7b-base] head B=8 L=256: 1.765ms 1160340 tok/s 4510MB
+[coda-1.7b-base] head B=16 L=256: 3.521ms 1163306 tok/s 5112MB
+[coda-1.7b-base] head B=32 L=256: 7.082ms 1156735 tok/s 6314MB
+[coda-1.7b-base] head B=1 L=512: 0.516ms 992248 tok/s 4059MB
+[coda-1.7b-base] head B=2 L=512: 0.948ms 1080169 tok/s 4209MB
+[coda-1.7b-base] head B=4 L=512: 1.808ms 1132743 tok/s 4510MB
+[coda-1.7b-base] head B=8 L=512: 3.511ms 1166619 tok/s 5112MB
+[coda-1.7b-base] head B=16 L=512: 7.104ms 1153153 tok/s 6314MB
+[coda-1.7b-base] head B=32 L=512: 14.007ms 1169701 tok/s 8720MB
+[coda-1.7b-base] head B=1 L=1024: 0.968ms 1057851 tok/s 4209MB
+[coda-1.7b-base] head B=2 L=1024: 1.754ms 1167617 tok/s 4510MB
+[coda-1.7b-base] head B=4 L=1024: 3.492ms 1172967 tok/s 5112MB
+[coda-1.7b-base] head B=8 L=1024: 7.146ms 1146376 tok/s 6314MB
+[coda-1.7b-base] head B=16 L=1024: 14.018ms 1168783 tok/s 8720MB
+[coda-1.7b-base] head B=32 L=1024: 28.035ms 1168825 tok/s 13532MB
+[coda-1.7b-base] head B=1 L=2048: 1.697ms 1206836 tok/s 4510MB
+[coda-1.7b-base] head B=2 L=2048: 3.545ms 1155430 tok/s 5112MB
+[coda-1.7b-base] head B=4 L=2048: 7.07ms 1158699 tok/s 6314MB
+[coda-1.7b-base] head B=8 L=2048: 14.147ms 1158125 tok/s 8720MB
+[coda-1.7b-base] head B=16 L=2048: 28.057ms 1167908 tok/s 13532MB
+[coda-1.7b-base] head B=32 L=2048: 55.956ms 1171206 tok/s 23156MB
+[coda-1.7b-base] head B=1 L=4096: 3.519ms 1163967 tok/s 5112MB
+[coda-1.7b-base] head B=2 L=4096: 7.075ms 1157880 tok/s 6314MB
+[coda-1.7b-base] head B=4 L=4096: 14.141ms 1158617 tok/s 8720MB
+[coda-1.7b-base] head B=8 L=4096: 28.025ms 1169242 tok/s 13532MB
+[coda-1.7b-base] head B=16 L=4096: 53.674ms 1221001 tok/s 23156MB
+[coda-1.7b-base] head B=32 L=4096: 107.114ms 1223668 tok/s 42404MB
+[coda-1.7b-base] head B=1 L=8192: 7.103ms 1153316 tok/s 6314MB
+[coda-1.7b-base] head B=2 L=8192: 14.139ms 1158781 tok/s 8720MB
+[coda-1.7b-base] head B=4 L=8192: 28.048ms 1168283 tok/s 13532MB
+[coda-1.7b-base] head B=8 L=8192: 53.704ms 1220319 tok/s 23156MB
+[coda-1.7b-base] head B=16 L=8192: 107.137ms 1223406 tok/s 42404MB
+[coda-1.7b-base] head B=32 L=8192: 214.796ms 1220432 tok/s 80900MB
+=== coda naive 2026-08-27T01:43:15-05:00 ===
+/scratch/11079/antonxue/miniconda3/envs/qwen35/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:   0%|          | 1/311 [00:00<00:55,  5.55it/s]Loading weights:  97%|█████████▋| 301/311 [00:00<00:00, 1309.62it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 1093.10it/s]
+[coda-1.7b-base] {'model': 'coda-1.7b-base', 'revision': None, 'd': 2048, 'vocab': 151936, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': False, 'trunk_module': None, 'embeds_kw': None, 'warmup': 5}
+[coda-1.7b-base] full B=1 L=1024: 30.14ms 33975 tok/s 4209MB
+[coda-1.7b-base] full B=16 L=1024: 165.875ms 98773 tok/s 8720MB
+[coda-1.7b-base] full B=1 L=4096: 51.041ms 80249 tok/s 5112MB
+[coda-1.7b-base] full B=16 L=4096: 768.251ms 85305 tok/s 23157MB
+[coda-1.7b-base] trunk: UNSUPPORTED (no accessor found)
+[coda-1.7b-base] head B=1 L=1024: 0.886ms 1155756 tok/s 4209MB
+[coda-1.7b-base] head B=16 L=1024: 14.148ms 1158044 tok/s 8720MB
+[coda-1.7b-base] head B=1 L=4096: 3.477ms 1178027 tok/s 5112MB
+[coda-1.7b-base] head B=16 L=4096: 53.702ms 1220364 tok/s 23156MB
+=== 4b deployment 2026-08-27T01:44:26-05:00 ===
+Loading weights:   0%|          | 0/426 [00:00<?, ?it/s]Loading weights:  18%|█▊        | 77/426 [00:00<00:00, 758.91it/s]Loading weights:  36%|███▌      | 153/426 [00:00<00:00, 657.13it/s]Loading weights:  56%|█████▋    | 240/426 [00:00<00:00, 706.30it/s]Loading weights:  74%|███████▍  | 317/426 [00:00<00:00, 728.78it/s]Loading weights: 100%|██████████| 426/426 [00:00<00:00, 807.77it/s]
+[dqwen3.5-4b-base-v3] {'model': 'dqwen3.5-4b-base-v3', 'revision': 'step50000-swa', 'd': 2560, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'fast', 'flash_sdp': True, 'mem_eff_sdp': True, 'fla': True, 'causal_conv1d': True, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-4b-base-v3] full B=1 L=256: 51.226ms 4997 tok/s 8275MB
+[dqwen3.5-4b-base-v3] full B=2 L=256: 52.734ms 9709 tok/s 8400MB
+[dqwen3.5-4b-base-v3] full B=4 L=256: 53.405ms 19174 tok/s 8651MB
+[dqwen3.5-4b-base-v3] full B=8 L=256: 55.825ms 36686 tok/s 9150MB
+[dqwen3.5-4b-base-v3] full B=16 L=256: 79.966ms 51222 tok/s 10150MB
+[dqwen3.5-4b-base-v3] full B=32 L=256: 152.419ms 53747 tok/s 12150MB
+[dqwen3.5-4b-base-v3] full B=1 L=512: 52.933ms 9673 tok/s 8397MB
+[dqwen3.5-4b-base-v3] full B=2 L=512: 53.781ms 19040 tok/s 8651MB
+[dqwen3.5-4b-base-v3] full B=4 L=512: 55.986ms 36581 tok/s 9150MB
+[dqwen3.5-4b-base-v3] full B=8 L=512: 80.174ms 51089 tok/s 10150MB
+[dqwen3.5-4b-base-v3] full B=16 L=512: 152.29ms 53792 tok/s 12150MB
+[dqwen3.5-4b-base-v3] full B=32 L=512: 297.877ms 55003 tok/s 16150MB
+[dqwen3.5-4b-base-v3] full B=1 L=1024: 53.259ms 19227 tok/s 8646MB
+[dqwen3.5-4b-base-v3] full B=2 L=1024: 55.207ms 37097 tok/s 9150MB
+[dqwen3.5-4b-base-v3] full B=4 L=1024: 81.122ms 50492 tok/s 10150MB
+[dqwen3.5-4b-base-v3] full B=8 L=1024: 153.367ms 53414 tok/s 12150MB
+[dqwen3.5-4b-base-v3] full B=16 L=1024: 300.041ms 54606 tok/s 16150MB
+[dqwen3.5-4b-base-v3] full B=32 L=1024: 591.473ms 55401 tok/s 24151MB
+[dqwen3.5-4b-base-v3] full B=1 L=2048: 54.395ms 37651 tok/s 9140MB
+[dqwen3.5-4b-base-v3] full B=2 L=2048: 81.78ms 50086 tok/s 10150MB
+[dqwen3.5-4b-base-v3] full B=4 L=2048: 155.969ms 52523 tok/s 12150MB
+[dqwen3.5-4b-base-v3] full B=8 L=2048: 305.646ms 53604 tok/s 16150MB
+[dqwen3.5-4b-base-v3] full B=16 L=2048: 603.304ms 54314 tok/s 24151MB
+[dqwen3.5-4b-base-v3] full B=32 L=2048: 1198.733ms 54671 tok/s 40151MB
+[dqwen3.5-4b-base-v3] full B=1 L=4096: 86.074ms 47587 tok/s 10130MB
+[dqwen3.5-4b-base-v3] full B=2 L=4096: 162.642ms 50368 tok/s 12150MB
+[dqwen3.5-4b-base-v3] full B=4 L=4096: 318.731ms 51404 tok/s 16150MB
+[dqwen3.5-4b-base-v3] full B=8 L=4096: 629.087ms 52088 tok/s 24150MB
+[dqwen3.5-4b-base-v3] full B=16 L=4096: 1254.335ms 52248 tok/s 40151MB
+[dqwen3.5-4b-base-v3] full B=32 L=4096: 2489.63ms 52647 tok/s 72153MB
+[dqwen3.5-4b-base-v3] full B=1 L=8192: 178.209ms 45968 tok/s 12110MB
+[dqwen3.5-4b-base-v3] full B=2 L=8192: 346.04ms 47347 tok/s 16150MB
+[dqwen3.5-4b-base-v3] full B=4 L=8192: 686.522ms 47730 tok/s 24150MB
+[dqwen3.5-4b-base-v3] full B=8 L=8192: 1361.083ms 48150 tok/s 40151MB
+[dqwen3.5-4b-base-v3] full B=16 L=8192: 2715.717ms 48264 tok/s 72153MB
+[dqwen3.5-4b-base-v3] full B=32 L=8192: OOM
+[dqwen3.5-4b-base-v3] trunk B=1 L=256: 52.55ms 4872 tok/s 8185MB
+[dqwen3.5-4b-base-v3] trunk B=2 L=256: 53.236ms 9618 tok/s 8217MB
+[dqwen3.5-4b-base-v3] trunk B=4 L=256: 53.597ms 19106 tok/s 8282MB
+[dqwen3.5-4b-base-v3] trunk B=8 L=256: 53.316ms 38412 tok/s 8414MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=256: 72.227ms 56710 tok/s 8678MB
+[dqwen3.5-4b-base-v3] trunk B=32 L=256: 137.643ms 59516 tok/s 9205MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=512: 53.459ms 9577 tok/s 8217MB
+[dqwen3.5-4b-base-v3] trunk B=2 L=512: 53.577ms 19113 tok/s 8282MB
+[dqwen3.5-4b-base-v3] trunk B=4 L=512: 53.581ms 38223 tok/s 8414MB
+[dqwen3.5-4b-base-v3] trunk B=8 L=512: 72.583ms 56432 tok/s 8678MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=512: 138.866ms 58992 tok/s 9205MB
+[dqwen3.5-4b-base-v3] trunk B=32 L=512: 271.713ms 60299 tok/s 10261MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=1024: 54.4ms 18824 tok/s 8282MB
+[dqwen3.5-4b-base-v3] trunk B=2 L=1024: 53.4ms 38352 tok/s 8414MB
+[dqwen3.5-4b-base-v3] trunk B=4 L=1024: 73.36ms 55834 tok/s 8678MB
+[dqwen3.5-4b-base-v3] trunk B=8 L=1024: 140.742ms 58206 tok/s 9205MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=1024: 275.065ms 59564 tok/s 10261MB
+[dqwen3.5-4b-base-v3] trunk B=32 L=1024: 538.121ms 60893 tok/s 12372MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=2048: 55.065ms 37192 tok/s 8414MB
+[dqwen3.5-4b-base-v3] trunk B=2 L=2048: 75.109ms 54534 tok/s 8678MB
+[dqwen3.5-4b-base-v3] trunk B=4 L=2048: 143.44ms 57111 tok/s 9205MB
+[dqwen3.5-4b-base-v3] trunk B=8 L=2048: 281.086ms 58288 tok/s 10261MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=2048: 551.859ms 59377 tok/s 12372MB
+[dqwen3.5-4b-base-v3] trunk B=32 L=2048: 1098.417ms 59664 tok/s 16594MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=4096: 79.313ms 51643 tok/s 8678MB
+[dqwen3.5-4b-base-v3] trunk B=2 L=4096: 149.999ms 54614 tok/s 9205MB
+[dqwen3.5-4b-base-v3] trunk B=4 L=4096: 295.228ms 55496 tok/s 10261MB
+[dqwen3.5-4b-base-v3] trunk B=8 L=4096: 579.945ms 56502 tok/s 12372MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=4096: 1151.514ms 56913 tok/s 16594MB
+[dqwen3.5-4b-base-v3] trunk B=32 L=4096: 2305.969ms 56840 tok/s 25038MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=8192: 164.885ms 49683 tok/s 9205MB
+[dqwen3.5-4b-base-v3] trunk B=2 L=8192: 319.983ms 51203 tok/s 10261MB
+[dqwen3.5-4b-base-v3] trunk B=4 L=8192: 633.719ms 51707 tok/s 12372MB
+[dqwen3.5-4b-base-v3] trunk B=8 L=8192: 1260.013ms 52012 tok/s 16594MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=8192: 2519.62ms 52021 tok/s 25038MB
+[dqwen3.5-4b-base-v3] trunk B=32 L=8192: 5051.926ms 51890 tok/s 41926MB
+[dqwen3.5-4b-base-v3] head B=1 L=256: 0.517ms 495164 tok/s 8273MB
+[dqwen3.5-4b-base-v3] head B=2 L=256: 0.882ms 580499 tok/s 8395MB
+[dqwen3.5-4b-base-v3] head B=4 L=256: 1.754ms 583808 tok/s 8641MB
+[dqwen3.5-4b-base-v3] head B=8 L=256: 3.625ms 564966 tok/s 9130MB
+[dqwen3.5-4b-base-v3] head B=16 L=256: 7.122ms 575119 tok/s 10110MB
+[dqwen3.5-4b-base-v3] head B=32 L=256: 14.123ms 580047 tok/s 12070MB
+[dqwen3.5-4b-base-v3] head B=1 L=512: 0.945ms 541799 tok/s 8395MB
+[dqwen3.5-4b-base-v3] head B=2 L=512: 1.827ms 560482 tok/s 8641MB
+[dqwen3.5-4b-base-v3] head B=4 L=512: 3.604ms 568257 tok/s 9130MB
+[dqwen3.5-4b-base-v3] head B=8 L=512: 7.109ms 576171 tok/s 10110MB
+[dqwen3.5-4b-base-v3] head B=16 L=512: 13.965ms 586609 tok/s 12070MB
+[dqwen3.5-4b-base-v3] head B=32 L=512: 28.109ms 582874 tok/s 15990MB
+[dqwen3.5-4b-base-v3] head B=1 L=1024: 1.715ms 597085 tok/s 8641MB
+[dqwen3.5-4b-base-v3] head B=2 L=1024: 3.644ms 562020 tok/s 9130MB
+[dqwen3.5-4b-base-v3] head B=4 L=1024: 7.125ms 574877 tok/s 10110MB
+[dqwen3.5-4b-base-v3] head B=8 L=1024: 13.962ms 586735 tok/s 12070MB
+[dqwen3.5-4b-base-v3] head B=16 L=1024: 27.825ms 588823 tok/s 15990MB
+[dqwen3.5-4b-base-v3] head B=32 L=1024: 55.725ms 588031 tok/s 23830MB
+[dqwen3.5-4b-base-v3] head B=1 L=2048: 3.564ms 574635 tok/s 9130MB
+[dqwen3.5-4b-base-v3] head B=2 L=2048: 7.158ms 572227 tok/s 10110MB
+[dqwen3.5-4b-base-v3] head B=4 L=2048: 13.966ms 586567 tok/s 12070MB
+[dqwen3.5-4b-base-v3] head B=8 L=2048: 28.108ms 582895 tok/s 15990MB
+[dqwen3.5-4b-base-v3] head B=16 L=2048: 55.844ms 586777 tok/s 23830MB
+[dqwen3.5-4b-base-v3] head B=32 L=2048: 109.929ms 596167 tok/s 39510MB
+[dqwen3.5-4b-base-v3] head B=1 L=4096: 7.214ms 567785 tok/s 10110MB
+[dqwen3.5-4b-base-v3] head B=2 L=4096: 14.123ms 580047 tok/s 12070MB
+[dqwen3.5-4b-base-v3] head B=4 L=4096: 28.094ms 583185 tok/s 15990MB
+[dqwen3.5-4b-base-v3] head B=8 L=4096: 55.833ms 586893 tok/s 23830MB
+[dqwen3.5-4b-base-v3] head B=16 L=4096: 109.844ms 596628 tok/s 39510MB
+[dqwen3.5-4b-base-v3] head B=32 L=4096: 213.951ms 612626 tok/s 70870MB
+[dqwen3.5-4b-base-v3] head B=1 L=8192: 14.175ms 577919 tok/s 12070MB
+[dqwen3.5-4b-base-v3] head B=2 L=8192: 28.085ms 583372 tok/s 15990MB
+[dqwen3.5-4b-base-v3] head B=4 L=8192: 55.894ms 586253 tok/s 23830MB
+[dqwen3.5-4b-base-v3] head B=8 L=8192: 110.5ms 593086 tok/s 39510MB
+[dqwen3.5-4b-base-v3] head B=16 L=8192: 214.034ms 612389 tok/s 70870MB
+[dqwen3.5-4b-base-v3] head B=32 L=8192: OOM
+=== 4b fla+math 2026-08-27T02:00:38-05:00 ===
+Loading weights:   0%|          | 0/426 [00:00<?, ?it/s]Loading weights: 100%|██████████| 426/426 [00:00<00:00, 11263.35it/s]
+[dqwen3.5-4b-base-v3] {'model': 'dqwen3.5-4b-base-v3', 'revision': 'step50000-swa', 'd': 2560, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': True, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-4b-base-v3] full B=1 L=1024: 52.958ms 19336 tok/s 8646MB
+[dqwen3.5-4b-base-v3] full B=16 L=1024: 369.853ms 44299 tok/s 16150MB
+[dqwen3.5-4b-base-v3] full B=1 L=4096: 149.238ms 27446 tok/s 10884MB
+[dqwen3.5-4b-base-v3] full B=16 L=4096: 2509.012ms 26120 tok/s 51900MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=1024: 52.677ms 19439 tok/s 8401MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=1024: 338.564ms 48393 tok/s 12170MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=4096: 140.455ms 29162 tok/s 10883MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=4096: 2110.722ms 31049 tok/s 51879MB
+[dqwen3.5-4b-base-v3] head B=1 L=1024: 1.658ms 617612 tok/s 8641MB
+[dqwen3.5-4b-base-v3] head B=16 L=1024: 28.114ms 582770 tok/s 15990MB
+[dqwen3.5-4b-base-v3] head B=1 L=4096: 7.15ms 572867 tok/s 10110MB
+[dqwen3.5-4b-base-v3] head B=16 L=4096: 110.685ms 592095 tok/s 39510MB
+=== 4b fallback+flash 2026-08-27T02:04:09-05:00 ===
+[transformers] The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+Loading weights:   0%|          | 0/426 [00:00<?, ?it/s]Loading weights: 100%|██████████| 426/426 [00:00<00:00, 11977.06it/s]
+[dqwen3.5-4b-base-v3] {'model': 'dqwen3.5-4b-base-v3', 'revision': 'step50000-swa', 'd': 2560, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'fast', 'flash_sdp': True, 'mem_eff_sdp': True, 'fla': True, 'causal_conv1d': False, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-4b-base-v3] full B=1 L=1024: 51.423ms 19913 tok/s 8646MB
+[dqwen3.5-4b-base-v3] full B=16 L=1024: 365.889ms 44779 tok/s 16150MB
+[dqwen3.5-4b-base-v3] full B=1 L=4096: 102.815ms 39839 tok/s 10130MB
+[dqwen3.5-4b-base-v3] full B=16 L=4096: 1534.179ms 42717 tok/s 40151MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=1024: 49.304ms 20769 tok/s 8283MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=1024: 341.109ms 48032 tok/s 10261MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=4096: 96.408ms 42486 tok/s 8678MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=4096: 1423.945ms 46024 tok/s 16594MB
+[dqwen3.5-4b-base-v3] head B=1 L=1024: 1.599ms 640400 tok/s 8641MB
+[dqwen3.5-4b-base-v3] head B=16 L=1024: 28.116ms 582729 tok/s 15990MB
+[dqwen3.5-4b-base-v3] head B=1 L=4096: 7.076ms 578858 tok/s 10110MB
+[dqwen3.5-4b-base-v3] head B=16 L=4096: 111.022ms 590297 tok/s 39510MB
+=== 4b naive 2026-08-27T02:06:08-05:00 ===
+[transformers] The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+Loading weights:   0%|          | 0/426 [00:00<?, ?it/s]Loading weights: 100%|██████████| 426/426 [00:00<00:00, 11460.51it/s]
+[dqwen3.5-4b-base-v3] {'model': 'dqwen3.5-4b-base-v3', 'revision': 'step50000-swa', 'd': 2560, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': False, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-4b-base-v3] full B=1 L=1024: 56.187ms 18225 tok/s 8646MB
+[dqwen3.5-4b-base-v3] full B=16 L=1024: 439.257ms 37299 tok/s 16150MB
+[dqwen3.5-4b-base-v3] full B=1 L=4096: 166.349ms 24623 tok/s 10884MB
+[dqwen3.5-4b-base-v3] full B=16 L=4096: 2784.63ms 23535 tok/s 51900MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=1024: 53.268ms 19224 tok/s 8401MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=1024: 406.363ms 40319 tok/s 12170MB
+[dqwen3.5-4b-base-v3] trunk B=1 L=4096: 157.834ms 25951 tok/s 10883MB
+[dqwen3.5-4b-base-v3] trunk B=16 L=4096: 2385.788ms 27469 tok/s 51879MB
+[dqwen3.5-4b-base-v3] head B=1 L=1024: 1.601ms 639600 tok/s 8641MB
+[dqwen3.5-4b-base-v3] head B=16 L=1024: 27.901ms 587219 tok/s 15990MB
+[dqwen3.5-4b-base-v3] head B=1 L=4096: 7.117ms 575523 tok/s 10110MB
+[dqwen3.5-4b-base-v3] head B=16 L=4096: 111.195ms 589379 tok/s 39510MB
+=== dream deployment 2026-08-27T02:09:09-05:00 ===
+/scratch/11079/antonxue/miniconda3/envs/qwen35/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:  17%|█▋        | 59/339 [00:00<00:00, 579.43it/s]Loading weights:  39%|███▊      | 131/339 [00:00<00:00, 659.94it/s]Loading weights:  58%|█████▊    | 198/339 [00:00<00:00, 615.91it/s]Loading weights:  77%|███████▋  | 260/339 [00:00<00:00, 572.43it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 766.16it/s]
+[transformers] `use_return_dict` is deprecated! Use `return_dict` instead!
+[dream-7b-base] {'model': 'dream-7b-base', 'revision': None, 'd': 3584, 'vocab': 152064, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'fast', 'flash_sdp': True, 'mem_eff_sdp': True, 'fla': True, 'causal_conv1d': True, 'trunk_module': 'DreamBaseModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dream-7b-base] full B=1 L=256: 25.808ms 9919 tok/s 14678MB
+[dream-7b-base] full B=2 L=256: 25.815ms 19833 tok/s 14754MB
+[dream-7b-base] full B=4 L=256: 29.146ms 35133 tok/s 14907MB
+[dream-7b-base] full B=8 L=256: 54.154ms 37818 tok/s 15210MB
+[dream-7b-base] full B=16 L=256: 105.261ms 38913 tok/s 15818MB
+[dream-7b-base] full B=32 L=256: 204.499ms 40059 tok/s 17034MB
+[dream-7b-base] full B=1 L=512: 26.05ms 19655 tok/s 14754MB
+[dream-7b-base] full B=2 L=512: 29.248ms 35011 tok/s 14907MB
+[dream-7b-base] full B=4 L=512: 54.299ms 37717 tok/s 15210MB
+[dream-7b-base] full B=8 L=512: 105.945ms 38662 tok/s 15818MB
+[dream-7b-base] full B=16 L=512: 205.728ms 39820 tok/s 17034MB
+[dream-7b-base] full B=32 L=512: 407.447ms 40211 tok/s 19466MB
+[dream-7b-base] full B=1 L=1024: 29.924ms 34220 tok/s 14907MB
+[dream-7b-base] full B=2 L=1024: 55.966ms 36594 tok/s 15210MB
+[dream-7b-base] full B=4 L=1024: 108.743ms 37667 tok/s 15818MB
+[dream-7b-base] full B=8 L=1024: 211.88ms 38663 tok/s 17034MB
+[dream-7b-base] full B=16 L=1024: 419.421ms 39063 tok/s 19466MB
+[dream-7b-base] full B=32 L=1024: 843.92ms 38828 tok/s 24330MB
+[dream-7b-base] full B=1 L=2048: 58.673ms 34905 tok/s 15210MB
+[dream-7b-base] full B=2 L=2048: 114.132ms 35888 tok/s 15818MB
+[dream-7b-base] full B=4 L=2048: 221.822ms 36931 tok/s 17034MB
+[dream-7b-base] full B=8 L=2048: 438.95ms 37325 tok/s 19466MB
+[dream-7b-base] full B=16 L=2048: 879.759ms 37247 tok/s 24330MB
+[dream-7b-base] full B=32 L=2048: 1759.271ms 37252 tok/s 34058MB
+[dream-7b-base] full B=1 L=4096: 122.824ms 33349 tok/s 15818MB
+[dream-7b-base] full B=2 L=4096: 240.157ms 34111 tok/s 17034MB
+[dream-7b-base] full B=4 L=4096: 475.623ms 34447 tok/s 19466MB
+[dream-7b-base] full B=8 L=4096: 953.15ms 34379 tok/s 24330MB
+[dream-7b-base] full B=16 L=4096: 1908.28ms 34343 tok/s 34058MB
+[dream-7b-base] full B=32 L=4096: 3837.192ms 34158 tok/s 53515MB
+[dream-7b-base] full B=1 L=8192: 275.487ms 29736 tok/s 17034MB
+[dream-7b-base] full B=2 L=8192: 548.919ms 29848 tok/s 19466MB
+[dream-7b-base] full B=4 L=8192: 1103.131ms 29705 tok/s 24330MB
+[dream-7b-base] full B=8 L=8192: 2210.762ms 29644 tok/s 34058MB
+[dream-7b-base] full B=16 L=8192: 4436.331ms 29545 tok/s 53515MB
+[dream-7b-base] full B=32 L=8192: OOM
+[dream-7b-base] trunk B=1 L=256: 25.147ms 10180 tok/s 14654MB
+[dream-7b-base] trunk B=2 L=256: 25.463ms 20108 tok/s 14699MB
+[dream-7b-base] trunk B=4 L=256: 27.624ms 37069 tok/s 14800MB
+[dream-7b-base] trunk B=8 L=256: 51.262ms 39952 tok/s 14998MB
+[dream-7b-base] trunk B=16 L=256: 99.439ms 41191 tok/s 15382MB
+[dream-7b-base] trunk B=32 L=256: 193.767ms 42278 tok/s 16162MB
+[dream-7b-base] trunk B=1 L=512: 25.648ms 19963 tok/s 14700MB
+[dream-7b-base] trunk B=2 L=512: 27.849ms 36770 tok/s 14800MB
+[dream-7b-base] trunk B=4 L=512: 51.625ms 39671 tok/s 14998MB
+[dream-7b-base] trunk B=8 L=512: 100.454ms 40775 tok/s 15382MB
+[dream-7b-base] trunk B=16 L=512: 195.51ms 41901 tok/s 16162MB
+[dream-7b-base] trunk B=32 L=512: 385.719ms 42477 tok/s 17722MB
+[dream-7b-base] trunk B=1 L=1024: 28.366ms 36100 tok/s 14798MB
+[dream-7b-base] trunk B=2 L=1024: 53.024ms 38624 tok/s 14998MB
+[dream-7b-base] trunk B=4 L=1024: 102.806ms 39842 tok/s 15383MB
+[dream-7b-base] trunk B=8 L=1024: 200.421ms 40874 tok/s 16163MB
+[dream-7b-base] trunk B=16 L=1024: 395.402ms 41436 tok/s 17723MB
+[dream-7b-base] trunk B=32 L=1024: 794.485ms 41244 tok/s 20842MB
+[dream-7b-base] trunk B=1 L=2048: 55.418ms 36956 tok/s 14999MB
+[dream-7b-base] trunk B=2 L=2048: 107.616ms 38061 tok/s 15383MB
+[dream-7b-base] trunk B=4 L=2048: 210.187ms 38975 tok/s 16163MB
+[dream-7b-base] trunk B=8 L=2048: 414.566ms 39521 tok/s 17723MB
+[dream-7b-base] trunk B=16 L=2048: 832.648ms 39354 tok/s 20843MB
+[dream-7b-base] trunk B=32 L=2048: 1679.771ms 39015 tok/s 27083MB
+[dream-7b-base] trunk B=1 L=4096: 116.631ms 35119 tok/s 15384MB
+[dream-7b-base] trunk B=2 L=4096: 228.541ms 35845 tok/s 16164MB
+[dream-7b-base] trunk B=4 L=4096: 452.013ms 36247 tok/s 17724MB
+[dream-7b-base] trunk B=8 L=4096: 907.963ms 36090 tok/s 20844MB
+[dream-7b-base] trunk B=16 L=4096: 1816.795ms 36072 tok/s 27084MB
+[dream-7b-base] trunk B=32 L=4096: 3655.218ms 35859 tok/s 39564MB
+[dream-7b-base] trunk B=1 L=8192: 264.482ms 30974 tok/s 16167MB
+[dream-7b-base] trunk B=2 L=8192: 525.457ms 31180 tok/s 17727MB
+[dream-7b-base] trunk B=4 L=8192: 1059.587ms 30925 tok/s 20847MB
+[dream-7b-base] trunk B=8 L=8192: 2119.88ms 30915 tok/s 27087MB
+[dream-7b-base] trunk B=16 L=8192: 4252.811ms 30820 tok/s 39567MB
+[dream-7b-base] trunk B=32 L=8192: 8399.183ms 31211 tok/s 64527MB
+[dream-7b-base] head B=1 L=256: 0.421ms 608076 tok/s 14678MB
+[dream-7b-base] head B=2 L=256: 0.733ms 698499 tok/s 14754MB
+[dream-7b-base] head B=4 L=256: 1.39ms 736691 tok/s 14907MB
+[dream-7b-base] head B=8 L=256: 2.936ms 697548 tok/s 15210MB
+[dream-7b-base] head B=16 L=256: 6.084ms 673241 tok/s 15818MB
+[dream-7b-base] head B=32 L=256: 11.564ms 708405 tok/s 17034MB
+[dream-7b-base] head B=1 L=512: 0.81ms 632099 tok/s 14754MB
+[dream-7b-base] head B=2 L=512: 1.529ms 669719 tok/s 14907MB
+[dream-7b-base] head B=4 L=512: 3.109ms 658733 tok/s 15210MB
+[dream-7b-base] head B=8 L=512: 6.123ms 668953 tok/s 15818MB
+[dream-7b-base] head B=16 L=512: 11.584ms 707182 tok/s 17034MB
+[dream-7b-base] head B=32 L=512: 23.064ms 710371 tok/s 19466MB
+[dream-7b-base] head B=1 L=1024: 1.464ms 699454 tok/s 14907MB
+[dream-7b-base] head B=2 L=1024: 3.026ms 676801 tok/s 15210MB
+[dream-7b-base] head B=4 L=1024: 6.141ms 666992 tok/s 15818MB
+[dream-7b-base] head B=8 L=1024: 11.56ms 708651 tok/s 17034MB
+[dream-7b-base] head B=16 L=1024: 23.062ms 710433 tok/s 19466MB
+[dream-7b-base] head B=32 L=1024: 45.746ms 716303 tok/s 24330MB
+[dream-7b-base] head B=1 L=2048: 2.817ms 727015 tok/s 15210MB
+[dream-7b-base] head B=2 L=2048: 6.116ms 669719 tok/s 15818MB
+[dream-7b-base] head B=4 L=2048: 11.558ms 708773 tok/s 17034MB
+[dream-7b-base] head B=8 L=2048: 23.052ms 710741 tok/s 19466MB
+[dream-7b-base] head B=16 L=2048: 46.1ms 710803 tok/s 24330MB
+[dream-7b-base] head B=32 L=2048: 91.09ms 719464 tok/s 34058MB
+[dream-7b-base] head B=1 L=4096: 5.929ms 690842 tok/s 15818MB
+[dream-7b-base] head B=2 L=4096: 11.598ms 706329 tok/s 17034MB
+[dream-7b-base] head B=4 L=4096: 23.125ms 708497 tok/s 19466MB
+[dream-7b-base] head B=8 L=4096: 45.943ms 713232 tok/s 24330MB
+[dream-7b-base] head B=16 L=4096: 90.547ms 723779 tok/s 34058MB
+[dream-7b-base] head B=32 L=4096: 175.659ms 746173 tok/s 53514MB
+[dream-7b-base] head B=1 L=8192: 11.159ms 734116 tok/s 17034MB
+[dream-7b-base] head B=2 L=8192: 23.044ms 710988 tok/s 19466MB
+[dream-7b-base] head B=4 L=8192: 45.949ms 713138 tok/s 24330MB
+[dream-7b-base] head B=8 L=8192: 91.335ms 717534 tok/s 34058MB
+[dream-7b-base] head B=16 L=8192: 177.614ms 737960 tok/s 53514MB
+[dream-7b-base] head B=32 L=8192: 355.802ms 736769 tok/s 92426MB
+=== dream naive 2026-08-27T02:23:41-05:00 ===
+/scratch/11079/antonxue/miniconda3/envs/qwen35/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 11783.90it/s]
+[transformers] `use_return_dict` is deprecated! Use `return_dict` instead!
+[dream-7b-base] {'model': 'dream-7b-base', 'revision': None, 'd': 3584, 'vocab': 152064, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': False, 'trunk_module': 'DreamBaseModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dream-7b-base] full B=1 L=1024: 48.595ms 21072 tok/s 15008MB
+[dream-7b-base] full B=16 L=1024: 680.268ms 24085 tok/s 21099MB
+[dream-7b-base] full B=1 L=4096: 384.568ms 10651 tok/s 19252MB
+[dream-7b-base] full B=16 L=4096: 6019.131ms 10888 tok/s 88975MB
+[dream-7b-base] trunk B=1 L=1024: 47.095ms 21743 tok/s 15008MB
+[dream-7b-base] trunk B=16 L=1024: 658.694ms 24873 tok/s 21099MB
+[dream-7b-base] trunk B=1 L=4096: 379.67ms 10788 tok/s 19252MB
+[dream-7b-base] trunk B=16 L=4096: 5880.644ms 11144 tok/s 88974MB
+[dream-7b-base] head B=1 L=1024: 1.403ms 729865 tok/s 14906MB
+[dream-7b-base] head B=16 L=1024: 23.009ms 712069 tok/s 19466MB
+[dream-7b-base] head B=1 L=4096: 6.083ms 673352 tok/s 15818MB
+[dream-7b-base] head B=16 L=4096: 91.091ms 719456 tok/s 34058MB
+=== dream-coder deployment 2026-08-27T02:28:05-05:00 ===
+/scratch/11079/antonxue/miniconda3/envs/qwen35/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:  24%|██▍       | 81/339 [00:00<00:00, 809.75it/s]Loading weights:  48%|████▊     | 162/339 [00:00<00:00, 693.85it/s]Loading weights:  71%|███████▏  | 242/339 [00:00<00:00, 736.25it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 821.02it/s]
+[transformers] `use_return_dict` is deprecated! Use `return_dict` instead!
+[dream-coder-7b-base] {'model': 'dream-coder-7b-base', 'revision': None, 'd': 3584, 'vocab': 152064, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'fast', 'flash_sdp': True, 'mem_eff_sdp': True, 'fla': True, 'causal_conv1d': True, 'trunk_module': 'DreamBaseModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dream-coder-7b-base] full B=1 L=256: 24.256ms 10554 tok/s 14678MB
+[dream-coder-7b-base] full B=2 L=256: 24.291ms 21078 tok/s 14754MB
+[dream-coder-7b-base] full B=4 L=256: 28.951ms 35370 tok/s 14907MB
+[dream-coder-7b-base] full B=8 L=256: 54.12ms 37842 tok/s 15210MB
+[dream-coder-7b-base] full B=16 L=256: 105.33ms 38887 tok/s 15818MB
+[dream-coder-7b-base] full B=32 L=256: 204.001ms 40157 tok/s 17034MB
+[dream-coder-7b-base] full B=1 L=512: 22.797ms 22459 tok/s 14754MB
+[dream-coder-7b-base] full B=2 L=512: 29.147ms 35132 tok/s 14907MB
+[dream-coder-7b-base] full B=4 L=512: 54.368ms 37669 tok/s 15210MB
+[dream-coder-7b-base] full B=8 L=512: 105.87ms 38689 tok/s 15818MB
+[dream-coder-7b-base] full B=16 L=512: 205.662ms 39832 tok/s 17034MB
+[dream-coder-7b-base] full B=32 L=512: 408.534ms 40104 tok/s 19466MB
+[dream-coder-7b-base] full B=1 L=1024: 29.88ms 34270 tok/s 14907MB
+[dream-coder-7b-base] full B=2 L=1024: 55.983ms 36583 tok/s 15210MB
+[dream-coder-7b-base] full B=4 L=1024: 109.074ms 37552 tok/s 15818MB
+[dream-coder-7b-base] full B=8 L=1024: 212.266ms 38593 tok/s 17034MB
+[dream-coder-7b-base] full B=16 L=1024: 420.496ms 38964 tok/s 19466MB
+[dream-coder-7b-base] full B=32 L=1024: 842.122ms 38911 tok/s 24330MB
+[dream-coder-7b-base] full B=1 L=2048: 58.542ms 34983 tok/s 15210MB
+[dream-coder-7b-base] full B=2 L=2048: 114.014ms 35925 tok/s 15818MB
+[dream-coder-7b-base] full B=4 L=2048: 221.428ms 36996 tok/s 17034MB
+[dream-coder-7b-base] full B=8 L=2048: 438.816ms 37337 tok/s 19466MB
+[dream-coder-7b-base] full B=16 L=2048: 878.695ms 37292 tok/s 24330MB
+[dream-coder-7b-base] full B=32 L=2048: 1759.76ms 37241 tok/s 34058MB
+[dream-coder-7b-base] full B=1 L=4096: 122.65ms 33396 tok/s 15818MB
+[dream-coder-7b-base] full B=2 L=4096: 239.348ms 34226 tok/s 17034MB
+[dream-coder-7b-base] full B=4 L=4096: 475.948ms 34424 tok/s 19466MB
+[dream-coder-7b-base] full B=8 L=4096: 953.389ms 34370 tok/s 24330MB
+[dream-coder-7b-base] full B=16 L=4096: 1906.675ms 34372 tok/s 34058MB
+[dream-coder-7b-base] full B=32 L=4096: 3835.432ms 34174 tok/s 53515MB
+[dream-coder-7b-base] full B=1 L=8192: 276.5ms 29627 tok/s 17034MB
+[dream-coder-7b-base] full B=2 L=8192: 549.452ms 29819 tok/s 19466MB
+[dream-coder-7b-base] full B=4 L=8192: 1104.809ms 29659 tok/s 24330MB
+[dream-coder-7b-base] full B=8 L=8192: 2214.822ms 29590 tok/s 34058MB
+[dream-coder-7b-base] full B=16 L=8192: 4435.396ms 29551 tok/s 53515MB
+[dream-coder-7b-base] full B=32 L=8192: OOM
+[dream-coder-7b-base] trunk B=1 L=256: 24.48ms 10458 tok/s 14654MB
+[dream-coder-7b-base] trunk B=2 L=256: 24.068ms 21273 tok/s 14699MB
+[dream-coder-7b-base] trunk B=4 L=256: 27.585ms 37122 tok/s 14800MB
+[dream-coder-7b-base] trunk B=8 L=256: 51.166ms 40027 tok/s 14998MB
+[dream-coder-7b-base] trunk B=16 L=256: 99.646ms 41106 tok/s 15382MB
+[dream-coder-7b-base] trunk B=32 L=256: 194.61ms 42094 tok/s 16162MB
+[dream-coder-7b-base] trunk B=1 L=512: 23.685ms 21617 tok/s 14700MB
+[dream-coder-7b-base] trunk B=2 L=512: 27.858ms 36758 tok/s 14800MB
+[dream-coder-7b-base] trunk B=4 L=512: 51.716ms 39601 tok/s 14998MB
+[dream-coder-7b-base] trunk B=8 L=512: 100.721ms 40667 tok/s 15382MB
+[dream-coder-7b-base] trunk B=16 L=512: 196.26ms 41741 tok/s 16162MB
+[dream-coder-7b-base] trunk B=32 L=512: 387.205ms 42314 tok/s 17722MB
+[dream-coder-7b-base] trunk B=1 L=1024: 28.454ms 35988 tok/s 14798MB
+[dream-coder-7b-base] trunk B=2 L=1024: 53.121ms 38553 tok/s 14998MB
+[dream-coder-7b-base] trunk B=4 L=1024: 103.227ms 39680 tok/s 15383MB
+[dream-coder-7b-base] trunk B=8 L=1024: 201.555ms 40644 tok/s 16163MB
+[dream-coder-7b-base] trunk B=16 L=1024: 398.075ms 41158 tok/s 17723MB
+[dream-coder-7b-base] trunk B=32 L=1024: 799.332ms 40994 tok/s 20842MB
+[dream-coder-7b-base] trunk B=1 L=2048: 55.857ms 36665 tok/s 14999MB
+[dream-coder-7b-base] trunk B=2 L=2048: 108.201ms 37855 tok/s 15383MB
+[dream-coder-7b-base] trunk B=4 L=2048: 210.622ms 38894 tok/s 16163MB
+[dream-coder-7b-base] trunk B=8 L=2048: 415.749ms 39408 tok/s 17723MB
+[dream-coder-7b-base] trunk B=16 L=2048: 832.543ms 39359 tok/s 20843MB
+[dream-coder-7b-base] trunk B=32 L=2048: 1671.805ms 39201 tok/s 27083MB
+[dream-coder-7b-base] trunk B=1 L=4096: 116.783ms 35074 tok/s 15384MB
+[dream-coder-7b-base] trunk B=2 L=4096: 227.945ms 35938 tok/s 16164MB
+[dream-coder-7b-base] trunk B=4 L=4096: 451.852ms 36260 tok/s 17724MB
+[dream-coder-7b-base] trunk B=8 L=4096: 906.787ms 36136 tok/s 20844MB
+[dream-coder-7b-base] trunk B=16 L=4096: 1816.215ms 36084 tok/s 27084MB
+[dream-coder-7b-base] trunk B=32 L=4096: 3659.724ms 35815 tok/s 39564MB
+[dream-coder-7b-base] trunk B=1 L=8192: 264.046ms 31025 tok/s 16167MB
+[dream-coder-7b-base] trunk B=2 L=8192: 524.686ms 31226 tok/s 17727MB
+[dream-coder-7b-base] trunk B=4 L=8192: 1059.564ms 30926 tok/s 20847MB
+[dream-coder-7b-base] trunk B=8 L=8192: 2119.28ms 30924 tok/s 27087MB
+[dream-coder-7b-base] trunk B=16 L=8192: 4251.366ms 30831 tok/s 39567MB
+[dream-coder-7b-base] trunk B=32 L=8192: 8399.728ms 31209 tok/s 64527MB
+[dream-coder-7b-base] head B=1 L=256: 0.414ms 618357 tok/s 14678MB
+[dream-coder-7b-base] head B=2 L=256: 0.705ms 726241 tok/s 14754MB
+[dream-coder-7b-base] head B=4 L=256: 1.384ms 739884 tok/s 14907MB
+[dream-coder-7b-base] head B=8 L=256: 3.036ms 674572 tok/s 15210MB
+[dream-coder-7b-base] head B=16 L=256: 6.102ms 671255 tok/s 15818MB
+[dream-coder-7b-base] head B=32 L=256: 11.578ms 707549 tok/s 17034MB
+[dream-coder-7b-base] head B=1 L=512: 0.814ms 628993 tok/s 14754MB
+[dream-coder-7b-base] head B=2 L=512: 1.533ms 667971 tok/s 14907MB
+[dream-coder-7b-base] head B=4 L=512: 3.069ms 667318 tok/s 15210MB
+[dream-coder-7b-base] head B=8 L=512: 6.153ms 665692 tok/s 15818MB
+[dream-coder-7b-base] head B=16 L=512: 11.67ms 701971 tok/s 17034MB
+[dream-coder-7b-base] head B=32 L=512: 23.228ms 705356 tok/s 19466MB
+[dream-coder-7b-base] head B=1 L=1024: 1.563ms 655150 tok/s 14907MB
+[dream-coder-7b-base] head B=2 L=1024: 3.036ms 674572 tok/s 15210MB
+[dream-coder-7b-base] head B=4 L=1024: 6.069ms 674905 tok/s 15818MB
+[dream-coder-7b-base] head B=8 L=1024: 11.668ms 702091 tok/s 17034MB
+[dream-coder-7b-base] head B=16 L=1024: 23.262ms 704325 tok/s 19466MB
+[dream-coder-7b-base] head B=32 L=1024: 46.261ms 708329 tok/s 24330MB
+[dream-coder-7b-base] head B=1 L=2048: 2.999ms 682894 tok/s 15210MB
+[dream-coder-7b-base] head B=2 L=2048: 6.11ms 670376 tok/s 15818MB
+[dream-coder-7b-base] head B=4 L=2048: 11.686ms 701010 tok/s 17034MB
+[dream-coder-7b-base] head B=8 L=2048: 23.258ms 704446 tok/s 19466MB
+[dream-coder-7b-base] head B=16 L=2048: 46.527ms 704279 tok/s 24330MB
+[dream-coder-7b-base] head B=32 L=2048: 90.361ms 725269 tok/s 34058MB
+[dream-coder-7b-base] head B=1 L=4096: 5.855ms 699573 tok/s 15818MB
+[dream-coder-7b-base] head B=2 L=4096: 11.652ms 703055 tok/s 17034MB
+[dream-coder-7b-base] head B=4 L=4096: 23.245ms 704840 tok/s 19466MB
+[dream-coder-7b-base] head B=8 L=4096: 46.277ms 708084 tok/s 24330MB
+[dream-coder-7b-base] head B=16 L=4096: 91.264ms 718093 tok/s 34058MB
+[dream-coder-7b-base] head B=32 L=4096: 177.783ms 737258 tok/s 53514MB
+[dream-coder-7b-base] head B=1 L=8192: 12.008ms 682212 tok/s 17034MB
+[dream-coder-7b-base] head B=2 L=8192: 23.253ms 704597 tok/s 19466MB
+[dream-coder-7b-base] head B=4 L=8192: 46.177ms 709617 tok/s 24330MB
+[dream-coder-7b-base] head B=8 L=8192: 89.0ms 736360 tok/s 34058MB
+[dream-coder-7b-base] head B=16 L=8192: 179.534ms 730068 tok/s 53514MB
+[dream-coder-7b-base] head B=32 L=8192: 358.898ms 730414 tok/s 92426MB
+=== dream-coder naive 2026-08-27T02:42:43-05:00 ===
+/scratch/11079/antonxue/miniconda3/envs/qwen35/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 12236.18it/s]
+[transformers] `use_return_dict` is deprecated! Use `return_dict` instead!
+[dream-coder-7b-base] {'model': 'dream-coder-7b-base', 'revision': None, 'd': 3584, 'vocab': 152064, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': False, 'trunk_module': 'DreamBaseModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dream-coder-7b-base] full B=1 L=1024: 48.631ms 21057 tok/s 15008MB
+[dream-coder-7b-base] full B=16 L=1024: 681.334ms 24047 tok/s 21099MB
+[dream-coder-7b-base] full B=1 L=4096: 384.492ms 10653 tok/s 19252MB
+[dream-coder-7b-base] full B=16 L=4096: 6020.024ms 10886 tok/s 88975MB
+[dream-coder-7b-base] trunk B=1 L=1024: 47.286ms 21655 tok/s 15008MB
+[dream-coder-7b-base] trunk B=16 L=1024: 659.017ms 24861 tok/s 21099MB
+[dream-coder-7b-base] trunk B=1 L=4096: 379.844ms 10783 tok/s 19252MB
+[dream-coder-7b-base] trunk B=16 L=4096: 5880.532ms 11145 tok/s 88974MB
+[dream-coder-7b-base] head B=1 L=1024: 1.374ms 745269 tok/s 14906MB
+[dream-coder-7b-base] head B=16 L=1024: 23.256ms 704506 tok/s 19466MB
+[dream-coder-7b-base] head B=1 L=4096: 6.097ms 671806 tok/s 15818MB
+[dream-coder-7b-base] head B=16 L=4096: 88.467ms 740796 tok/s 34058MB
+=== llada deployment 2026-08-27T02:47:11-05:00 ===
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:  11%|█         | 32/291 [00:00<00:00, 308.57it/s]Loading weights:  27%|██▋       | 79/291 [00:00<00:00, 396.48it/s]Loading weights:  41%|████      | 120/291 [00:00<00:00, 396.74it/s]Loading weights:  55%|█████▍    | 160/291 [00:00<00:00, 362.18it/s]Loading weights:  77%|███████▋  | 223/291 [00:00<00:00, 451.87it/s]Loading weights: 100%|██████████| 291/291 [00:00<00:00, 542.60it/s]
+[llada-8b-base] {'model': 'llada-8b-base', 'revision': None, 'd': 4096, 'vocab': 126464, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'fast', 'flash_sdp': True, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': True, 'trunk_module': None, 'embeds_kw': None, 'warmup': 5}
+[transformers] `use_return_dict` is deprecated! Use `return_dict` instead!
+[llada-8b-base] full B=1 L=256: 28.086ms 9115 tok/s 15389MB
+[llada-8b-base] full B=2 L=256: 28.011ms 18279 tok/s 15453MB
+[llada-8b-base] full B=4 L=256: 32.843ms 31179 tok/s 15581MB
+[llada-8b-base] full B=8 L=256: 62.824ms 32599 tok/s 15835MB
+[llada-8b-base] full B=16 L=256: 123.823ms 33079 tok/s 16345MB
+[llada-8b-base] full B=32 L=256: 241.207ms 33963 tok/s 17365MB
+[llada-8b-base] full B=1 L=512: 27.614ms 18541 tok/s 15453MB
+[llada-8b-base] full B=2 L=512: 33.27ms 30778 tok/s 15581MB
+[llada-8b-base] full B=4 L=512: 63.824ms 32088 tok/s 15835MB
+[llada-8b-base] full B=8 L=512: 125.138ms 32732 tok/s 16345MB
+[llada-8b-base] full B=16 L=512: 243.858ms 33593 tok/s 17365MB
+[llada-8b-base] full B=32 L=512: 488.452ms 33543 tok/s 19405MB
+[llada-8b-base] full B=1 L=1024: 33.767ms 30325 tok/s 15581MB
+[llada-8b-base] full B=2 L=1024: 65.475ms 31279 tok/s 15835MB
+[llada-8b-base] full B=4 L=1024: 128.448ms 31888 tok/s 16345MB
+[llada-8b-base] full B=8 L=1024: 251.63ms 32556 tok/s 17365MB
+[llada-8b-base] full B=16 L=1024: 503.655ms 32530 tok/s 19405MB
+[llada-8b-base] full B=32 L=1024: 1003.735ms 32646 tok/s 23485MB
+[llada-8b-base] full B=1 L=2048: 68.528ms 29886 tok/s 15835MB
+[llada-8b-base] full B=2 L=2048: 134.838ms 30377 tok/s 16345MB
+[llada-8b-base] full B=4 L=2048: 264.103ms 31018 tok/s 17365MB
+[llada-8b-base] full B=8 L=2048: 528.871ms 30979 tok/s 19405MB
+[llada-8b-base] full B=16 L=2048: 1050.056ms 31206 tok/s 23485MB
+[llada-8b-base] full B=32 L=2048: 2100.88ms 31195 tok/s 31645MB
+[llada-8b-base] full B=1 L=4096: 146.422ms 27974 tok/s 16345MB
+[llada-8b-base] full B=2 L=4096: 287.977ms 28447 tok/s 17365MB
+[llada-8b-base] full B=4 L=4096: 576.791ms 28405 tok/s 19405MB
+[llada-8b-base] full B=8 L=4096: 1149.115ms 28516 tok/s 23485MB
+[llada-8b-base] full B=16 L=4096: 2307.685ms 28399 tok/s 31645MB
+[llada-8b-base] full B=32 L=4096: 4623.863ms 28347 tok/s 47966MB
+[llada-8b-base] full B=1 L=8192: 334.957ms 24457 tok/s 17369MB
+[llada-8b-base] full B=2 L=8192: 669.999ms 24454 tok/s 19409MB
+[llada-8b-base] full B=4 L=8192: 1339.304ms 24466 tok/s 23489MB
+[llada-8b-base] full B=8 L=8192: 2680.217ms 24452 tok/s 31649MB
+[llada-8b-base] full B=16 L=8192: 5374.086ms 24390 tok/s 47970MB

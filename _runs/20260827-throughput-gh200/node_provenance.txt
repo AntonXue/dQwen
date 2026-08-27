@@ -1,0 +1,19 @@
+== node provenance 2026-08-27T00:58:57-05:00 ==
+c608-072.vista.tacc.utexas.edu
+     JOBID  PARTITION            NAME       TIME    TIME_LEFT NODELIST
+    943292         gh        idv02467   14:14:53      3:45:07 c608-072
+name, memory.total [MiB], driver_version, clocks.current.sm [MHz], clocks.current.memory [MHz]
+NVIDIA GH200 120GB, 97871 MiB, 590.48.01, 345 MHz, 2619 MHz
+    Max Clocks
+        Graphics                                       : 1980 MHz
+        SM                                             : 1980 MHz
+        Memory                                         : 2619 MHz
+        Video                                          : 1545 MHz
+    Max Customer Boost Clocks
+        Graphics                                       : 1980 MHz
+
+== node provenance (resume) 2026-08-27T03:00:17-05:00 ==
+c639-072.vista.tacc.utexas.edu
+    945525         gh    1:08:21   1-22:51:39 c639-072
+name, memory.total [MiB], driver_version, clocks.current.sm [MHz], clocks.current.memory [MHz]
+NVIDIA GH200 120GB, 97871 MiB, 590.48.01, 345 MHz, 2619 MHz

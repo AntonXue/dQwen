@@ -1,0 +1,65 @@
+=== 2B fla+math 2026-08-27T01:20:30-05:00 ===
+Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights: 100%|██████████| 320/320 [00:00<00:00, 11878.10it/s]
+[dqwen3.5-2b-base-v3] {'model': 'dqwen3.5-2b-base-v3', 'revision': 'step50000-swa', 'd': 2048, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': True, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-2b-base-v3] full B=1 L=1024: 41.919ms 24428 tok/s 4115MB
+[dqwen3.5-2b-base-v3] full B=16 L=1024: 167.437ms 97852 tok/s 11574MB
+[dqwen3.5-2b-base-v3] full B=1 L=4096: 66.128ms 61940 tok/s 5593MB
+[dqwen3.5-2b-base-v3] full B=16 L=4096: 965.282ms 67893 tok/s 35431MB
+[dqwen3.5-2b-base-v3] trunk B=1 L=1024: 39.545ms 25895 tok/s 3752MB
+[dqwen3.5-2b-base-v3] trunk B=16 L=1024: 142.945ms 114618 tok/s 5705MB
+[dqwen3.5-2b-base-v3] trunk B=1 L=4096: 60.547ms 67650 tok/s 5006MB
+[dqwen3.5-2b-base-v3] trunk B=16 L=4096: 849.177ms 77176 tok/s 25782MB
+[dqwen3.5-2b-base-v3] head B=1 L=1024: 1.31ms 781679 tok/s 4111MB
+[dqwen3.5-2b-base-v3] head B=16 L=1024: 22.582ms 725534 tok/s 11445MB
+[dqwen3.5-2b-base-v3] head B=1 L=4096: 5.66ms 723675 tok/s 5577MB
+[dqwen3.5-2b-base-v3] head B=16 L=4096: 90.346ms 725389 tok/s 34917MB
+=== 2B fallback+flash 2026-08-27T01:22:32-05:00 ===
+[transformers] The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights: 100%|██████████| 320/320 [00:00<00:00, 13439.24it/s]
+[dqwen3.5-2b-base-v3] {'model': 'dqwen3.5-2b-base-v3', 'revision': 'step50000-swa', 'd': 2048, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'fast', 'flash_sdp': True, 'mem_eff_sdp': True, 'fla': True, 'causal_conv1d': False, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-2b-base-v3] full B=1 L=1024: 39.51ms 25917 tok/s 4115MB
+[dqwen3.5-2b-base-v3] full B=16 L=1024: 177.347ms 92384 tok/s 11574MB
+[dqwen3.5-2b-base-v3] full B=1 L=4096: 50.223ms 81556 tok/s 5593MB
+[dqwen3.5-2b-base-v3] full B=16 L=4096: 722.183ms 90747 tok/s 35430MB
+[dqwen3.5-2b-base-v3] trunk B=1 L=1024: 40.228ms 25455 tok/s 3696MB
+[dqwen3.5-2b-base-v3] trunk B=16 L=1024: 155.762ms 105186 tok/s 4815MB
+[dqwen3.5-2b-base-v3] trunk B=1 L=4096: 45.467ms 90087 tok/s 3920MB
+[dqwen3.5-2b-base-v3] trunk B=16 L=4096: 635.51ms 103123 tok/s 8395MB
+[dqwen3.5-2b-base-v3] head B=1 L=1024: 1.318ms 776935 tok/s 4111MB
+[dqwen3.5-2b-base-v3] head B=16 L=1024: 22.705ms 721603 tok/s 11445MB
+[dqwen3.5-2b-base-v3] head B=1 L=4096: 5.695ms 719227 tok/s 5577MB
+[dqwen3.5-2b-base-v3] head B=16 L=4096: 89.153ms 735096 tok/s 34917MB
+=== 2B naive 2026-08-27T01:23:37-05:00 ===
+[transformers] The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights: 100%|██████████| 320/320 [00:00<00:00, 12156.52it/s]
+[dqwen3.5-2b-base-v3] {'model': 'dqwen3.5-2b-base-v3', 'revision': 'step50000-swa', 'd': 2048, 'vocab': 248320, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': False, 'trunk_module': 'Qwen3_5TextModel', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3.5-2b-base-v3] full B=1 L=1024: 42.762ms 23946 tok/s 4115MB
+[dqwen3.5-2b-base-v3] full B=16 L=1024: 205.269ms 79817 tok/s 11574MB
+[dqwen3.5-2b-base-v3] full B=1 L=4096: 74.62ms 54891 tok/s 5593MB
+[dqwen3.5-2b-base-v3] full B=16 L=4096: 1114.431ms 58807 tok/s 35430MB
+[dqwen3.5-2b-base-v3] trunk B=1 L=1024: 41.117ms 24905 tok/s 3752MB
+[dqwen3.5-2b-base-v3] trunk B=16 L=1024: 181.122ms 90458 tok/s 5705MB
+[dqwen3.5-2b-base-v3] trunk B=1 L=4096: 68.86ms 59483 tok/s 5006MB
+[dqwen3.5-2b-base-v3] trunk B=16 L=4096: 999.915ms 65542 tok/s 25782MB
+[dqwen3.5-2b-base-v3] head B=1 L=1024: 1.303ms 785879 tok/s 4111MB
+[dqwen3.5-2b-base-v3] head B=16 L=1024: 22.584ms 725469 tok/s 11445MB
+[dqwen3.5-2b-base-v3] head B=1 L=4096: 5.746ms 712844 tok/s 5577MB
+[dqwen3.5-2b-base-v3] head B=16 L=4096: 89.097ms 735558 tok/s 34917MB
+=== control naive 2026-08-27T01:25:04-05:00 ===
+Loading weights:   0%|          | 0/310 [00:00<?, ?it/s]Loading weights: 100%|██████████| 310/310 [00:00<00:00, 11906.14it/s]
+[dqwen3-1.7b-base-v3] {'model': 'dqwen3-1.7b-base-v3', 'revision': 'step50000-swa', 'd': 2048, 'vocab': 151936, 'device': 'NVIDIA GH200 120GB', 'torch': '2.10.0+cu129', 'sdpa_arm': 'math', 'flash_sdp': False, 'mem_eff_sdp': False, 'fla': True, 'causal_conv1d': False, 'trunk_module': 'Qwen3Model', 'embeds_kw': 'inputs_embeds', 'warmup': 5}
+[dqwen3-1.7b-base-v3] full B=1 L=1024: 33.497ms 30570 tok/s 3619MB
+[dqwen3-1.7b-base-v3] full B=16 L=1024: 340.197ms 48160 tok/s 8255MB
+[dqwen3-1.7b-base-v3] full B=1 L=4096: 204.777ms 20002 tok/s 5864MB
+[dqwen3-1.7b-base-v3] full B=16 L=4096: 3725.553ms 17591 tok/s 44044MB
+[dqwen3-1.7b-base-v3] trunk B=1 L=1024: 31.472ms 32537 tok/s 3519MB
+[dqwen3-1.7b-base-v3] trunk B=16 L=1024: 312.319ms 52459 tok/s 6579MB
+[dqwen3-1.7b-base-v3] trunk B=1 L=4096: 196.63ms 20831 tok/s 5860MB
+[dqwen3-1.7b-base-v3] trunk B=16 L=4096: 3062.991ms 21396 tok/s 44021MB
+[dqwen3-1.7b-base-v3] head B=1 L=1024: 0.816ms 1254902 tok/s 3615MB
+[dqwen3-1.7b-base-v3] head B=16 L=1024: 14.002ms 1170119 tok/s 8126MB
+[dqwen3-1.7b-base-v3] head B=1 L=4096: 3.465ms 1182107 tok/s 4518MB
+[dqwen3-1.7b-base-v3] head B=16 L=4096: 55.407ms 1182811 tok/s 22562MB
+=== tier1 cross arms done 2026-08-27T01:28:35-05:00 ===
+
+[exited with code 0]

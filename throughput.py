@@ -122,6 +122,11 @@ def main():
     lengths = [int(x) for x in a.lengths.split(",")]
 
     m = models.load(a.model, revision=REVISIONS[a.model])
+    if a.sdpa == "math":
+        # LLaDA's remote __init__ re-enables flash sdp (modeling_llada.py:1056)
+        torch.backends.cuda.enable_flash_sdp(False)
+        torch.backends.cuda.enable_mem_efficient_sdp(False)
+        torch.backends.cuda.enable_math_sdp(True)
     dev = m.device
     cfg = m.model.config
     d = getattr(cfg, "hidden_size", None) or cfg.text_config.hidden_size
@@ -130,7 +135,9 @@ def main():
                         if "trunk" in modes else (None, None))
     head_w = m.model.get_output_embeddings().weight
     import importlib.util
+    import socket
     prov = dict(model=a.model, revision=REVISIONS[a.model], d=d, vocab=vocab,
+                node=socket.gethostname().split(".")[0],
                 device=torch.cuda.get_device_name(dev),
                 torch=torch.__version__, sdpa_arm=a.sdpa,
                 flash_sdp=torch.backends.cuda.flash_sdp_enabled(),
