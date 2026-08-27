@@ -227,6 +227,19 @@ MBPP = {
 }
 
 
+# MBPP499 (Anton 2026-08-26): MBPP test set minus task_id 493, whose rendered
+# prompt is 4,290 chars (2x the runner-up; two ~1.9k-char hexagon-coordinate
+# test asserts) and starves the 2048-token canvas after the 3-shot prefix.
+# Everything else byte-identical to MBPP; 499 docs.
+
+
+def _drop_task_493(dataset):
+    return dataset.filter(lambda r: r["task_id"] != 493)
+
+
+MBPP499 = {**MBPP, "task": "mbpp499", "process_docs": _drop_task_493}
+
+
 # ---- mbpp-plus
 # MBPP+ — EvalPlus's MBPP-sanitized set (378 problems, edited prompts, ~34x
 # denser tests) under OUR MBPP protocol: the same [BEGIN]/[DONE] scaffold
@@ -292,6 +305,19 @@ MBPP_FENCE = {
     "repeats": 1,
     "metadata": {"version": 1.0},
 }
+
+
+# MBPP499 (Anton 2026-08-26): MBPP test set minus task_id 493, whose rendered
+# prompt is 4,290 chars (2x the runner-up; two ~1.9k-char hexagon-coordinate
+# test asserts) and starves the 2048-token canvas after the 3-shot prefix.
+# Everything else byte-identical to MBPP; 499 docs.
+
+
+def _drop_task_493(dataset):
+    return dataset.filter(lambda r: r["task_id"] != 493)
+
+
+MBPP499 = {**MBPP, "task": "mbpp499", "process_docs": _drop_task_493}
 
 
 # ---- mbpp-plus-fence
@@ -607,6 +633,7 @@ TASKS = {
     "humaneval": HUMANEVAL,
     "humaneval_plus_sound": HUMANEVAL_PLUS,
     "mbpp": MBPP,
+    "mbpp499": MBPP499,
     "mbpp_plus_full": MBPP_PLUS,
     "mbpp_ticks": MBPP_FENCE,
     "mbpp_plus_ticks": MBPP_PLUS_FENCE,

@@ -14,7 +14,7 @@ family, a <family>.py with a build() plus one BUILDERS line).
 
 import torch
 
-from . import coda, dlm1b, dqwen, dream, llada
+from . import coda, dlm1b, dqwen, dream, llada, qwen3sym
 from .adapter import ModelAdapter, ModelSpec
 
 MODELS: dict[str, ModelSpec] = {
@@ -61,6 +61,26 @@ MODELS: dict[str, ModelSpec] = {
         151660, 151643,
         notes="cross-repo: weights+modeling code live in ~/foo/DLM1B, tokenizer "
               "sourced from Qwen/Qwen3-0.6B (checkpoint dir ships no tokenizer)"),
+    # DLM1B qwen3_sym conversion arms (Vista scratch; 2026-08-26 campaign).
+    # Matched total compute: bdlm ck-10000 vs the two staged arms at ck-5000.
+    # Each checkpoint runs through ITS OWN attn_mode (adapter-enforced; toy
+    # Exp 4: an SDLM ckpt through free attention collapses).
+    "qwen3sym-bdlm10k": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_bdlm10k_20260826_122624",
+        "qwen3sym", 151660, 151643,
+        notes="BDLM direct arm: bidir from stock Qwen3-1.7B, 10k steps"),
+    "qwen3sym-cdlm5k": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_20260826_122649",
+        "qwen3sym", 151660, 151643,
+        notes="CDLM shared stage: causal attn + frozen-aug masking, 5k steps"),
+    "qwen3sym-cdlm-bdlm5k": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_free5k_20260826_123637",
+        "qwen3sym", 151660, 151643,
+        notes="CDLM->BDLM arm ('free'): bidir from cdlm ck-5000, 5k steps"),
+    "qwen3sym-cdlm-sdlm5k": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_sym5k_20260826_123637",
+        "qwen3sym", 151660, 151643,
+        notes="CDLM->SDLM arm ('sym'): symmetrized from cdlm ck-5000, 5k steps"),
 }
 
 BUILDERS = {
@@ -69,6 +89,7 @@ BUILDERS = {
     "coda": coda.build,
     "dqwen": dqwen.build,
     "dlm1b": dlm1b.build,
+    "qwen3sym": qwen3sym.build,
 }
 assert {spec.family for spec in MODELS.values()} <= set(BUILDERS), \
     "every family named in the MODELS catalog needs a builder here"

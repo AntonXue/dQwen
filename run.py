@@ -222,6 +222,7 @@ BENCH = {
     "humaneval":  dict(task="humaneval",    gen=1024, shots=0, shards=1, unsafe=True),
     "humaneval-plus": dict(task="humaneval_plus_sound", gen=1024, shots=0, shards=1, unsafe=True),
     "mbpp":       dict(task="mbpp",         gen=1024, shots=3, shards=2, unsafe=True),
+    "mbpp499":    dict(task="mbpp499",      gen=1024, shots=3, shards=2, unsafe=True),
     "mbpp-plus":  dict(task="mbpp_plus_full", gen=1024, shots=3, shards=2, unsafe=True),
     "mbpp-fence": dict(task="mbpp_ticks",   gen=1024, shots=3, shards=2, unsafe=True),
     "mbpp-plus-fence": dict(task="mbpp_plus_ticks", gen=1024, shots=3, shards=2, unsafe=True),
@@ -233,6 +234,16 @@ BENCH = {
     "math500":    dict(task="minerva_math500", gen=1024, shots=4, shards=2, unsafe=False),
     "mmlu":       dict(task="mmlu",         gen=None, shots=5, shards=1, unsafe=False),
 }
+
+# DQEVAL_GEN: env override of every generative benchmark's canvas — a speed
+# knob for pilot rows (e.g. the qwen3sym three-way at gen 256). NOT the house
+# protocol: overridden cells carry a __gN tag component so they can never
+# collide with (or be mistaken for) standard gen-1024 rows.
+_GEN_OVERRIDE = os.environ.get("DQEVAL_GEN")
+if _GEN_OVERRIDE:
+    for _b in BENCH.values():
+        if _b["gen"] is not None:
+            _b["gen"] = int(_GEN_OVERRIDE)
 
 TAU_GRID = (0.5, 0.6, 0.7, 0.8, 0.9, 0.95)    # adaptive-commit thresholds
 BLOCK_STATIC = (32, 16, 8, 4, 2)              # steps per 32-block
@@ -249,8 +260,9 @@ class Cell:
 
     def tag(self) -> str:
         k, n = self.shard
+        g = f"__g{_GEN_OVERRIDE}" if _GEN_OVERRIDE else ""
         return (f"{self.model.replace('/', '_')}@{self.revision or 'main'}"
-                f"__{self.benchmark}__{self.decode}__s{k}of{n}")
+                f"__{self.benchmark}__{self.decode}{g}__s{k}of{n}")
 
 
 def parse_decode(decode: str, gen_length: int) -> dict:
