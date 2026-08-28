@@ -77,6 +77,18 @@ MODELS: dict[str, ModelSpec] = {
         "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_free5k_20260826_123637",
         "qwen3sym", 151660, 151643,
         notes="CDLM->BDLM arm ('free'): bidir from cdlm ck-5000, 5k steps"),
+    "qwen3sym-mix01": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_mix01_20260827_121855",
+        "qwen3sym", 151660, 151643,
+        notes="lambda-sweep arm: mix lambda=0.1 from cdlm ck-5000, 5k steps"),
+    "qwen3sym-mix05": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_mix05_20260827_121951",
+        "qwen3sym", 151660, 151643,
+        notes="lambda-sweep arm: mix lambda=0.5 from cdlm ck-5000, 5k steps"),
+    "qwen3sym-mix09": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_mix09_20260827_122037",
+        "qwen3sym", 151660, 151643,
+        notes="lambda-sweep arm: mix lambda=0.9 from cdlm ck-5000, 5k steps"),
     "qwen3sym-cdlm-sdlm5k": ModelSpec(
         "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_sym5k_20260826_123637",
         "qwen3sym", 151660, 151643,
