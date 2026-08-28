@@ -107,6 +107,15 @@ MODELS: dict[str, ModelSpec] = {
     "qwen3sym06b-sym10k": ModelSpec(
         "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_sym10k_20260828_021121",
         "qwen3sym", 151660, 151643, notes="0.6B lambda=1 sym arm, 10k"),
+    "qwen3sym06b-llbidir10k": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_llbidir10k_20260828_094429",
+        "qwen3sym", 151660, 151643, notes="0.6B lastlayer arm: causal trunk + free-bidir last layer readout, 10k"),
+    "qwen3sym06b-llsym10k": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_llsym10k_20260828_094429",
+        "qwen3sym", 151660, 151643, notes="0.6B lastlayer arm: causal trunk + sym last layer readout, 10k"),
+    "qwen3sym06b-llmix0510k": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_llmix0510k_20260828_094429",
+        "qwen3sym", 151660, 151643, notes="0.6B lastlayer arm: causal trunk + mix-0.5 last layer readout, 10k"),
     "qwen3sym-cdlm-sdlm5k": ModelSpec(
         "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_sym5k_20260826_123637",
         "qwen3sym", 151660, 151643,
