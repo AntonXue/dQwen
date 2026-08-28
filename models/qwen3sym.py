@@ -65,7 +65,7 @@ def build(spec: ModelSpec, revision: Optional[str] = None,
     model = SymQwen3.from_pretrained(ckpt_dir, attn_implementation="sdpa",
                                      dtype=dtype)
     mode = getattr(model.config, "attn_mode", None)
-    if mode not in ("bidir", "causal", "sym", "mix"):
+    if mode not in ("bidir", "causal", "sym", "mix", "lastlayer"):
         raise ValueError(
             f"{ckpt_dir}: config carries no valid attn_mode ({mode!r}) -- "
             "refusing to guess the forward; eval must run the training mode")
