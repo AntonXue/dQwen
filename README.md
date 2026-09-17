@@ -28,15 +28,11 @@ bash setup_env.sh        # lm_eval 0.4.8 and the graders; patches lm_eval for tr
 ## Generate
 
 ```python
-from transformers import AutoModel, AutoTokenizer
+import torch
+from transformers import AutoModel
 
-repo = "UT-IFML/dQwen3.5-9B-Base"
-tok = AutoTokenizer.from_pretrained(repo)
-model = AutoModel.from_pretrained(repo, trust_remote_code=True).cuda().eval()
-
-ids = tok("def fibonacci(n):", return_tensors="pt").input_ids.cuda()
-out = model.generate(ids, tok, gen_length=512, stop_strings=["\ndef "])
-print(out.text)
+model = AutoModel.from_pretrained("UT-IFML/dQwen3.5-9B-Base", trust_remote_code=True, dtype=torch.bfloat16).cuda().eval()
+print(model.generate("def fibonacci(n):", gen_length=512, stop_strings=["\ndef "]).text)
 ```
 
 `generate` is the block-diffusion sampler from `models/samplers.py`, shipped inside each

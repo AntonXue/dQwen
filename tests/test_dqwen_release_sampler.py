@@ -45,7 +45,7 @@ def patch_from_release(adapter):
     spec = importlib.util.spec_from_file_location("dqwen_release_" + fn[:-3], Path(__file__).resolve().parent.parent / "models" / fn)
     mod = importlib.util.module_from_spec(spec); sys.modules[spec.name] = mod; spec.loader.exec_module(mod)
     src = getattr(mod, type(adapter.model).__name__)
-    for k in ("generate", "_dg_top_k", "_dg_top_p", "_dg_assert_finite_rope", "_NEG_INF"):
+    for k in ("generate", "_dg_top_k", "_dg_top_p", "_dg_assert_finite_rope", "_dg_tokenizer", "_NEG_INF"):
         setattr(type(adapter.model), k, src.__dict__[k])
     return fn
 
@@ -64,6 +64,15 @@ def run(name, from_hub):
                   and torch.equal(h.commit_step, m.commit_step) and h.text == m.text)
             print(f"  {'PASS' if ok else 'FAIL'}  {case:26s} fwd={h.n_forward:<3} {m.text[:38]!r}")
             if not ok: fails.append((case, p))
+    # string prompt: identical tokens to the tensor path, with and without a tokenizer
+    for p in PROMPTS:
+        ids = adapter.encode(p)
+        ref = adapter.model.generate(ids, adapter.tokenizer, gen_length=G, block_length=32, tau=None)
+        a = adapter.model.generate(p, adapter.tokenizer, gen_length=G, block_length=32, tau=None)
+        b = adapter.model.generate(p, gen_length=G, block_length=32, tau=None)      # lazy tokenizer
+        ok = torch.equal(ref.gen_ids.cpu(), a.gen_ids.cpu()) and torch.equal(ref.gen_ids.cpu(), b.gen_ids.cpu()) and ref.text == a.text == b.text and b.text is not None
+        print(f"  {'PASS' if ok else 'FAIL'}  {'str prompt == ids':26s} fwd={ref.n_forward:<3} {b.text[:38]!r}")
+        if not ok: fails.append(("str prompt", p))
     return fails
 
 def main():

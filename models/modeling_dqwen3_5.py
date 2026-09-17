@@ -111,10 +111,22 @@ class DiffuQwen35(Qwen3_5ForCausalLM):
                                "materialised without rotary init (transformers>=5 meta-device trap)")
         self._dg_rope_checked = True
 
+    def _dg_tokenizer(self):
+        # Loaded once from the repo the weights came from; None if this model was
+        # built from a bare config and no repo name is known.
+        if not hasattr(self, "_dg_tok"):
+            name = getattr(self, "name_or_path", "") or getattr(self.config, "_name_or_path", "")
+            if name:
+                from transformers import AutoTokenizer
+                self._dg_tok = AutoTokenizer.from_pretrained(name)
+            else:
+                self._dg_tok = None
+        return self._dg_tok
+
     @torch.no_grad()
     def generate(
         self,
-        input_ids: torch.LongTensor,
+        prompt,
         tokenizer=None,
         *,
         gen_length: int = 512,
@@ -128,7 +140,11 @@ class DiffuQwen35(Qwen3_5ForCausalLM):
         stop_strings=None,
         seed: Optional[int] = None,
     ) -> DiffusionGenerateOutput:
-        """Masked-diffusion decoding of ONE prompt (`input_ids` is [1, L]).
+        """Masked-diffusion decoding of ONE prompt: a string, or its ids as [1, L].
+
+        `tokenizer` may be omitted: it is loaded once from the repo this model came
+        from (`name_or_path`) and cached, so `model.generate("def f(x):").text` is
+        the whole call. Pass one explicitly to control it.
 
         The answer canvas of `gen_length` MASK tokens is appended to the prompt
         and revealed left to right in blocks of `block_length` (default None:
@@ -156,6 +172,14 @@ class DiffuQwen35(Qwen3_5ForCausalLM):
         "low_confidence" (default), "entropy", "topk_margin", "random",
         "sequential".
         """
+        if tokenizer is None:
+            tokenizer = self._dg_tokenizer()
+        if isinstance(prompt, str):
+            if tokenizer is None:
+                raise ValueError("a string prompt needs a tokenizer; pass one, or load the model from its repo")
+            input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(self.device)
+        else:
+            input_ids = prompt
         if input_ids.dim() != 2 or input_ids.size(0) != 1:
             raise ValueError(f"batch size one only; got {tuple(input_ids.shape)}")
         if block_length is None:
