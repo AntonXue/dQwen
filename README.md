@@ -1,185 +1,67 @@
 # dQwen
 
-Reproducible evaluation for diffusion language models — the **dQwen3.5 / dQwen3**
-family alongside **LLaDA**, **Dream / Dream-Coder** and **CoDA**, all in one
-environment. (SDAR was ported too, then pruned 2026-08-12 -- the paper treats
-it as a boundary family, prose-only; port evidence lives in `_claude/`.)
+Evaluation suite for the dQwen3.5 technical report, plus the modeling code the
+released checkpoints run on. Every number in the paper, ours and the comparators',
+comes from one entrypoint, one environment, and one decoding protocol.
 
-One flat entrypoint: `run.py`. One cell = (model, revision, decode, benchmark,
-shard) = one provenance-stamped JSONL. Cells are independent, idempotent, and
-safe to requeue — that is the whole system.
+**Paper:** dQwen3.5: Hybrid-Attention Diffusion Language Models (arXiv link to follow)
+**Models:** https://huggingface.co/UT-IFML/dQwen3.5-9B-Base (family table and quickstart)
 
-One question, answered the same way for every model: *what does it score
-under the house protocol?* One decode engine (validated token-for-token
-against LLaDA's published sampler), one benchmark spec file, every family
-measured identically -- published numbers are cited as context, not mixed in.
+| model | trunk | total | Hugging Face |
+|---|---|---|---|
+| dQwen3.5-9B-Base | 6.92B | 8.95B | [UT-IFML/dQwen3.5-9B-Base](https://huggingface.co/UT-IFML/dQwen3.5-9B-Base) |
+| dQwen3.5-4B-Base | 3.57B | 4.21B | [UT-IFML/dQwen3.5-4B-Base](https://huggingface.co/UT-IFML/dQwen3.5-4B-Base) |
+| dQwen3.5-2B-Base | 1.37B | 1.88B | [UT-IFML/dQwen3.5-2B-Base](https://huggingface.co/UT-IFML/dQwen3.5-2B-Base) |
+| dQwen3.5-0.8B-Base | 0.50B | 0.75B | [UT-IFML/dQwen3.5-0.8B-Base](https://huggingface.co/UT-IFML/dQwen3.5-0.8B-Base) |
+| dQwen3-1.7B-Base (full-attention control) | 1.41B | 1.72B | [UT-IFML/dQwen3-1.7B-Base](https://huggingface.co/UT-IFML/dQwen3-1.7B-Base) |
 
-## Running an eval cell
+## Install
 
-```bash
-PY=/ssd1/ayx98/miniconda3/envs/qwen35/bin/python     # the only env that works
-CUDA_VISIBLE_DEVICES=1 $PY run.py MODEL REVISION DECODE BENCHMARK [K/N]
-```
-
-Examples:
+Pinned environment: `torch 2.7.1+cu128`, `transformers 5.13.0`, `flash-linear-attention 0.5.1`.
+The Gated DeltaNet layers run Triton kernels, so a CUDA GPU is required.
 
 ```bash
-$PY run.py dqwen3.5-2b-base-v3 step50000-swa block32-tau0.8 gsm8k 2/8
-$PY run.py dqwen3.5-9b-base-v3 main block32-static-s8 humaneval
-$PY run.py Qwen/Qwen3.5-2B - ar gsm8k          # AR counterpart cell
-$PY run.py --list                               # models, benchmarks, schemes
+pip install -r requirements.txt
+bash setup_env.sh        # lm_eval 0.4.8 and the graders; patches lm_eval for transformers 5
 ```
 
-SLURM form: `$PY run.py manifest.jsonl $SLURM_ARRAY_TASK_ID`, where the
-manifest is a JSONL of cells (`{"model": ..., "revision": ..., "decode": ...,
-"benchmark": ..., "shard": [k, n]}` per line). One array task per line;
-requeue failures freely — completed cells exit in seconds.
-
-### The five cell fields
-
-| field | values |
-|---|---|
-| MODEL | dqeval registry name (`--list`); for `ar` cells, a bare HF id |
-| REVISION | HF revision (`step25000-swa`, `step50000-swa`); `main` or `-` for default |
-| DECODE | `ar` · `mc-nelbo` (mmlu only) · `block32-static-sK` · `standard-static-sK` · `block32-tauT` · `standard-tauT` |
-| BENCHMARK | `humaneval` · `humaneval-plus` · `mbpp` · `mbpp-plus` · `mbpp-fence` · `mbpp-plus-fence` · `gsm8k` · `math500` · `mmlu` |
-| K/N | stripe shard: docs `[k::n]`, `k` in `0..n-1`. Omit for the whole set |
-
-Notes that prevent wrong numbers:
-
-- **Shards are stripes, never chunks** — benchmark difficulty drifts with
-  position, so "first N" is a biased sample. Never quote a partial shard's
-  aggregate; merge all N first.
-- **Shard every DLM generation cell to ~250 docs** (suggested counts in
-  `--list`: gsm8k 6, math500 2, mbpp 2, mbpp-plus 2; humaneval and mmlu run
-  whole -- mmlu's mc-nelbo generates nothing). **AR cells run UNSHARDED**:
-  they are fast (HFLM bs=16), and batch composition differs between
-  striped and whole runs (measured 0.23pp on gsm8k) -- unsharded keeps
-  AR numbers composition-independent.
-- `mbpp` vs `mbpp-fence` are different prompts (different generations).
-  The "+" columns are ordinary cells: `humaneval-plus` shares humaneval's
-  prompts (denser tests), `mbpp-plus` runs EvalPlus's 378 sanitized
-  problems under our scaffold via `benchmark_specs.py` (mbpp-plus section) (stock
-  lm-eval `mbpp_plus` never executes the plus suite; the file carries the
-  published-number comparability caveat).
-- Few-shot counts, gen lengths, greedy decoding, bs=1, and the math-only
-  attention backend are all fixed by the cell — nothing to remember.
-
-### Outputs
-
-`_runs/grid_v1/<benchmark>/<model>@<revision>__<benchmark>__<decode>__sKofN.jsonl`
-
-One file per cell, four record kinds:
-
-- `meta` — the cell, launch time, resolved HF repo/revision, full decode
-  config, doc-set fingerprint, library versions, wall clock
-- `sample` — per generated doc: raw text, truncated text, n_forward
-- `lm_eval_sample` — per doc: the graded metrics
-- `summary` — aggregate results; **its presence is the completeness
-  sentinel** (reruns skip finished cells by checking it)
-
-`_runs/README.md` is the directory contract: `_runs` holds raw artifacts
-only (stores `grid_v1/` + `regrades/`, plus stamped launch dirs); coalescing
-is `python summarize.py [filter]`, read-only.
-
-### GPU etiquette on this box
-
-Check `nvidia-smi` first; GPUs 0/3 are usually someone's training run.
-A 2B HumanEval cell takes ~20 s/doc-shard; 9B GSM8K shards run hours.
-
-## One section per benchmark
-
-`benchmark_specs.py` is the entire evaluation protocol: one section per
-benchmark (HUMANEVAL, MBPP_PLUS, GSM8K, MMLU, ...), each a complete task
-config — prompt template, frozen few-shot examples, stops, metrics — plus
-the code-grading knobs, with lm-eval as the execution engine underneath.
-`tests/task_freeze_gate.py` holds the stock-derived specs byte-identical
-to the pinned lm-eval (doc fingerprints + rendered prompts); run it
-whenever the specs change or the pin is bumped.
-
-## Cluster deployment (TACC Vista, GH200 -- one GPU per node)
-
-The qgh QOS caps jobs per user (20 running / 40 submitted, array TASKS
-each count), so campaigns launch TILED: `plan_tiles.py` packs cells into
-~3.2h node-lanes from measured GH200 rates, 16 lanes per 8h job. Prep on
-a node with network, submit from a LOGIN node (sbatch is login-only):
-
-```bash
-bash setup_env.sh                        # harness layer into the cluster qwen35 env
-                                         #   (default never touches the hand-built torch)
-python run.py --prewarm manifest.jsonl   # models + datasets + code_eval -> $HF_HOME
-python manifests/plan_tiles.py manifest.jsonl   # -> manifest.tiles.json + packing report
-bash slurm_launch.sh manifest.tiles.json # LOGIN node: sbatch every job in the plan
-```
-
-`slurm_launch.sh` is the whole SLURM surface: it submits the plan's jobs
-AND is the job script they run (payload mode). Compute nodes run fully
-offline (it sets `HF_*_OFFLINE=1`). Requeue freely -- completed cells
-exit in seconds, so a lane killed at the wall loses only its in-flight
-cell: re-run `slurm_launch.sh` on the same plan and it fast-skips to
-where it died. `run.py --pending manifest.jsonl` shows what remains;
-single-cell debugging is a direct `run.py` invocation on an idev node.
-Concurrent reruns of one cell cannot corrupt output (unique tmp + atomic
-rename). Coalesce stripes afterwards with `python summarize.py --merge`
-(verifies each union is complete and disjoint before printing a merged
-number).
-
-NOTE on hardware: publication cells should all come from ONE hardware
-generation. Local-workstation cells are PROBE; restamp on the cluster.
-
-## Design in one paragraph
-
-A portable sampler needs exactly one thing from a model: logits for a canvas.
-Everything else — mask ids, compat shims, whether the family needs an eval-side logit
-shift, chat formatting — is the **adapter's** problem. Adapters expose **two** logit
-surfaces: `raw_logits()` (what the model returns; native samplers use it, since they
-carry their own shift) and `logits()` (position-aligned; portable samplers use it).
-Each family's published decode recipe is a **preset** in one `DecodeConfig` space, not
-a separate code path — a claim that the parity tests (`tests/test_llada_sampler.py`, `tests/test_nelbo_vs_llada.py`) is there to keep honest.
+## Generate
 
 ```python
-from models import load
-from models.samplers import DecodeConfig, generate
+from transformers import AutoModel, AutoTokenizer
 
-m = load("llada-8b-base")                      # compat shims applied automatically
-out = generate(m, m.encode("def add(a, b):\n    "),
-               DecodeConfig(gen_length=32, block_length=32,
-                            steps_per_block=32))
+repo = "UT-IFML/dQwen3.5-9B-Base"
+tok = AutoTokenizer.from_pretrained(repo)
+model = AutoModel.from_pretrained(repo, trust_remote_code=True).cuda().eval()
 
-ours = load("dqwen3.5-2b-base-v3", revision="step50000-swa")   # checkpoints are HF revisions
+ids = tok("def fibonacci(n):", return_tensors="pt").input_ids.cuda()
+out = model.generate(ids, tok, gen_length=512, stop_strings=["\ndef "])
+print(out.text)
 ```
 
-## Why one environment is possible
+`generate` is the block-diffusion sampler from `models/samplers.py`, shipped inside each
+checkpoint's modeling file. `models/modeling_dqwen3_5.py` and `models/modeling_dqwen3.py`
+are the canonical copies; `tests/test_dqwen_release_sampler.py` holds them token-identical
+to the harness engine.
 
-dQwen3.5 requires transformers >= 5.x; every comparator pins 4.4x–4.5x, and neither
-side loads on the other's version. So the comparators are **ported** — ~90 lines of
-compat shims total (the compat sections of `models/*.py`).
+## Evaluate
 
-Those shims are **archaeology, not invention**: each restores a behaviour transformers
-4.x actually had, verified by reading it out of the native environment rather than
-guessed. With torch held fixed, the ported models are **bitwise identical** to their
-native environment (max|d| = 0.00e+00). All observed numerical drift is attributable
-to torch 2.5.1 → 2.7.1, none to transformers — which is why `torch` is pinned exactly
-in `requirements.txt` as part of the reproducibility contract
-(`setup_env.sh` finishes the install with two lm-eval source patches).
+One cell is (model, revision, decode, benchmark, shard):
 
-Two of the three comparators had a **silent** failure mode where the model loads,
-forwards, raises nothing, and returns noise. `models/adapter.py::assert_finite_rope()`
-exists so it can never be silent again.
+```bash
+python run.py dqwen3.5-9b-base main standard-static-s1024 humaneval   # the paper's protocol
+python run.py dqwen3.5-9b-base main block32-tau0.9 gsm8k 2/8          # parallel decoding, shard 2 of 8
+python run.py Qwen/Qwen3.5-9B - ar gsm8k                               # an AR counterpart
+python run.py --list                                                   # models, decodes, benchmarks
+```
 
-## Reproducibility notes
+Decodes: `standard-static-sK` (full canvas, K steps), `block32-static-sK`, `standard-tauT` and
+`block32-tauT` (confidence threshold T), `ar`, and `mc-nelbo` (MMLU). Benchmarks: `humaneval`,
+`humaneval-plus`, `mbpp`, `mbpp-plus`, `gsm8k`, `math500`, `mmlu`. Shards are stripes, never
+chunks; merge every shard before quoting a number. `benchmark_specs.py` is the complete
+protocol, `summarize.py` aggregates finished cells, and `manifests/` holds the cell lists
+behind each table in the paper.
 
-`UPSTREAM_PINS` in `models/adapter.py` pins upstream commits and — importantly —
-records **which implementation produced which published table**. This is not
-bookkeeping pedantry: SDAR (an adjacent decode family the paper discusses in
-prose) ships four disagreeing sampler implementations with three different
-confidence thresholds, and its published numbers come from a fifth path
-(LMDeploy) whose greedy setting their own reference script cannot express.
-When published numbers have that kind of provenance, the pins ledger is what
-keeps our citations attributable.
+## License
 
-## Status
-
-All four families run through the grid (`run.py`); the runner passed its
-deploy gates 2026-08-12 (shard-merge lossless, template fidelity, 10/10
-spot check). See `_claude/` for the running log and full evidence.
+Apache-2.0.

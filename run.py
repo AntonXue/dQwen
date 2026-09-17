@@ -495,7 +495,10 @@ def main(argv):
         return 0
     if argv[0] == "--list":
         print("models (registry; AR cells take a bare HF id instead):")
+        from models import ALIASES
         for m in MODELS:
+            if m in ALIASES:
+                continue
             print(f"  {m}")
         print("\nbenchmarks:")
         for b, cfg in BENCH.items():

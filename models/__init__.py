@@ -1,16 +1,24 @@
 """The model package: catalog, contract, decode, and the five families.
 
     from models import load, MODELS
-    adapter = load("dqwen3.5-2b-base-v3", revision="step50000-swa")
+    adapter = load("dqwen3.5-9b-base", revision="step25000-swa")
 
 Everything model-shaped lives here and the package is CLOSED: family files
 import only their siblings (.adapter for the contract + loading helpers,
 .samplers for decode types); nothing in it imports upward. adapter.py and
 samplers.py deliberately do not import each other.
 
+The catalog below is the PUBLIC one: the five released dQwen checkpoints under
+their plain ids (the historical `-v3` ids are kept as aliases so existing
+manifests and result filenames keep working) and the four comparators.
+Development entries (private repos, local checkpoint runs) live in
+registry_dev.py and are merged in only under DQEVAL_DEV=1.
+
 To register a model: add a ModelSpec entry to MODELS below (and, for a new
 family, a <family>.py with a build() plus one BUILDERS line).
 """
+
+import os
 
 import torch
 
@@ -18,27 +26,19 @@ from . import coda, dlm1b, dqwen, dream, llada, qwen3sym
 from .adapter import ModelAdapter, ModelSpec
 
 MODELS: dict[str, ModelSpec] = {
-    # ours (private org)
-    # step checkpoints are HF revisions: load(..., revision="step30000-swa")
-    "dqwen3.5-0.8b-base": ModelSpec("EER6b/dQwen3.5-0.8B-Base", "dqwen", 248061, 248044),
-    "dqwen3.5-2b-base":   ModelSpec("EER6b/dQwen3.5-2B-Base",   "dqwen", 248061, 248044),
-    "dqwen3.5-4b-base":   ModelSpec("EER6b/dQwen3.5-4B-Base",   "dqwen", 248061, 248044),
-    "dqwen3.5-9b-base":   ModelSpec("EER6b/dQwen3.5-9B-Base",   "dqwen", 248061, 248044),
     # v3-MIXTURE production runs. Same recipe as the entries above (LR ladder, seed,
     # schedule) -- the mixture is the only deliberate change, so `-base` vs `-base-v3`
     # at a matched step count is the mixture A/B. 0.8B main == step50000-swa, which is
     # budget-matched to the released v1 (also 50k); step25000-swa is the half-budget leg.
-    "dqwen3.5-0.8b-base-v3": ModelSpec("UT-IFML/dQwen3.5-0.8B-Base", "dqwen", 248061, 248044),
-    "dqwen3.5-2b-base-v3":   ModelSpec("UT-IFML/dQwen3.5-2B-Base",   "dqwen", 248061, 248044),
-    "dqwen3.5-4b-base-v3":   ModelSpec("UT-IFML/dQwen3.5-4B-Base",   "dqwen", 248061, 248044),
-    "dqwen3.5-9b-base-v3":   ModelSpec("UT-IFML/dQwen3.5-9B-Base",   "dqwen", 248061, 248044),
-    "dqwen3-0.6b-base":   ModelSpec("EER6b/dQwen3-0.6B-Base",   "dqwen", 151660, 151643),
+    "dqwen3.5-0.8b-base": ModelSpec("UT-IFML/dQwen3.5-0.8B-Base", "dqwen", 248061, 248044),
+    "dqwen3.5-2b-base":   ModelSpec("UT-IFML/dQwen3.5-2B-Base",   "dqwen", 248061, 248044),
+    "dqwen3.5-4b-base":   ModelSpec("UT-IFML/dQwen3.5-4B-Base",   "dqwen", 248061, 248044),
+    "dqwen3.5-9b-base":   ModelSpec("UT-IFML/dQwen3.5-9B-Base",   "dqwen", 248061, 248044),
     # v3-recipe backbone ablation: Qwen3-1.7B (FULL-attention) under the same recipe as the
     # hybrid 2B -- argparse.json differs in 2 of 22 keys. Also the same backbone as
     # Salesforce/CoDA-v0-Base, so this is the recipe-controlled CoDA comparison.
     # Qwen3 ids (151660/151643), NOT Qwen3.5's -- the publish script's own latent bug.
-    "dqwen3-1.7b-base-v3": ModelSpec("UT-IFML/dQwen3-1.7B-Base", "dqwen", 151660, 151643),
-    "dqwen3-1.7b-base":   ModelSpec("EER6b/dQwen3-1.7B-Base",   "dqwen", 151660, 151643),
+    "dqwen3-1.7b-base": ModelSpec("UT-IFML/dQwen3-1.7B-Base", "dqwen", 151660, 151643),
     # comparators
     "llada-8b-base":     ModelSpec("GSAI-ML/LLaDA-8B-Base",     "llada", 126336),
     "dream-7b-base":     ModelSpec("Dream-org/Dream-v0-Base-7B",     "dream", 151666),
@@ -69,58 +69,18 @@ MODELS: dict[str, ModelSpec] = {
         "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_bdlm10k_20260826_122624",
         "qwen3sym", 151660, 151643,
         notes="BDLM direct arm: bidir from stock Qwen3-1.7B, 10k steps"),
-    "qwen3sym-cdlm5k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_20260826_122649",
-        "qwen3sym", 151660, 151643,
-        notes="CDLM shared stage: causal attn + frozen-aug masking, 5k steps"),
-    "qwen3sym-cdlm-bdlm5k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_free5k_20260826_123637",
-        "qwen3sym", 151660, 151643,
-        notes="CDLM->BDLM arm ('free'): bidir from cdlm ck-5000, 5k steps"),
-    "qwen3sym-mix01": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_mix01_20260827_121855",
-        "qwen3sym", 151660, 151643,
-        notes="lambda-sweep arm: mix lambda=0.1 from cdlm ck-5000, 5k steps"),
-    "qwen3sym-mix05": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_mix05_20260827_121951",
-        "qwen3sym", 151660, 151643,
-        notes="lambda-sweep arm: mix lambda=0.5 from cdlm ck-5000, 5k steps"),
-    "qwen3sym-mix09": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_mix09_20260827_122037",
-        "qwen3sym", 151660, 151643,
-        notes="lambda-sweep arm: mix lambda=0.9 from cdlm ck-5000, 5k steps"),
-    "qwen3sym06b-cdlm5k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_20260828_021121",
-        "qwen3sym", 151660, 151643, notes="0.6B CDLM stage: causal + frozen-aug, 5k"),
-    "qwen3sym06b-free10k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_free10k_20260828_021121",
-        "qwen3sym", 151660, 151643, notes="0.6B lambda=0 arm: bidir from 0.6B cdlm ck-5000, 10k"),
-    "qwen3sym06b-mix0110k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_mix0110k_20260828_021121",
-        "qwen3sym", 151660, 151643, notes="0.6B mix lambda=0.1 arm, 10k"),
-    "qwen3sym06b-mix0510k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_mix0510k_20260828_021121",
-        "qwen3sym", 151660, 151643, notes="0.6B mix lambda=0.5 arm, 10k"),
-    "qwen3sym06b-mix0910k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_mix0910k_20260828_021121",
-        "qwen3sym", 151660, 151643, notes="0.6B mix lambda=0.9 arm, 10k"),
-    "qwen3sym06b-sym10k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_sym10k_20260828_021121",
-        "qwen3sym", 151660, 151643, notes="0.6B lambda=1 sym arm, 10k"),
-    "qwen3sym06b-llbidir10k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_llbidir10k_20260828_094429",
-        "qwen3sym", 151660, 151643, notes="0.6B lastlayer arm: causal trunk + free-bidir last layer readout, 10k"),
-    "qwen3sym06b-llsym10k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_llsym10k_20260828_094429",
-        "qwen3sym", 151660, 151643, notes="0.6B lastlayer arm: causal trunk + sym last layer readout, 10k"),
-    "qwen3sym06b-llmix0510k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym06b_cdlm5k_llmix0510k_20260828_094429",
-        "qwen3sym", 151660, 151643, notes="0.6B lastlayer arm: causal trunk + mix-0.5 last layer readout, 10k"),
-    "qwen3sym-cdlm-sdlm5k": ModelSpec(
-        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_sym5k_20260826_123637",
-        "qwen3sym", 151660, 151643,
-        notes="CDLM->SDLM arm ('sym'): symmetrized from cdlm ck-5000, 5k steps"),
 }
+
+# Historical ids for the released checkpoints; same specs. Hidden from --list.
+ALIASES = {f"{k}-v3": k for k in ("dqwen3.5-0.8b-base", "dqwen3.5-2b-base",
+                                    "dqwen3.5-4b-base", "dqwen3.5-9b-base",
+                                    "dqwen3-1.7b-base")}
+for _alias, _name in ALIASES.items():
+    MODELS[_alias] = MODELS[_name]
+
+if os.environ.get("DQEVAL_DEV"):
+    from . import registry_dev
+    MODELS.update(registry_dev.MODELS)
 
 BUILDERS = {
     "llada": llada.build,
