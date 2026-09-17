@@ -67,4 +67,22 @@ MODELS: dict[str, ModelSpec] = {
         "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_cdlm5k_sym5k_20260826_123637",
         "qwen3sym", 151660, 151643,
         notes="CDLM->SDLM arm ('sym'): symmetrized from cdlm ck-5000, 5k steps"),
+    # DLM1B project (sibling repo ~/foo/DLM1B): AR->DLM adaptation of Qwen3-0.6B via
+    # on-the-fly-tokenized OWT continued pretraining. `repo` is the local training-run
+    # dir (NOT an HF hub id); `revision` selects the milestone checkpoint subdirectory
+    # (380/760/1530/3050/5340/7600, or "main" for the highest step present). Same ids
+    # as dqwen3-0.6b-base (same Qwen3-0.6B backbone, same MASK/PAD tokens).
+    "dlm1b-owt-baseline-1b": ModelSpec(
+        "/home/ayx98/foo/DLM1B/_runs/20260814-044535-owt-baseline-1b", "dlm1b",
+        151660, 151643,
+        notes="cross-repo: weights+modeling code live in ~/foo/DLM1B, tokenizer "
+              "sourced from Qwen/Qwen3-0.6B (checkpoint dir ships no tokenizer)"),
+    # DLM1B qwen3_sym conversion arms (Vista scratch; 2026-08-26 campaign).
+    # Matched total compute: bdlm ck-10000 vs the two staged arms at ck-5000.
+    # Each checkpoint runs through ITS OWN attn_mode (adapter-enforced; toy
+    # Exp 4: an SDLM ckpt through free attention collapses).
+    "qwen3sym-bdlm10k": ModelSpec(
+        "/scratch/11079/antonxue/dlm1b_runs/qwen3sym_bdlm10k_20260826_122624",
+        "qwen3sym", 151660, 151643,
+        notes="BDLM direct arm: bidir from stock Qwen3-1.7B, 10k steps"),
 }
