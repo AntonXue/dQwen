@@ -51,9 +51,15 @@ def main():
             print(f"  {rid:28s} rendered {len(card.splitlines())} lines; diff vs served main: {sum(l.startswith(('+','-')) for l in d)} changed lines")
         if a.push:
             assert api.repo_info(rid).id == rid, f"{rid} is a redirect"
-            ops = [CommitOperationAdd(path_in_repo="README.md", path_or_fileobj=card.encode()),
-                   CommitOperationAdd(path_in_repo=modeling, path_or_fileobj=str(REPO / "models" / modeling))]
+            local_mod = (REPO / "models" / modeling).read_bytes()
             for ref in REFS:
+                # skip a ref that already serves exactly this card and modeling file (re-runnable)
+                served = [open(hf_hub_download(rid, f, revision=ref, force_download=True), "rb").read() for f in ("README.md", modeling)]
+                if served == [card.encode(), local_mod]:
+                    print(f"  {rid:28s} {ref:14s} up to date"); continue
+                # CommitOperationAdd objects are single-use: build them fresh for every commit
+                ops = [CommitOperationAdd(path_in_repo="README.md", path_or_fileobj=card.encode()),
+                       CommitOperationAdd(path_in_repo=modeling, path_or_fileobj=local_mod)]
                 c = api.create_commit(repo_id=rid, operations=ops, revision=ref,
                                       commit_message="Model card: family landing page with a two-statement quickstart; generate() accepts a string prompt and loads its own tokenizer")
                 print(f"  {rid:28s} {ref:14s} {c.oid[:12]}")
