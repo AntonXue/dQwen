@@ -4,14 +4,14 @@ base_model: {parent}
 pipeline_tag: text-generation
 library_name: transformers
 inference: false
-tags: [diffusion-language-model, masked-diffusion, {arch_tag}, {family_tag}]
+tags: [diffusion-language-model, masked-diffusion, {arch_tag}, {family_tag}, arxiv:2609.20751]
 ---
 
 # {name}
 
 {description} This is a base model, with no instruction tuning.
 
-Paper: *dQwen3.5: Hybrid-Attention Diffusion Language Models*. Code: https://github.com/AntonXue/dQwen
+Paper: [dQwen3.5: Hybrid-Attention Diffusion Language Models](https://arxiv.org/abs/2609.20751). Code: https://github.com/AntonXue/dQwen
 
 ## The dQwen3.5 family
 
@@ -42,7 +42,7 @@ paper is `revision="step25000-swa"`.
 @article{{xue2026dqwen,
   title   = {{dQwen3.5: Hybrid-Attention Diffusion Language Models}},
   author  = {{Xue, Anton and Rout, Litu and Akella, Aditya and Klivans, Adam and Sanghavi, Sujay and Shakkottai, Sanjay}},
-  journal = {{arXiv preprint arXiv:XXXX.XXXXX}},
+  journal = {{arXiv preprint arXiv:2609.20751}},
   year    = {{2026}}
 }}
 ```

@@ -4,7 +4,7 @@ Evaluation suite for the dQwen3.5 technical report, plus the modeling code the
 released checkpoints run on. Every number in the paper, ours and the comparators',
 comes from one entrypoint, one environment, and one decoding protocol.
 
-**Paper:** dQwen3.5: Hybrid-Attention Diffusion Language Models (arXiv link to follow)
+**Paper:** [dQwen3.5: Hybrid-Attention Diffusion Language Models](https://arxiv.org/abs/2609.20751)  
 **Models:** https://huggingface.co/UT-IFML/dQwen3.5-9B-Base (family table and quickstart)
 
 | model | trunk | total | Hugging Face |
@@ -57,6 +57,17 @@ Decodes: `standard-static-sK` (full canvas, K steps), `block32-static-sK`, `stan
 chunks; merge every shard before quoting a number. `benchmark_specs.py` is the complete
 protocol, `summarize.py` aggregates finished cells, and `manifests/` holds the cell lists
 behind each table in the paper.
+
+## Citation
+
+```bibtex
+@article{xue2026dqwen,
+  title   = {dQwen3.5: Hybrid-Attention Diffusion Language Models},
+  author  = {Xue, Anton and Rout, Litu and Akella, Aditya and Klivans, Adam and Sanghavi, Sujay and Shakkottai, Sanjay},
+  journal = {arXiv preprint arXiv:2609.20751},
+  year    = {2026}
+}
+```
 
 ## License
 
