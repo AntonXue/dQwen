@@ -11,7 +11,8 @@ tags: [diffusion-language-model, masked-diffusion, {arch_tag}, {family_tag}, arx
 
 {description} This is a base model, with no instruction tuning.
 
-Paper: [dQwen3.5: Hybrid-Attention Diffusion Language Models](https://arxiv.org/abs/2609.20751). Code: https://github.com/AntonXue/dQwen
+**Paper:** [dQwen3.5: Hybrid-Attention Diffusion Language Models](https://arxiv.org/abs/2609.20751)  
+**Code:** https://github.com/AntonXue/dQwen
 
 ## The dQwen3.5 family
 

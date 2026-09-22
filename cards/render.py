@@ -61,7 +61,7 @@ def main():
                 ops = [CommitOperationAdd(path_in_repo="README.md", path_or_fileobj=card.encode()),
                        CommitOperationAdd(path_in_repo=modeling, path_or_fileobj=local_mod)]
                 c = api.create_commit(repo_id=rid, operations=ops, revision=ref,
-                                      commit_message="Model card: family landing page with a two-statement quickstart; generate() accepts a string prompt and loads its own tokenizer")
+                                      commit_message="Model card: paper and code links on their own lines")
                 print(f"  {rid:28s} {ref:14s} {c.oid[:12]}")
     return 0
 if __name__ == "__main__":
