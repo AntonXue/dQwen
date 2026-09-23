@@ -61,7 +61,7 @@ def main():
                 ops = [CommitOperationAdd(path_in_repo="README.md", path_or_fileobj=card.encode()),
                        CommitOperationAdd(path_in_repo=modeling, path_or_fileobj=local_mod)]
                 c = api.create_commit(repo_id=rid, operations=ops, revision=ref,
-                                      commit_message="Model card: quickstart names its stop_strings (the paper's HumanEval stops)")
+                                      commit_message="Model card: quickstart stop_strings are a harness-ready starting set")
                 print(f"  {rid:28s} {ref:14s} {c.oid[:12]}")
     return 0
 if __name__ == "__main__":
