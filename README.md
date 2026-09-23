@@ -32,7 +32,8 @@ import torch
 from transformers import AutoModel
 
 model = AutoModel.from_pretrained("UT-IFML/dQwen3.5-9B-Base", trust_remote_code=True, dtype=torch.bfloat16).cuda().eval()
-print(model.generate("def fibonacci(n):", gen_length=512, stop_strings=["\ndef "]).text)
+stop_strings = ["\ndef", "\nclass", "\nif", "\nprint", "\n#"]  # the paper's HumanEval stops; use ["\n\n"] for Q&A prompts
+print(model.generate("def fibonacci(n):", gen_length=512, stop_strings=stop_strings).text)
 ```
 
 `generate` is the block-diffusion sampler from `models/samplers.py`, shipped inside each

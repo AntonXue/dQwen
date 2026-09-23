@@ -29,13 +29,16 @@ import torch
 from transformers import AutoModel
 
 model = AutoModel.from_pretrained("UT-IFML/{name}", trust_remote_code=True, dtype=torch.bfloat16).cuda().eval()
-print(model.generate("def fibonacci(n):", gen_length=512, stop_strings=["\ndef "]).text)
+stop_strings = ["\ndef", "\nclass", "\nif", "\nprint", "\n#"]  # the paper's HumanEval stops; use ["\n\n"] for Q&A prompts
+print(model.generate("def fibonacci(n):", gen_length=512, stop_strings=stop_strings).text)
 ```
 
 `generate` decodes the whole canvas at once, committing positions above a confidence
 threshold (`tau=0.9`); pass `block_length=32` for left-to-right block decoding, or
-`tau=None, steps_per_block=k` for a fixed budget. The 50B-token checkpoint from the
-paper is `revision="step25000-swa"`.
+`tau=None, steps_per_block=k` for a fixed budget. A base DLM does not emit EOS, so
+`stop_strings` is what ends the completion; under block decoding it also skips the
+forwards for the rest of the canvas. The 50B-token checkpoint from the paper is
+`revision="step25000-swa"`.
 
 ## Citation
 
