@@ -30,7 +30,7 @@ from transformers import AutoModel
 
 model = AutoModel.from_pretrained("UT-IFML/{name}", trust_remote_code=True, dtype=torch.bfloat16).cuda().eval()
 stop_strings = ["\n\n", "\ndef", "\nclass", "<|endoftext|>"]
-print(model.generate("def fibonacci(n):", gen_length=512, stop_strings=stop_strings).text)
+print(model.generate("def fibonacci(n):\n", gen_length=512, stop_strings=stop_strings).text)
 ```
 
 `generate` decodes the whole canvas at once, committing positions above a confidence
