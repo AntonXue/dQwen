@@ -1,5 +1,7 @@
 """Diffusion LM from Qwen3; the BOS/logit shift preserves the AR next-token bias."""
 
+import warnings
+
 import torch
 import torch.nn.functional as F
 from dataclasses import dataclass
@@ -9,6 +11,7 @@ from transformers.modeling_outputs import ModelOutput
 
 
 # Qwen3 tokenizer ids
+_UNSET = object()  # sentinel for generate's deprecated keyword aliases
 MASK_TOKEN_ID = 151660  # <|fim_middle|>
 PAD_TOKEN_ID = 151643   # <|endoftext|>
 BOS_TOKEN_ID = 151652   # <|vision_start|>
@@ -127,14 +130,17 @@ class DiffuQwen3(Qwen3ForCausalLM):
         *,
         gen_length: int = 512,
         block_length: Optional[int] = None,
-        tau: Optional[float] = 0.9,
+        conf_threshold: Optional[float] = 0.9,
         steps_per_block: Optional[int] = None,
+        remask_order: str = "low_confidence",
+        conf_source: str = "top1",
         temperature: float = 0.0,
         top_k: int = 0,
         top_p: float = 1.0,
-        order: str = "low_confidence",
-        stop_strings=None,
         seed: Optional[int] = None,
+        stop_strings=None,
+        tau=_UNSET,
+        order=_UNSET,
     ) -> DiffusionGenerateOutput:
         """Masked-diffusion decoding of ONE prompt: a string, or its ids as [1, L].
 
@@ -142,32 +148,60 @@ class DiffuQwen3(Qwen3ForCausalLM):
         from (`name_or_path`) and cached, so `model.generate("def f(x):").text` is
         the whole call. Pass one explicitly to control it.
 
-        The answer canvas of `gen_length` MASK tokens is appended to the prompt
-        and revealed left to right in blocks of `block_length` (default None:
-        one block, the whole canvas -- the report's protocol, evaluated there at
-        gen_length=1024). Within a block, each forward proposes every masked
-        position and commits some of them:
+        Canvas. The answer canvas of `gen_length` MASK tokens is appended to the
+        prompt and revealed left to right in blocks of `block_length` (default
+        None: one block, the whole canvas -- the report's protocol, evaluated there
+        at gen_length=1024). Within a block, each forward proposes every masked
+        position and commits some of them.
 
-          tau=<float>   commit every position whose confidence exceeds tau, and
-                        at least one per forward, so it is never slower than one
-                        token per step (default 0.9: accuracy at or above one
-                        token per step at roughly 5x fewer forwards on the whole
-                        canvas, 10-30x with block_length=32, whose per-block
-                        early stop also ends short completions sooner).
-          tau=None      commit a fixed number per forward so the block finishes
-                        in exactly `steps_per_block` forwards (default: one
-                        token per step). Aggressive budgets collapse where the
+        Commit -- how many positions per forward:
+
+          conf_threshold=<float>   commit every position whose confidence exceeds
+                        it, and at least one per forward, so it is never slower
+                        than one token per step (default 0.9, the paper's tau:
+                        accuracy at or above one token per step at roughly 5x
+                        fewer forwards on the whole canvas, 10-30x with
+                        block_length=32, whose per-block early stop also ends
+                        short completions sooner).
+          conf_threshold=None      commit a fixed number per forward so the block
+                        finishes in exactly `steps_per_block` forwards (default:
+                        one token per step). Aggressive budgets collapse where the
                         threshold does not -- e.g. 4 tokens per step roughly
                         halves HumanEval -- so lower `steps_per_block` with care.
 
-        `temperature=0.0` is argmax; otherwise sample with top-k/top-p, with
-        confidence always read from the unfiltered distribution. `stop_strings`
-        (needs `tokenizer`) end decoding once a completed block's text contains
-        one; a masked DLM does not emit EOS, so this is what keeps a completion
-        from running to the full canvas. `order` ranks candidates:
-        "low_confidence" (default), "entropy", "topk_margin", "random",
-        "sequential".
+        Which positions. `conf_source` picks a position's confidence: "top1"
+        (default) = its top-1 probability, read before the draw, so which
+        positions commit never depends on the sampled token (Fast-dLLM's rule);
+        "sampled" = the sampled token's probability (LLaDA's code; the default
+        before 2026-11-11, which at temperature > 0 defers any position that drew
+        a less likely token and so skews samples toward each position's top
+        token). The two are identical under greedy. Confidence is always read
+        from the unfiltered distribution. `remask_order` ranks the candidates
+        when fewer than the required number clear the threshold, and under a
+        fixed budget: "low_confidence" (default; keep the least confident
+        masked), "entropy", "topk_margin", "random", "sequential". The threshold
+        itself always tests confidence.
+
+        Which tokens. `temperature=0.0` is argmax; otherwise sample with
+        top-k/top-p; `seed` seeds torch's global RNG.
+
+        Stopping. `stop_strings` (needs `tokenizer`) end decoding once a completed
+        block's text contains one; a masked DLM does not emit EOS, so this is what
+        keeps a completion from running to the full canvas.
+
+        Deprecated: `tau` (now `conf_threshold`) and `order` (now `remask_order`)
+        still work, with a FutureWarning.
         """
+        if tau is not _UNSET:
+            if conf_threshold != 0.9 and conf_threshold != tau:
+                raise ValueError("pass conf_threshold only; tau is its deprecated name")
+            warnings.warn("generate(tau=...) is deprecated; use conf_threshold=...", FutureWarning, stacklevel=3)  # 3: past torch.no_grad's wrapper
+            conf_threshold = tau
+        if order is not _UNSET:
+            if remask_order != "low_confidence" and remask_order != order:
+                raise ValueError("pass remask_order only; order is its deprecated name")
+            warnings.warn("generate(order=...) is deprecated; use remask_order=...", FutureWarning, stacklevel=3)  # 3: past torch.no_grad's wrapper
+            remask_order = order
         if tokenizer is None:
             tokenizer = self._dg_tokenizer()
         if isinstance(prompt, str):
@@ -188,6 +222,8 @@ class DiffuQwen3(Qwen3ForCausalLM):
             raise ValueError("steps_per_block must be positive")
         if temperature < 0.0 or not 0.0 < top_p <= 1.0:
             raise ValueError("temperature must be >= 0 and top_p in (0, 1]")
+        if conf_source not in ("top1", "sampled"):
+            raise ValueError(f"conf_source must be 'top1' or 'sampled', got {conf_source!r}")
         if stop_strings and tokenizer is None:
             raise ValueError("stop_strings needs a tokenizer")
         self._dg_assert_finite_rope()
@@ -231,27 +267,30 @@ class DiffuQwen3(Qwen3ForCausalLM):
                 else:
                     filtered = self._dg_top_p(self._dg_top_k(logits.float() / temperature, top_k), top_p)
                     x0 = torch.multinomial(F.softmax(filtered, dim=-1), num_samples=1).squeeze(-1)
-                conf = conf_all.gather(-1, x0.unsqueeze(-1)).squeeze(-1)
+                if conf_source == "top1":
+                    conf = conf_all.max(dim=-1).values
+                else:
+                    conf = conf_all.gather(-1, x0.unsqueeze(-1)).squeeze(-1)
 
-                if order == "low_confidence":
+                if remask_order == "low_confidence":
                     score = conf
-                elif order == "random":
+                elif remask_order == "random":
                     score = torch.rand_like(conf)
-                elif order == "sequential":
+                elif remask_order == "sequential":
                     score = torch.arange(conf.numel(), 0, -1, device=dev, dtype=conf.dtype)
-                elif order in ("entropy", "topk_margin"):
+                elif remask_order in ("entropy", "topk_margin"):
                     p = F.softmax(logits.float(), dim=-1)
-                    if order == "entropy":
+                    if remask_order == "entropy":
                         score = (p * p.clamp_min(1e-12).log()).sum(-1)
                     else:
                         top2 = p.topk(2, dim=-1).values
                         score = top2[:, 0] - top2[:, 1]
                 else:
-                    raise ValueError(f"unknown order {order!r}")
+                    raise ValueError(f"unknown remask_order {remask_order!r}")
                 score = score.masked_fill(~masked, NEG_INF)
 
-                if tau is not None:
-                    take = (conf > tau) & masked
+                if conf_threshold is not None:
+                    take = (conf > conf_threshold) & masked
                     if int(take.sum()) < int(schedule[step]):
                         take = torch.zeros_like(masked)
                         take[score.topk(int(schedule[step])).indices] = True

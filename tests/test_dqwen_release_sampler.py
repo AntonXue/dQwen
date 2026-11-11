@@ -23,19 +23,34 @@ PROMPTS = ["def add(a, b):\n    ", "The capital of France is"]
 FIVE = ["dqwen3.5-0.8b-base-v3", "dqwen3.5-2b-base-v3", "dqwen3.5-4b-base-v3",
         "dqwen3.5-9b-base-v3", "dqwen3-1.7b-base-v3"]
 G = 64
+# Harness DecodeConfig names on the left, release generate names on the right (confidence_threshold -> conf_threshold,
+# order -> remask_order; conf_source is shared). Both defaults are conf_source="top1". "greedy, sampled" crosses the
+# rules at the paper's greedy tau decode (they must be identical under greedy); "deprecated tau/order" calls the old names.
 CASES = {  # name: (harness DecodeConfig kwargs, generate kwargs)
     "block32 greedy 1tok/step": (dict(block_length=32, steps_per_block=32),
-                                 dict(block_length=32, tau=None)),
+                                 dict(block_length=32, conf_threshold=None)),
     "block32 tau0.9":           (dict(block_length=32, steps_per_block=32, commit="dynamic", confidence_threshold=0.9),
-                                 dict(block_length=32, tau=0.9)),
+                                 dict(block_length=32, conf_threshold=0.9)),
+    "block32 tau0.9 greedy, sampled": (dict(block_length=32, steps_per_block=32, commit="dynamic", confidence_threshold=0.9),
+                                 dict(block_length=32, conf_threshold=0.9, conf_source="sampled")),
+    "deprecated tau/order":     (dict(block_length=32, steps_per_block=32, commit="dynamic", confidence_threshold=0.8, order="random", seed=0),
+                                 dict(block_length=32, tau=0.8, order="random", seed=0)),
     "free-canvas tau0.9":       (dict(block_length=G, steps_per_block=G, commit="dynamic", confidence_threshold=0.9),
-                                 dict(block_length=None, tau=0.9)),
+                                 dict(block_length=None, conf_threshold=0.9)),
     "block32 static s8":        (dict(block_length=32, steps_per_block=8),
-                                 dict(block_length=32, tau=None, steps_per_block=8)),
+                                 dict(block_length=32, conf_threshold=None, steps_per_block=8)),
+    "block32 static s8 random": (dict(block_length=32, steps_per_block=8, order="random", seed=0),
+                                 dict(block_length=32, conf_threshold=None, steps_per_block=8, remask_order="random", seed=0)),
     "sampled t0.7 p0.9 seed0":  (dict(block_length=32, steps_per_block=32, temperature=0.7, top_p=0.9, seed=0),
-                                 dict(block_length=32, tau=None, temperature=0.7, top_p=0.9, seed=0)),
+                                 dict(block_length=32, conf_threshold=None, temperature=0.7, top_p=0.9, seed=0)),
+    "t0.7 p0.9, conf sampled":  (dict(block_length=32, steps_per_block=32, temperature=0.7, top_p=0.9, seed=0, conf_source="sampled"),
+                                 dict(block_length=32, conf_threshold=None, temperature=0.7, top_p=0.9, seed=0, conf_source="sampled")),
+    "tau0.9 t0.7, conf top1":   (dict(block_length=32, steps_per_block=32, commit="dynamic", confidence_threshold=0.9, temperature=0.7, top_p=0.9, seed=0, conf_source="top1"),
+                                 dict(block_length=32, conf_threshold=0.9, temperature=0.7, top_p=0.9, seed=0, conf_source="top1")),
+    "tau0.9 t0.7, conf sampled":(dict(block_length=32, steps_per_block=32, commit="dynamic", confidence_threshold=0.9, temperature=0.7, top_p=0.9, seed=0, conf_source="sampled"),
+                                 dict(block_length=32, conf_threshold=0.9, temperature=0.7, top_p=0.9, seed=0, conf_source="sampled")),
     "stop-string":              (dict(block_length=16, steps_per_block=16),
-                                 dict(block_length=16, tau=None)),
+                                 dict(block_length=16, conf_threshold=None)),
     "defaults (free, tau0.9, 512)": (dict(gen_length=512, block_length=512, steps_per_block=512, commit="dynamic", confidence_threshold=0.9),
                                  dict()),
 }
@@ -58,18 +73,18 @@ def run(name, from_hub):
         stop = ["\ndef", "\n\n"] if case == "stop-string" else None
         for p in PROMPTS:
             ids = adapter.encode(p)
-            h = harness_generate(adapter, ids, DecodeConfig(order="low_confidence", **{"gen_length": G, "temperature": 0.0, **hk}), stop_strings=stop)
+            h = harness_generate(adapter, ids, DecodeConfig(**{"order": "low_confidence", "gen_length": G, "temperature": 0.0, **hk}), stop_strings=stop)
             m = adapter.model.generate(ids, adapter.tokenizer, stop_strings=stop, **({} if case.startswith("defaults") else {"gen_length": G}), **dk)
             ok = (torch.equal(h.gen_ids.cpu(), m.gen_ids.cpu()) and h.n_forward == m.n_forward
                   and torch.equal(h.commit_step, m.commit_step) and h.text == m.text)
-            print(f"  {'PASS' if ok else 'FAIL'}  {case:26s} fwd={h.n_forward:<3} {m.text[:38]!r}")
+            print(f"  {'PASS' if ok else 'FAIL'}  {case:30s} fwd={h.n_forward:<3} {m.text[:38]!r}")
             if not ok: fails.append((case, p))
     # string prompt: identical tokens to the tensor path, with and without a tokenizer
     for p in PROMPTS:
         ids = adapter.encode(p)
-        ref = adapter.model.generate(ids, adapter.tokenizer, gen_length=G, block_length=32, tau=None)
-        a = adapter.model.generate(p, adapter.tokenizer, gen_length=G, block_length=32, tau=None)
-        b = adapter.model.generate(p, gen_length=G, block_length=32, tau=None)      # lazy tokenizer
+        ref = adapter.model.generate(ids, adapter.tokenizer, gen_length=G, block_length=32, conf_threshold=None)
+        a = adapter.model.generate(p, adapter.tokenizer, gen_length=G, block_length=32, conf_threshold=None)
+        b = adapter.model.generate(p, gen_length=G, block_length=32, conf_threshold=None)      # lazy tokenizer
         ok = torch.equal(ref.gen_ids.cpu(), a.gen_ids.cpu()) and torch.equal(ref.gen_ids.cpu(), b.gen_ids.cpu()) and ref.text == a.text == b.text and b.text is not None
         print(f"  {'PASS' if ok else 'FAIL'}  {'str prompt == ids':26s} fwd={ref.n_forward:<3} {b.text[:38]!r}")
         if not ok: fails.append(("str prompt", p))

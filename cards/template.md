@@ -34,9 +34,14 @@ print(model.generate("def fibonacci(n):\n", gen_length=512, stop_strings=stop_st
 ```
 
 `generate` decodes the whole canvas at once, committing positions above a confidence
-threshold (`tau=0.9`); pass `block_length=32` for left-to-right block decoding, or
-`tau=None, steps_per_block=k` for a fixed budget. The 50B-token checkpoint from the
-paper is `revision="step25000-swa"`.
+threshold (`conf_threshold=0.9`, the paper's tau); pass `block_length=32` for
+left-to-right block decoding, or `conf_threshold=None, steps_per_block=k` for a fixed
+budget. A position's confidence is its top-1 probability (`conf_source="top1"`);
+`conf_source="sampled"` reads the sampled token's probability instead, the default
+before 2026-11-11. The two differ only when sampling (`temperature>0`): greedy output,
+and every result in the paper, is unchanged. `tau=` and `order=` still work as
+deprecated names for `conf_threshold=` and `remask_order=`. The 50B-token checkpoint
+from the paper is `revision="step25000-swa"`.
 
 ## Citation
 

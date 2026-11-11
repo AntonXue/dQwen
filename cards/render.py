@@ -2,7 +2,7 @@
 """Render the five model cards from cards/template.md and push them to the Hub.
 
     python cards/render.py --check   # render; diff each against the card the Hub serves on main
-    python cards/render.py --push    # commit README.md (+ the modeling file) on main and both step branches
+    python cards/render.py --push -m "commit message"   # commit README.md (+ the modeling file) on main and both step branches
 
 Every card is a landing page: the family table is on all five, with the current repo bolded.
 The modeling file travels in the same commit so the snippet on the page matches the code
@@ -40,7 +40,10 @@ def render(name):
                     family_tag=me[5], family_rows="\n".join(rows))
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--check", action="store_true"); ap.add_argument("--push", action="store_true")
+    ap.add_argument("-m", "--message", help="Hub commit message (required with --push)")
     a = ap.parse_args()
+    if a.push and not a.message:
+        ap.error("--push needs -m/--message")
     from huggingface_hub import HfApi, hf_hub_download, CommitOperationAdd
     api = HfApi(token=os.environ.get("HF_TOKEN"))
     for name, _, _, _, modeling, _ in MODELS:
@@ -61,7 +64,7 @@ def main():
                 ops = [CommitOperationAdd(path_in_repo="README.md", path_or_fileobj=card.encode()),
                        CommitOperationAdd(path_in_repo=modeling, path_or_fileobj=local_mod)]
                 c = api.create_commit(repo_id=rid, operations=ops, revision=ref,
-                                      commit_message="Model card: the quickstart prompt ends with a newline, as HumanEval prompts do")
+                                      commit_message=a.message)
                 print(f"  {rid:28s} {ref:14s} {c.oid[:12]}")
     return 0
 if __name__ == "__main__":

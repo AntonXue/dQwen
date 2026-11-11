@@ -15,6 +15,7 @@ import torch.nn.functional as F
 
 Order = Literal["low_confidence", "entropy", "topk_margin", "random", "sequential"]
 Commit = Literal["static", "dynamic"]
+ConfSource = Literal["top1", "sampled"]
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,13 @@ class DecodeConfig:
     top_p: float = 1.0              # 1.0 => disabled
     # unmasking order
     order: Order = "low_confidence"
+    # which probability is a position's confidence: its top-1 probability
+    # ("top1", read before the draw; Fast-dLLM's rule and the paper's
+    # definition) or the sampled token's ("sampled", LLaDA's code; the default
+    # before 2026-11-11). Identical under greedy. The release generate's
+    # conf_source; there conf_threshold / remask_order are this file's
+    # confidence_threshold / order.
+    conf_source: ConfSource = "top1"
     # commit policy
     commit: Commit = "static"
     confidence_threshold: float = 0.9   # only read when commit == "dynamic"
@@ -60,6 +68,8 @@ class DecodeConfig:
             raise ValueError("temperature must be >= 0 (0 == greedy)")
         if not 0.0 < self.top_p <= 1.0:
             raise ValueError("top_p must be in (0, 1]")
+        if self.conf_source not in ("top1", "sampled"):
+            raise ValueError(f"conf_source must be 'top1' or 'sampled', got {self.conf_source!r}")
 
     @property
     def greedy(self) -> bool:
@@ -110,6 +120,8 @@ def _propose(logits: torch.Tensor, cfg: DecodeConfig) -> tuple[torch.Tensor, tor
     Confidence is read from the softmax of the UNMODIFIED logits (LLaDA's
     convention) so that the unmasking order does not silently depend on the
     temperature/top-k/top-p filtering applied to the sampling distribution.
+    `cfg.conf_source` picks WHICH probability: the position's top-1 ("top1",
+    read before the draw) or the proposed token's ("sampled").
     """
     conf_all = F.softmax(logits.float(), dim=-1)
     if cfg.greedy:
@@ -118,6 +130,8 @@ def _propose(logits: torch.Tensor, cfg: DecodeConfig) -> tuple[torch.Tensor, tor
         filtered = _apply_top_p(_apply_top_k(logits.float() / cfg.temperature, cfg.top_k),
                                 cfg.top_p)
         x0 = torch.multinomial(F.softmax(filtered, dim=-1), num_samples=1).squeeze(-1)
+    if cfg.conf_source == "top1":
+        return x0, conf_all.max(dim=-1).values
     return x0, conf_all.gather(-1, x0.unsqueeze(-1)).squeeze(-1)
 
 
